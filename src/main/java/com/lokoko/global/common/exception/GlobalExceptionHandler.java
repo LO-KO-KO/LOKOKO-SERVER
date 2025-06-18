@@ -94,6 +94,10 @@ public class GlobalExceptionHandler {
                         jme.getOriginalMessage()
                 ));
             }
+        } else {
+            details.add(new ParseJsonErrorResponse(
+                    null, null, cause.getMessage()
+            ));
         }
 
         return buildError(
