@@ -1,6 +1,6 @@
 package com.lokoko.global.auth.jwt.utils;
 
-import static com.lokoko.global.auth.jwt.utils.JwtProvider.ACCESS_TOKEN_SUBJECT;
+import static com.lokoko.global.auth.jwt.utils.JwtProvider.AUTHORIZATION_HEADER;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -30,13 +30,13 @@ public class JwtExtractor {
     }
 
     public Optional<String> extractJwtToken(HttpServletRequest request) {
-        return Optional.ofNullable(request.getHeader(ACCESS_TOKEN_SUBJECT))
+        return Optional.ofNullable(request.getHeader(AUTHORIZATION_HEADER))
                 .filter(refreshToken -> refreshToken.startsWith(BEARER))
                 .map(refreshToken -> refreshToken.replace(BEARER, ""));
     }
 
     public Long getId(String token) {
-        return getIdFromToken(token, ID_CLAIM);
+        return parseIdClaim(token);
     }
 
     public String getEmail(String token) {
@@ -57,17 +57,16 @@ public class JwtExtractor {
         return claims.get(claimName, String.class);
     }
 
-    private Long getIdFromToken(String token, String claimName) {
-        Claims claims = parseClaims(token);
-        return claims.get(claimName, Long.class);
+    private Long parseIdClaim(String token) {
+        return parseClaims(token).get(ID_CLAIM, Long.class);
     }
 
     private Claims parseClaims(String token) {
-        JwtParser parser = Jwts.parserBuilder()
+        return Jwts.parserBuilder()
                 .setSigningKey(key)
-                .build();
-        Claims claims = parser.parseClaimsJws(token).getBody();
-        return claims;
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 
     public boolean validateJwtToken(String token) {
