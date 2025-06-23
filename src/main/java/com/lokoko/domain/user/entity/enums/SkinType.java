@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum SkinType {
-    NORMAL("건성"),
+    DRY("건성"),
     OILY("지성"),
     COMBINATION("복합성"),
     ATOPIC("아토피성"),
