@@ -50,11 +50,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             return;
         }
-        saveAuthentcation(accessToken);
+        saveAuthentication(accessToken);
         filterChain.doFilter(request, response);
     }
 
-    private void saveAuthentcation(String token) {
+    private void saveAuthentication(String token) {
         Long id = jwtExtractor.getId(token);
         String email = jwtExtractor.getEmail(token);
         String role = jwtExtractor.getRole(token);
