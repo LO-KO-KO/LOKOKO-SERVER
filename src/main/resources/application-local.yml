@@ -11,4 +11,17 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
     hibernate:
       ddl-auto: update
+line:
+  channel-id: ${LINE_CHANNEL_ID}
+  channel-secret: ${LINE_CHANNEL_SECRET}
+  scope: ${LINE_SCOPE}
 
+lokoko:
+  jwt:
+    key: ${JWT_KEY}
+    access:
+      expiration: ${ACCESS_EXP}
+      header: ${ACCESS_HEAD}
+    refresh:
+      expiration: ${REFRESH_EXP}
+      header: ${REFRESH_HEAD}

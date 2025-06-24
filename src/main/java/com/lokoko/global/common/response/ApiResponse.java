@@ -8,14 +8,7 @@ public record ApiResponse<T>(
         String message,
         T data
 ) {
-    /**
-     * Creates a successful API response with the specified HTTP status, message, and data payload.
-     *
-     * @param httpStatus the HTTP status to include in the response
-     * @param message the message describing the result
-     * @param data the data payload to include in the response
-     * @return an ApiResponse instance representing a successful operation
-     */
+
     public static <T> ApiResponse<T> success(
             HttpStatus httpStatus,
             String message,
@@ -29,13 +22,6 @@ public record ApiResponse<T>(
         );
     }
 
-    /**
-     * Creates a successful API response with the specified HTTP status and message, without a data payload.
-     *
-     * @param httpStatus the HTTP status to include in the response
-     * @param message the message describing the result
-     * @return an ApiResponse instance representing a successful operation with no data
-     */
     public static ApiResponse<Void> success(
             HttpStatus httpStatus,
             String message
@@ -43,14 +29,6 @@ public record ApiResponse<T>(
         return success(httpStatus, message, null);
     }
 
-    /**
-     * Creates an error ApiResponse with the specified HTTP status, message, and data payload.
-     *
-     * @param httpStatus the HTTP status to set in the response
-     * @param message the error message to include
-     * @param data the data payload to include in the response
-     * @return an ApiResponse representing an error with the provided details
-     */
     public static <T> ApiResponse<T> error(
             HttpStatus httpStatus,
             String message,
@@ -64,13 +42,6 @@ public record ApiResponse<T>(
         );
     }
 
-    /**
-     * Creates an error ApiResponse with the specified HTTP status and message, without a data payload.
-     *
-     * @param httpStatus the HTTP status to set in the response
-     * @param message the error message to include in the response
-     * @return an ApiResponse instance representing an error, with no data
-     */
     public static ApiResponse<Void> error(
             HttpStatus httpStatus,
             String message
