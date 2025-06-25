@@ -1,8 +1,8 @@
 package com.lokoko.global.auth.jwt.filter;
 
-import static com.lokoko.global.auth.jwt.exception.ErrorMessage.JWT_TOKEN_EXPIRED;
-import static com.lokoko.global.auth.jwt.exception.ErrorMessage.JWT_TOKEN_INVALID;
-import static com.lokoko.global.auth.jwt.exception.ErrorMessage.JWT_TOKEN_NOT_FOUND;
+import static com.lokoko.global.auth.jwt.exception.JwtErrorMessage.JWT_TOKEN_EXPIRED;
+import static com.lokoko.global.auth.jwt.exception.JwtErrorMessage.JWT_TOKEN_INVALID;
+import static com.lokoko.global.auth.jwt.exception.JwtErrorMessage.JWT_TOKEN_NOT_FOUND;
 
 import com.lokoko.global.auth.jwt.principal.JwtUserDetails;
 import com.lokoko.global.auth.jwt.utils.JwtExtractor;
@@ -21,6 +21,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+    private static final String NO_CHECK_URL = "";
     private final static String JWT_ERROR = "jwtError";
     private final JwtExtractor jwtExtractor;
 
