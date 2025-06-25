@@ -4,7 +4,12 @@ import com.lokoko.global.common.exception.BaseException;
 import org.springframework.http.HttpStatus;
 
 public class OauthException extends BaseException {
+
     public OauthException() {
-        super(HttpStatus.UNAUTHORIZED, ErrorMessage.OAUTH_ERROR.getMessage());
+        this(ErrorMessage.OAUTH_ERROR);
+    }
+
+    public OauthException(ErrorMessage errorMessage) {
+        super(HttpStatus.UNAUTHORIZED, errorMessage.getMessage());
     }
 }
