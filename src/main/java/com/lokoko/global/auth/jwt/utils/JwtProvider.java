@@ -1,6 +1,5 @@
 package com.lokoko.global.auth.jwt.utils;
 
-import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -33,27 +32,24 @@ public class JwtProvider {
     }
 
     public String generateAccessToken(Long userId, String role) {
-        JwtBuilder builder = Jwts.builder()
-                .setSubject(AUTHORIZATION_HEADER)
+        return Jwts.builder()
+                .setSubject(userId.toString())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpiration))
+                .setExpiration(new Date(System.currentTimeMillis()
+                        + accessTokenExpiration))
                 .claim(ID_CLAIM, userId)
-                .claim(ROLE_CLAIM, ROLE_PREFIX + role);
-
-        return builder
+                .claim(ROLE_CLAIM, ROLE_PREFIX + role)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    public String generateRefreshToken(Long userId, String role) {
-        JwtBuilder builder = Jwts.builder()
-                .setSubject(REFRESH_TOKEN_HEADER)
+    public String generateRefreshToken(Long userId) {
+        return Jwts.builder()
+                .setSubject(userId.toString())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpiration))
+                .setExpiration(new Date(System.currentTimeMillis()
+                        + refreshTokenExpiration))
                 .claim(ID_CLAIM, userId)
-                .claim(ROLE_CLAIM, ROLE_PREFIX + role);
-
-        return builder
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
