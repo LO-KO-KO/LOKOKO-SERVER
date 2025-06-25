@@ -12,8 +12,10 @@ spring:
     hibernate:
       ddl-auto: update
 line:
-  channel-id: ${LINE_CHANNEL_ID}
-  channel-secret: ${LINE_CHANNEL_SECRET}
+  client-id: ${LINE_CHANNEL_ID}
+  client-secret: ${LINE_CHANNEL_SECRET}
+  redirect-uri: ${LINE_CALLBACK_URL}
+  base-url: ${LINE_BASE_URL}
   scope: ${LINE_SCOPE}
 
 lokoko:
