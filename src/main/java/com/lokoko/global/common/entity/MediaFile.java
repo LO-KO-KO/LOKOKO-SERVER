@@ -2,13 +2,14 @@ package com.lokoko.global.common.entity;
 
 import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
 @Embeddable
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-
+@EqualsAndHashCode
 public class MediaFile {
 
     private String fileName;
