@@ -13,6 +13,7 @@ public class SeleniumConfig {
     public WebDriver webDriver() {
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--lang=ja-JP");
+        options.addArguments("--headless");
         return new ChromeDriver(options);
     }
 }

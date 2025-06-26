@@ -24,12 +24,13 @@ public final class ProductCrawlerConstants {
     public static final String SELECTOR_IMAGE_SLIDE = ".prd-visual-content .swiper-slide";
     public static final String SELECTOR_PRICE_INFO = ".prd-price-info";
     public static final String SELECTOR_PRICE_NORMAL = ".prd-price-info .price span";
-    public static final String SELECTOR_PRICE_SALE = "prd-price-info dd.sale-price";
+    public static final String SELECTOR_PRICE_SALE = ".prd-price-info dd.sale-price";
     public static final String REGEX_YEN = "¥[0-9,]+";
     // Error messages
     public static final String ERROR_MSG_EXTRACT_ID = "Error extracting product ID from URL: ";
     public static final String ERROR_MSG_PARSE_PRICE = "Failed to parse price: ";
     public static final String ERROR_MSG_SLEEP_INTERRUPTED = "Sleep interrupted: ";
+
     private ProductCrawlerConstants() {
     }
 }
