@@ -1,11 +1,11 @@
 package com.lokoko.global.auth.service;
 
-import static com.lokoko.global.auth.line.LineConstants.AUTHORIZE_PATH;
-import static com.lokoko.global.auth.line.LineConstants.PARAM_CLIENT_ID;
-import static com.lokoko.global.auth.line.LineConstants.PARAM_REDIRECT_URI;
-import static com.lokoko.global.auth.line.LineConstants.PARAM_RESPONSE_TYPE;
-import static com.lokoko.global.auth.line.LineConstants.PARAM_SCOPE;
-import static com.lokoko.global.auth.line.LineConstants.PARAM_STATE;
+import static com.lokoko.global.utils.LineConstants.AUTHORIZE_PATH;
+import static com.lokoko.global.utils.LineConstants.PARAM_CLIENT_ID;
+import static com.lokoko.global.utils.LineConstants.PARAM_REDIRECT_URI;
+import static com.lokoko.global.utils.LineConstants.PARAM_RESPONSE_TYPE;
+import static com.lokoko.global.utils.LineConstants.PARAM_SCOPE;
+import static com.lokoko.global.utils.LineConstants.PARAM_STATE;
 
 import com.lokoko.domain.user.entity.User;
 import com.lokoko.domain.user.repository.UserRepository;

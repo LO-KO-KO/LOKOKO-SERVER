@@ -1,4 +1,4 @@
-package com.lokoko.global.auth.line;
+package com.lokoko.global.utils;
 
 public class LineConstants {
     // Base URL

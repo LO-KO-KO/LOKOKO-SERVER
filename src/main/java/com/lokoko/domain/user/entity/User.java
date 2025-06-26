@@ -16,6 +16,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -42,10 +43,6 @@ public class User extends BaseEntity {
     private LocalDateTime lastLoginAt;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Role role = Role.USER;
-
-    @Enumerated(EnumType.STRING)
     @Column
     private PersonalColor personalColor;
 
@@ -57,7 +54,13 @@ public class User extends BaseEntity {
     @Column
     private SkinType skinType;
 
-    @Column(name = "status", nullable = false, length = 20)
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    @Column(nullable = false)
+    private Role role = Role.USER;
+
+    @Column(nullable = false, length = 20)
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     private UserStatus status = UserStatus.ACTIVE;
 
