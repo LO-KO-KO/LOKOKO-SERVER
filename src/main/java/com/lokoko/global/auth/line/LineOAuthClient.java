@@ -2,6 +2,7 @@ package com.lokoko.global.auth.line;
 
 import com.lokoko.global.auth.line.dto.LineProfileResponse;
 import com.lokoko.global.auth.line.dto.LineTokenResponse;
+import com.lokoko.global.utils.LineConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.BodyInserters;
