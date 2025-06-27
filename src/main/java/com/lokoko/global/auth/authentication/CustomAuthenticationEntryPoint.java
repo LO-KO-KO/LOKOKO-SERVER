@@ -1,7 +1,6 @@
 package com.lokoko.global.auth.authentication;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lokoko.global.auth.exception.ErrorMessage;
 import com.lokoko.global.common.response.ApiResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,7 +16,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
-    private static final String LOG_FORMAT = "ExceptionClass: {}, Message: {}";
+    private static final String LOG_FORMAT = "ExceptionClass: {}, Message: {}, ErrorObj: {}";
     private static final String JWT_ERROR_ATTR = "jwtError";
     private static final String CONTENT_TYPE = "application/json";
     private static final String CHAR_ENCODING = "UTF-8";
@@ -25,17 +24,27 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,
                          AuthenticationException authException) throws IOException, ServletException {
-        ErrorMessage jwtError = (ErrorMessage) request.getAttribute(JWT_ERROR_ATTR);
+        Object jwtErrorObj = request.getAttribute(JWT_ERROR_ATTR);
 
-        String errorMessage = (jwtError != null)
-                ? jwtError.getMessage()
-                : authException.getMessage();
+        String errorMessage;
+        String exceptionClass;
+        Object logTarget;
 
-        String exceptionClass = (jwtError != null)
-                ? jwtError.getClass().getSimpleName()
-                : authException.getClass().getSimpleName();
+        if (jwtErrorObj instanceof com.lokoko.global.auth.exception.ErrorMessage em) {
+            errorMessage = em.getMessage();
+            exceptionClass = em.getClass().getSimpleName();
+            logTarget = em;
+        } else if (jwtErrorObj instanceof com.lokoko.global.auth.jwt.exception.JwtErrorMessage jem) {
+            errorMessage = jem.getMessage();
+            exceptionClass = jem.getClass().getSimpleName();
+            logTarget = jem;
+        } else {
+            errorMessage = authException.getMessage();
+            exceptionClass = authException.getClass().getSimpleName();
+            logTarget = authException;
+        }
 
-        log.error(LOG_FORMAT, exceptionClass, errorMessage, (jwtError != null ? jwtError : authException));
+        log.error(LOG_FORMAT, exceptionClass, errorMessage, logTarget);
 
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType(CONTENT_TYPE);
