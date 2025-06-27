@@ -31,6 +31,23 @@ public final class ProductCrawlerConstants {
     public static final String ERROR_MSG_PARSE_PRICE = "Failed to parse price: ";
     public static final String ERROR_MSG_SLEEP_INTERRUPTED = "Sleep interrupted: ";
 
+    // Selectors
+    public static final String[] SELECTORS_PRODUCT_DETAIL = {
+            "a[href='#agreeList1']",
+            "a[data-target='#agreeList1']",
+            "a:contains('商品特徴')",
+            "a:contains('상세')",
+            "a:contains('특징')"
+    };
+
+    public static final String[] SELECTORS_INGREDIENTS = {
+            "a[href='#agreeList2']",
+            "a[data-target='#agreeList2']",
+            "a:contains('原材料')",
+            "a:contains('성분')",
+            "a:contains('원료')"
+    };
+
     private ProductCrawlerConstants() {
     }
 }

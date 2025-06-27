@@ -201,21 +201,9 @@ public class CrawlingService {
             String productDetail = null;
             String ingredients = null;
 
-            String[] detailSelectors = {
-                    "a[href='#agreeList1']",
-                    "a[data-target='#agreeList1']",
-                    "a:contains('商品特徴')",
-                    "a:contains('상세')",
-                    "a:contains('특징')"
-            };
+            String[] detailSelectors = ProductCrawlerConstants.SELECTORS_PRODUCT_DETAIL;
 
-            String[] ingredientSelectors = {
-                    "a[href='#agreeList2']",
-                    "a[data-target='#agreeList2']",
-                    "a:contains('原材料')",
-                    "a:contains('성분')",
-                    "a:contains('원료')"
-            };
+            String[] ingredientSelectors = ProductCrawlerConstants.SELECTORS_INGREDIENTS;
 
             for (String selector : detailSelectors) {
                 productDetail = extractDetailOrIngredients(selector, "#agreeList1", wait, js);
