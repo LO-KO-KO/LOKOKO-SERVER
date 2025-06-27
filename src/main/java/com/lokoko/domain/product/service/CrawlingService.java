@@ -69,14 +69,19 @@ public class CrawlingService {
             waitForFilterApplication(sub, wait);
 
             List<String> detailUrls = collectUniqueProductUrls(sub);
-            for (String detailUrl : detailUrls) {
-                long count = productRepository
-                        .countByMainCategoryAndMiddleCategoryAndSubCategory(main, middle, sub);
+            int savedCount = (int) productRepository
+                    .countByMainCategoryAndMiddleCategoryAndSubCategory(main, middle, sub);
 
-                if (count >= MAX_PER_SUB) {
+            for (String detailUrl : detailUrls) {
+                if (savedCount >= MAX_PER_SUB) {
                     break;
                 }
-                scrapeDetailPageSafely(detailUrl, main, middle, sub);
+
+                boolean success = scrapeDetailPageSafelyInNewTab(detailUrl, main, middle, sub);
+                if (success) {
+                    savedCount++;
+                }
+                util.safeSleep(500);
             }
 
         } catch (Exception e) {
@@ -90,7 +95,6 @@ public class CrawlingService {
             for (String sel : ProductCrawlerConstants.SELECTORS_SUBCATEGORY_AREA) {
                 try {
                     wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(sel)));
-
                     return;
                 } catch (Exception ignored) {
                 }
@@ -161,10 +165,6 @@ public class CrawlingService {
         for (WebElement a : driver.findElements(
                 By.cssSelector(ProductCrawlerConstants.SELECTOR_CATEGORY_PRODUCT_LIST_LINK))) {
 
-            if (urls.size() >= MAX_PER_SUB) {
-                break;
-            }
-
             String href = a.getAttribute("href");
             String abs = util.convertToAbsoluteUrl(href);
             String id = util.extractProductId(abs);
@@ -177,19 +177,70 @@ public class CrawlingService {
         return urls;
     }
 
-    private boolean scrapeDetailPageSafely(String url, MainCategory main, MiddleCategory middle, SubCategory sub) {
+    private boolean scrapeDetailPageSafelyInNewTab(String url, MainCategory main, MiddleCategory middle,
+                                                   SubCategory sub) {
+        String originalTab = driver.getWindowHandle();
         try {
+            ((JavascriptExecutor) driver).executeScript("window.open('about:blank','_blank');");
+            List<String> tabs = new ArrayList<>(driver.getWindowHandles());
+            driver.switchTo().window(tabs.get(tabs.size() - 1));
             driver.get(url);
-            new WebDriverWait(driver, Duration.ofSeconds(10))
-                    .until(ExpectedConditions.visibilityOfElementLocated(
-                            By.cssSelector(ProductCrawlerConstants.SELECTOR_PRICE_INFO)));
+
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+            wait.until(ExpectedConditions.visibilityOfElementLocated(
+                    By.cssSelector(ProductCrawlerConstants.SELECTOR_PRICE_INFO)));
+            Thread.sleep(1000);
+
             long price = util.extractPrice();
             String ship = util.safeText(By.cssSelector(".prd-delivery-info"));
             String brand = util.safeText(By.cssSelector(".prd-brand-info h3"));
             String detail = util.safeText(By.cssSelector(".prd-brand-info dl"));
             Tag tag = util.extractTag();
 
+            String productDetail = null;
+            String ingredients = null;
+
+            String[] detailSelectors = {
+                    "a[href='#agreeList1']",
+                    "a[data-target='#agreeList1']",
+                    "a:contains('商品特徴')",
+                    "a:contains('상세')",
+                    "a:contains('특징')"
+            };
+
+            String[] ingredientSelectors = {
+                    "a[href='#agreeList2']",
+                    "a[data-target='#agreeList2']",
+                    "a:contains('原材料')",
+                    "a:contains('성분')",
+                    "a:contains('원료')"
+            };
+
+            for (String selector : detailSelectors) {
+                productDetail = extractDetailOrIngredients(selector, "#agreeList1", wait, js);
+                if (productDetail != null) {
+                    break;
+                }
+            }
+
+            for (String selector : ingredientSelectors) {
+                ingredients = extractDetailOrIngredients(selector, "#agreeList2", wait, js);
+                if (ingredients != null) {
+                    break;
+                }
+            }
+
+            if (productDetail == null && ingredients == null) {
+                System.out.println("SKIP: No detail/ingredients for " + url);
+                driver.close();
+                driver.switchTo().window(originalTab);
+                return false;
+            }
+
             if (brand == null || detail == null) {
+                driver.close();
+                driver.switchTo().window(originalTab);
                 return false;
             }
 
@@ -202,6 +253,9 @@ public class CrawlingService {
                     .mainCategory(main)
                     .middleCategory(middle)
                     .subCategory(sub)
+                    .productDetail(productDetail)
+                    .ingredients(ingredients)
+                    .oliveYoungUrl(url)
                     .build();
 
             Product saved = productRepository.save(p);
@@ -214,9 +268,69 @@ public class CrawlingService {
                                 .url(imgUrl)
                                 .build());
             }
+            System.out.println("Product saved with detail: " + (productDetail != null ? "YES" : "NO") +
+                    ", ingredients: " + (ingredients != null ? "YES" : "NO"));
+
+            driver.close();
+            driver.switchTo().window(originalTab);
             return true;
         } catch (Exception e) {
+            System.err.println("Error in detail page scraping: " + e.getMessage());
+            try {
+                driver.close();
+            } catch (Exception ignore) {
+            }
+            driver.switchTo().window(originalTab);
             return false;
+        }
+    }
+
+    private String extractDetailOrIngredients(String anchorSelector, String contentId, WebDriverWait wait,
+                                              JavascriptExecutor js) {
+        try {
+            List<WebElement> anchors = driver.findElements(By.cssSelector(anchorSelector));
+            if (anchors.isEmpty()) {
+                System.out.println("Anchor not found: " + anchorSelector);
+                return null;
+            }
+            WebElement anchor = anchors.get(0);
+            js.executeScript("arguments[0].scrollIntoView({block:'center'});", anchor);
+            Thread.sleep(500);
+            String expanded = anchor.getAttribute("aria-expanded");
+            System.out.println("Initial aria-expanded: " + expanded + " for " + anchorSelector);
+
+            if (!"true".equals(expanded)) {
+                js.executeScript("arguments[0].click();", anchor);
+                boolean expandSuccess = wait.until(d -> "true".equals(anchor.getAttribute("aria-expanded")));
+                System.out.println("Expand success: " + expandSuccess);
+            }
+            List<WebElement> contentDivs = new ArrayList<>();
+            contentDivs.addAll(driver.findElements(By.cssSelector(contentId + " div")));
+
+            if (contentDivs.isEmpty()) {
+                contentDivs.addAll(driver.findElements(By.cssSelector(contentId + ".collapse.show div")));
+            }
+
+            if (contentDivs.isEmpty()) {
+                contentDivs.addAll(driver.findElements(By.cssSelector(contentId + ".collapse.in div")));
+            }
+
+            if (contentDivs.isEmpty()) {
+                contentDivs.addAll(driver.findElements(By.cssSelector(contentId + " > div")));
+            }
+
+            if (!contentDivs.isEmpty()) {
+                String content = contentDivs.get(0).getAttribute("innerHTML");
+                System.out.println(
+                        "Content found: " + (content != null ? content.substring(0, Math.min(50, content.length()))
+                                + "..." : "null"));
+                return content;
+            }
+            System.out.println("No content div found for " + contentId);
+            return null;
+        } catch (Exception e) {
+            System.err.println("Error extracting content for " + anchorSelector + ": " + e.getMessage());
+            return null;
         }
     }
 }
