@@ -4,6 +4,7 @@ import static jakarta.persistence.FetchType.LAZY;
 
 import com.lokoko.domain.review.entity.Review;
 import com.lokoko.domain.user.entity.User;
+import com.lokoko.global.common.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -28,7 +29,7 @@ import lombok.experimental.SuperBuilder;
 @Table(uniqueConstraints = {
         @UniqueConstraint(name = "uk_review_like_review_user", columnNames = {"review_id", "user_id"})
 }) // (리뷰, 유저) 에 대해 유니크 제약조건 설정하여 같은 유저가 여러번 좋아요 누를 수 없도록 설정.
-public class ReviewLike {
+public class ReviewLike extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
