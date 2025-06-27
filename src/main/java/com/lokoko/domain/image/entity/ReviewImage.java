@@ -1,5 +1,7 @@
 package com.lokoko.domain.image.entity;
 
+import static jakarta.persistence.FetchType.LAZY;
+
 import com.lokoko.domain.review.entity.Review;
 import com.lokoko.global.common.entity.MediaFile;
 import jakarta.persistence.Column;
@@ -31,7 +33,7 @@ public class ReviewImage {
 
     private int displayOrder; // 배치순서
 
-    @ManyToOne
+    @ManyToOne(fetch = LAZY)
     @JoinColumn(name = "review_id")
     private Review review; // 이미지가 어떤 리뷰에 대한 것인지 (외래키)
 
