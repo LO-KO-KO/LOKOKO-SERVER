@@ -1,7 +1,16 @@
 FROM openjdk:21-jdk
 
+RUN apt-get update \
+ && apt-get install -y wget unzip fontconfig \
+ && rm -rf /var/lib/apt/lists/*
+
+ARG CHROME_VERSION=138.0.7204.49
+RUN wget -qO chrome.zip \
+      https://storage.googleapis.com/chrome-for-testing-public/${CHROME_VERSION}/linux64/chrome-linux64.zip \
+ && unzip chrome.zip -d /opt \
+ && rm chrome.zip \
+ && ln -s /opt/chrome-linux64/google-chrome /usr/bin/google-chrome
+
 ARG JAR_FILE=build/libs/*.jar
-
 COPY ${JAR_FILE} docker-springboot.jar
-
 ENTRYPOINT ["java", "-jar", "-Dspring.profiles.active=dev", "/docker-springboot.jar"]
