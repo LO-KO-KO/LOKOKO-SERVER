@@ -50,6 +50,9 @@ dependencies {
 
     // Selenium
     implementation 'org.seleniumhq.selenium:selenium-java:4.8.0'
+
+    // webdriver-manager
+    implementation 'io.github.bonigarcia:webdrivermanager:5.5.0'
 }
 
 tasks.named('test') {
