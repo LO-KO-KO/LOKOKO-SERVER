@@ -2,6 +2,7 @@ package com.lokoko.domain.review.entity;
 
 import static jakarta.persistence.FetchType.LAZY;
 
+import com.lokoko.domain.product.entity.Product;
 import com.lokoko.domain.user.entity.User;
 import com.lokoko.global.common.entity.BaseEntity;
 import jakarta.persistence.Column;
@@ -31,10 +32,9 @@ public class Review extends BaseEntity {
     @JoinColumn(name = "user_id")
     private User author; // 리뷰 작성자 foreign key 매핑
 
-    // Product 엔티티가 만들어지고 난 후, 주석 해제 해야합니다.
-    // @ManyToOne
-    // @JoinColumn(name = "product_id")
-    // private Product product;
+    @ManyToOne(fetch = LAZY)
+    @JoinColumn(name = "product_id")
+    private Product product;
 
     private String positiveContent; // 긍정 리뷰 내용
 
