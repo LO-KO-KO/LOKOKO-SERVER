@@ -11,12 +11,6 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
     hibernate:
       ddl-auto: update
-line:
-  client-id: ${LINE_CHANNEL_ID}
-  client-secret: ${LINE_CHANNEL_SECRET}
-  redirect-uri: ${LINE_CALLBACK_URL}
-  base-url: ${LINE_BASE_URL}
-  scope: ${LINE_SCOPE}
 
 lokoko:
   jwt:
@@ -27,3 +21,16 @@ lokoko:
     refresh:
       expiration: ${REFRESH_EXP}
       header: ${REFRESH_HEAD}
+
+line:
+  client-id: ${LINE_CHANNEL_ID}
+  client-secret: ${LINE_CHANNEL_SECRET}
+  redirect-uri: ${LINE_CALLBACK_URL}
+  base-url: ${LINE_BASE_URL}
+  scope: ${LINE_SCOPE}
+
+youtube:
+  api-key: ${YOUTUBE_API_KEY}
+
+aws:
+  region: ${AWS_REGION}
