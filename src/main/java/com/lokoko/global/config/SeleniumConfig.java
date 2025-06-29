@@ -15,7 +15,6 @@ public class SeleniumConfig {
         WebDriverManager.chromedriver().setup();
         ChromeOptions options = new ChromeOptions();
         options.addArguments(
-                "--lang=ja-JP",
                 "--headless",
                 "--no-sandbox",
                 "--disable-dev-shm-usage",
