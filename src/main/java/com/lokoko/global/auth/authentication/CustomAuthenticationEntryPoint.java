@@ -1,6 +1,7 @@
 package com.lokoko.global.auth.authentication;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lokoko.global.auth.jwt.exception.JwtErrorMessage;
 import com.lokoko.global.common.response.ApiResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

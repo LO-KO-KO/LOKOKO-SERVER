@@ -1,14 +1,11 @@
 package com.lokoko.domain.product.dto;
 
-import com.lokoko.domain.product.entity.enums.MainCategory;
-import com.lokoko.domain.product.entity.enums.MiddleCategory;
+import java.util.List;
 
 public record CrawlResponse(
-        String message
+        List<String> videoUrls
 ) {
-    public static CrawlResponse of(MainCategory main, MiddleCategory middle) {
-        return new CrawlResponse(
-                String.format("%s / %s", main, middle)
-        );
+    public static CrawlResponse of(List<String> videoUrls) {
+        return new CrawlResponse(videoUrls);
     }
 }
