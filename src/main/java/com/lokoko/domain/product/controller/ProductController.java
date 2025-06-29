@@ -23,7 +23,6 @@ public class ProductController {
     public ApiResponse<CrawlResponse> crawl(@RequestBody CrawlRequest request) {
         productCrawlingService.scrapeByCategory(request.mainCategory(), request.middleCategory());
 
-        return ApiResponse.success(HttpStatus.OK, ResponseMessage.CRAWL_SUCCESS.getMessage(),
-                CrawlResponse.of(request.mainCategory(), request.middleCategory()));
+        return ApiResponse.success(HttpStatus.OK, ResponseMessage.CRAWL_SUCCESS.getMessage(), null);
     }
 }
