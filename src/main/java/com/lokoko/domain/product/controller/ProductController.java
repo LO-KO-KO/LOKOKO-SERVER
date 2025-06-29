@@ -3,7 +3,6 @@ package com.lokoko.domain.product.controller;
 
 import com.lokoko.domain.product.controller.enums.ResponseMessage;
 import com.lokoko.domain.product.dto.CrawlRequest;
-import com.lokoko.domain.product.dto.CrawlResponse;
 import com.lokoko.domain.product.service.ProductCrawlingService;
 import com.lokoko.global.common.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -22,7 +21,7 @@ public class ProductController {
 
     @Hidden
     @PostMapping("/crawl")
-    public ApiResponse<CrawlResponse> crawl(@RequestBody CrawlRequest request) {
+    public ApiResponse<Void> crawl(@RequestBody CrawlRequest request) {
         productCrawlingService.scrapeByCategory(request.mainCategory(), request.middleCategory());
 
         return ApiResponse.success(HttpStatus.OK, ResponseMessage.CRAWL_SUCCESS.getMessage(), null);
