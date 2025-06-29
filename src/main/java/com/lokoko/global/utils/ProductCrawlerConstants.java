@@ -4,6 +4,7 @@ public final class ProductCrawlerConstants {
     // Base URL & Path
     public static final String BASE_URL = "https://global.oliveyoung.com";
     public static final String PATH_DISPLAY_CATEGORY = "/display/category?ctgrNo=%s";
+
     // Selectors
     public static final String SELECTOR_WRAP_LNB_FILTER = ".wrap-lnb-filter";
     public static final String[] SELECTORS_SUBCATEGORY_AREA = {
@@ -26,6 +27,7 @@ public final class ProductCrawlerConstants {
     public static final String SELECTOR_PRICE_NORMAL = ".prd-price-info .price span";
     public static final String SELECTOR_PRICE_SALE = ".prd-price-info dd.sale-price";
     public static final String REGEX_YEN = "¥[0-9,]+";
+
     // Error messages
     public static final String ERROR_MSG_EXTRACT_ID = "Error extracting product ID from URL: ";
     public static final String ERROR_MSG_PARSE_PRICE = "Failed to parse price: ";
@@ -39,7 +41,6 @@ public final class ProductCrawlerConstants {
             "a:contains('상세')",
             "a:contains('특징')"
     };
-
     public static final String[] SELECTORS_INGREDIENTS = {
             "a[href='#agreeList2']",
             "a[data-target='#agreeList2']",
@@ -47,6 +48,12 @@ public final class ProductCrawlerConstants {
             "a:contains('성분')",
             "a:contains('원료')"
     };
+
+    // Sleep durations
+    public static final long SAFETY_SLEEP_MS = 300L;
+    public static final long DEFAULT_SLEEP_AFTER_FILTER_MS = 2000L;
+    public static final long DEFAULT_WAIT_SEC = 15L;
+    public static final long SHORT_WAIT_SEC = 5L;
 
     private ProductCrawlerConstants() {
     }
