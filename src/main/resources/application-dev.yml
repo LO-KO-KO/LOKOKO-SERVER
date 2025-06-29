@@ -29,6 +29,3 @@ line:
 
 youtube:
   api-key: ${YOUTUBE_API_KEY}
-
-aws:
-  region: ${AWS_REGION}
