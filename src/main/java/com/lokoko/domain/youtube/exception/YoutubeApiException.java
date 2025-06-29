@@ -4,7 +4,7 @@ import com.lokoko.global.common.exception.BaseException;
 import org.springframework.http.HttpStatus;
 
 public class YoutubeApiException extends BaseException {
-    public YoutubeApiException(ErrorMessage errorMessage) {
-        super(HttpStatus.BAD_GATEWAY, errorMessage.getMessage());
+    public YoutubeApiException() {
+        super(HttpStatus.BAD_GATEWAY, ErrorMessage.YOUTUBE_API_CALL_FAILED.getMessage());
     }
 }
