@@ -1,7 +1,7 @@
 package com.lokoko.global.auth.authentication;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lokoko.global.auth.exception.ErrorMessage;
+import com.lokoko.global.auth.jwt.exception.JwtErrorMessage;
 import com.lokoko.global.common.response.ApiResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,7 +25,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,
                          AuthenticationException authException) throws IOException, ServletException {
-        ErrorMessage jwtError = (ErrorMessage) request.getAttribute(JWT_ERROR_ATTR);
+        JwtErrorMessage jwtError = (JwtErrorMessage) request.getAttribute(JWT_ERROR_ATTR);
 
         String errorMessage = (jwtError != null)
                 ? jwtError.getMessage()
