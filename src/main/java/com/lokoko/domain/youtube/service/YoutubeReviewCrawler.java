@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class YoutubeCrawlerService {
+public class YoutubeReviewCrawler {
     private final YoutubeApiService youtubeApiService;
     private final ProductRepository productRepository;
 
