@@ -11,8 +11,4 @@ public enum MainCategory {
 
     private final String displayName;
     private final String ctgrNo;
-
-    public String getUrlPath() {
-        return "/display/category?ctgrNo=" + ctgrNo;
-    }
 }

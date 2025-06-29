@@ -11,21 +11,18 @@ import com.lokoko.domain.product.repository.ProductRepository;
 import com.lokoko.global.utils.ProductCrawlerConstants;
 import com.lokoko.global.utils.ProductCrawlerUtil;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CrawlingService {
@@ -41,155 +38,115 @@ public class CrawlingService {
     @Transactional
     public void scrapeByCategory(MainCategory main, MiddleCategory middle) {
         preferenceManager.ensureJapanCountry();
-        List<SubCategory> subs = Arrays.stream(SubCategory.values())
+        List<SubCategory> subs = List.of(SubCategory.values());
+        subs.stream()
                 .filter(sc -> sc.getMiddleCategory() == middle)
-                .toList();
-
-        for (SubCategory sub : subs) {
-            scrapeBySub(main, middle, sub);
-        }
+                .forEach(sub -> scrapeBySub(main, middle, sub));
     }
 
     private void scrapeBySub(MainCategory main, MiddleCategory middle, SubCategory sub) {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(ProductCrawlerConstants.DEFAULT_WAIT_SEC));
         JavascriptExecutor js = (JavascriptExecutor) driver;
 
         try {
-            String url = ProductCrawlerConstants.BASE_URL +
-                    String.format(ProductCrawlerConstants.PATH_DISPLAY_CATEGORY, middle.getCtgrNo());
+            String url = String.format(ProductCrawlerConstants.BASE_URL +
+                    ProductCrawlerConstants.PATH_DISPLAY_CATEGORY, middle.getCtgrNo());
             driver.get(url);
-            System.out.println("Accessed: " + url);
+            log.info("크롤링 시작 URL 접근: {}", url);
 
-            wait.until(ExpectedConditions.presenceOfElementLocated(
-                    By.cssSelector(ProductCrawlerConstants.SELECTOR_WRAP_LNB_FILTER)));
-            waitForSubcategoryArea(wait);
+            util.waitForPresence(ProductCrawlerConstants.SELECTOR_WRAP_LNB_FILTER, 15);
+            util.waitForPresence(ProductCrawlerConstants.SELECTORS_SUBCATEGORY_AREA[0], 15);
+            util.waitForNonEmpty(ProductCrawlerConstants.SELECTORS_SUBCATEGORY_AREA[1], 15);
 
-            clearOtherSubCategories(middle, sub, js, wait);
-            selectTargetSubCategory(sub, js, wait);
-            waitForFilterApplication(sub, wait);
+            clearOtherSubCategories(middle, sub, js);
+            selectTargetSubCategory(sub, js);
 
-            List<String> detailUrls = collectUniqueProductUrls(sub);
+            util.waitForPresence(
+                    String.format(ProductCrawlerConstants.SELECTOR_FILTER_TAG_FORMAT, sub.getCtgrNo()),
+                    15);
+            util.waitForNonEmpty(ProductCrawlerConstants.SELECTOR_CATEGORY_PRODUCT_LIST_ITEM, 15);
+            util.safeSleep(ProductCrawlerConstants.DEFAULT_SLEEP_AFTER_FILTER_MS);
+
+            List<String> detailUrls = util.collectProductUrls(
+                    By.cssSelector(ProductCrawlerConstants.SELECTOR_CATEGORY_PRODUCT_LIST_LINK)
+            );
+            int savedCount = (int) productRepository
+                    .countByMainCategoryAndMiddleCategoryAndSubCategory(main, middle, sub);
+
             for (String detailUrl : detailUrls) {
-                long count = productRepository
-                        .countByMainCategoryAndMiddleCategoryAndSubCategory(main, middle, sub);
-
-                if (count >= MAX_PER_SUB) {
+                if (savedCount >= MAX_PER_SUB) {
                     break;
                 }
-                scrapeDetailPageSafely(detailUrl, main, middle, sub);
-            }
-
-        } catch (Exception e) {
-            System.err.printf("Failed to scrape %s->%s->%s: %s%n",
-                    main, middle, sub, e.getMessage());
-        }
-    }
-
-    private void waitForSubcategoryArea(WebDriverWait wait) {
-        try {
-            for (String sel : ProductCrawlerConstants.SELECTORS_SUBCATEGORY_AREA) {
-                try {
-                    wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(sel)));
-
-                    return;
-                } catch (Exception ignored) {
+                if (scrapeDetailPageSafelyInNewTab(detailUrl)) {
+                    savedCount++;
                 }
+                util.safeSleep(ProductCrawlerConstants.SHORT_WAIT_SEC);
             }
-            wait.until(d -> !d.findElements(
-                            By.cssSelector(ProductCrawlerConstants.SELECTORS_SUBCATEGORY_AREA[1]))
-                    .isEmpty());
+
         } catch (Exception e) {
-            throw e;
+            log.error("크롤링 실패: {} -> {} -> {}", main, middle, sub, e);
         }
     }
 
     private void clearOtherSubCategories(MiddleCategory middle, SubCategory target,
-                                         JavascriptExecutor js, WebDriverWait wait) {
-        List<SubCategory> all = Arrays.stream(SubCategory.values())
-                .filter(sc -> sc.getMiddleCategory() == middle).toList();
-        for (SubCategory other : all) {
-            if (!other.equals(target)) {
-                String fmt = ProductCrawlerConstants.SELECTOR_INPUT_SUBCATEGORY_FORMAT;
-                List<WebElement> cbs = driver.findElements(
-                        By.cssSelector(String.format(fmt, other.getCtgrNo())));
-
-                if (!cbs.isEmpty() && cbs.get(0).isSelected()) {
-                    js.executeScript("arguments[0].click();", cbs.get(0));
-                    util.safeSleep(SAFETY_SLEEP);
-                }
-            }
-        }
+                                         JavascriptExecutor js) {
+        List<SubCategory> all = List.of(SubCategory.values());
+        all.stream()
+                .filter(sc -> sc.getMiddleCategory() == middle && !sc.equals(target))
+                .forEach(other -> {
+                    String selector = String.format(
+                            ProductCrawlerConstants.SELECTOR_INPUT_SUBCATEGORY_FORMAT,
+                            other.getCtgrNo());
+                    driver.findElements(By.cssSelector(selector)).stream()
+                            .filter(WebElement::isSelected)
+                            .findFirst()
+                            .ifPresent(cb -> {
+                                util.scrollAndClick(cb);
+                                util.safeSleep(SAFETY_SLEEP);
+                            });
+                });
     }
 
-    private void selectTargetSubCategory(SubCategory sub, JavascriptExecutor js,
-                                         WebDriverWait wait) {
+    private void selectTargetSubCategory(SubCategory sub, JavascriptExecutor js) {
+        String labelSelector = String.format(
+                ProductCrawlerConstants.SELECTOR_LABEL_SUBCATEGORY_FORMAT,
+                sub.getCtgrNo());
         try {
-            String lblFmt = ProductCrawlerConstants.SELECTOR_LABEL_SUBCATEGORY_FORMAT;
-            WebElement lbl = wait.until(ExpectedConditions.elementToBeClickable(
-                    By.cssSelector(String.format(lblFmt, sub.getCtgrNo()))));
-            js.executeScript("arguments[0].scrollIntoView({block:'center'});", lbl);
-            util.safeSleep(SAFETY_SLEEP);
-            js.executeScript("arguments[0].click();", lbl);
+            WebElement lbl = driver.findElement(By.cssSelector(labelSelector));
+            util.scrollAndClick(lbl);
         } catch (Exception e) {
-            String inFmt = ProductCrawlerConstants.SELECTOR_INPUT_SUBCATEGORY_FORMAT;
-            WebElement inp = wait.until(ExpectedConditions.elementToBeClickable(
-                    By.cssSelector(String.format(inFmt, sub.getCtgrNo()))));
-            js.executeScript("arguments[0].scrollIntoView({block:'center'});", inp);
-            util.safeSleep(SAFETY_SLEEP);
-            js.executeScript("arguments[0].click();", inp);
+            String inputSelector = String.format(
+                    ProductCrawlerConstants.SELECTOR_INPUT_SUBCATEGORY_FORMAT,
+                    sub.getCtgrNo());
+            WebElement inp = driver.findElement(By.cssSelector(inputSelector));
+            util.scrollAndClick(inp);
         }
     }
 
-    private void waitForFilterApplication(SubCategory sub, WebDriverWait wait) {
-        try {
-            String fmt = ProductCrawlerConstants.SELECTOR_FILTER_TAG_FORMAT;
-            wait.until(ExpectedConditions.presenceOfElementLocated(
-                    By.cssSelector(String.format(fmt, sub.getCtgrNo()))));
-            wait.until(d -> !d.findElements(
-                            By.cssSelector(ProductCrawlerConstants.SELECTOR_CATEGORY_PRODUCT_LIST_ITEM))
-                    .isEmpty());
-            util.safeSleep(2000);
-
-        } catch (Exception e) {
-        }
-    }
-
-    private List<String> collectUniqueProductUrls(SubCategory sub) {
-        List<String> urls = new ArrayList<>();
-        Set<String> seen = new HashSet<>();
-
-        for (WebElement a : driver.findElements(
-                By.cssSelector(ProductCrawlerConstants.SELECTOR_CATEGORY_PRODUCT_LIST_LINK))) {
-
-            if (urls.size() >= MAX_PER_SUB) {
-                break;
-            }
-
-            String href = a.getAttribute("href");
-            String abs = util.convertToAbsoluteUrl(href);
-            String id = util.extractProductId(abs);
-
-            if (id != null && seen.add(id)) {
-                urls.add(abs);
-            }
-        }
-
-        return urls;
-    }
-
-    private boolean scrapeDetailPageSafely(String url, MainCategory main, MiddleCategory middle, SubCategory sub) {
+    private boolean scrapeDetailPageSafelyInNewTab(String url) {
+        String originalTab = util.openNewTabAndSwitch();
         try {
             driver.get(url);
-            new WebDriverWait(driver, Duration.ofSeconds(10))
-                    .until(ExpectedConditions.visibilityOfElementLocated(
-                            By.cssSelector(ProductCrawlerConstants.SELECTOR_PRICE_INFO)));
+            util.waitForPresence(ProductCrawlerConstants.SELECTOR_PRICE_INFO, 15);
+            util.safeSleep(1000);
+
             long price = util.extractPrice();
             String ship = util.safeText(By.cssSelector(".prd-delivery-info"));
             String brand = util.safeText(By.cssSelector(".prd-brand-info h3"));
             String detail = util.safeText(By.cssSelector(".prd-brand-info dl"));
             Tag tag = util.extractTag();
 
-            if (brand == null || detail == null) {
+            String productDetail = util.expandAndExtract(
+                    ProductCrawlerConstants.SELECTORS_PRODUCT_DETAIL,
+                    "#agreeList1"
+            );
+            String ingredients = util.expandAndExtract(
+                    ProductCrawlerConstants.SELECTORS_INGREDIENTS,
+                    "#agreeList2"
+            );
+
+            if ((productDetail == null && ingredients == null)
+                    || brand == null || detail == null) {
                 return false;
             }
 
@@ -199,24 +156,31 @@ public class CrawlingService {
                     .productName(detail)
                     .shippingInfo(ship != null ? ship : "배송 정보 없음")
                     .tag(tag)
-                    .mainCategory(main)
-                    .middleCategory(middle)
-                    .subCategory(sub)
+                    .mainCategory(null) // 필요시 매개변수로 전달
+                    .middleCategory(null)
+                    .subCategory(null)
+                    .productDetail(productDetail)
+                    .ingredients(ingredients)
+                    .oliveYoungUrl(url)
                     .build();
 
             Product saved = productRepository.save(p);
-            String imgUrl = util.extractImageUrl();
+            util.extractImageUrl().ifPresent(imgUrl ->
+                    productImageRepository.save(
+                            ProductImage.builder()
+                                    .product(saved)
+                                    .url(imgUrl)
+                                    .build()
+                    )
+            );
 
-            if (imgUrl != null) {
-                productImageRepository.save(
-                        ProductImage.builder()
-                                .product(saved)
-                                .url(imgUrl)
-                                .build());
-            }
             return true;
         } catch (Exception e) {
+            log.error("상세 페이지 크롤링 오류 (URL={}): {}", url, e.getMessage(), e);
             return false;
+        } finally {
+            util.closeCurrentTabAndSwitchBack(originalTab);
         }
     }
 }
+

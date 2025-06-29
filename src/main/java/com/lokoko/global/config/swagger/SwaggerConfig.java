@@ -44,8 +44,8 @@ public class SwaggerConfig {
 
     private Info apiInfo() {
         return new Info()
-                .title("LOKOKO")
-                .description("LOKOKO API 문서")
+                .title("LOCOCO")
+                .description("LOCOCO API 문서")
                 .version("1.1.0");
     }
 }
