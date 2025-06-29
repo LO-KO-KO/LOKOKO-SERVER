@@ -9,7 +9,7 @@ public class PermitUrlConfig {
         return new String[]{
                 "/swagger-ui/**",
                 "/v3/api-docs/**",
-                "/auth/**",
+                "api/auth/**",
         };
     }
 
@@ -22,7 +22,7 @@ public class PermitUrlConfig {
     public String[] getAdminUrl() {
         return new String[]{
                 "/api/admin/**",
-                "/products/crawl",
+                "api/products/crawl",
         };
     }
 
