@@ -53,7 +53,7 @@ public class ProductService {
 
         // product id 의 리스트를 매개변수로 하여 이와 관련 있는 이미지를 in 쿼리로 한번에 가져오는 메소드
         // N+1 문제 발생하지 않는다.
-        List<ProductImage> images = productImageRepository.findByProductIdin(productIds);
+        List<ProductImage> images = productImageRepository.findByProductIdIn(productIds);
 
         // productIdToImageUrl 에는, 하나의 제품에 대한 대표 이미지가 포함되어있다.
         // 즉, Long 은 제품의 ID 이고, String 은 해당 제품의 대표 이미지의 URL 이다.
