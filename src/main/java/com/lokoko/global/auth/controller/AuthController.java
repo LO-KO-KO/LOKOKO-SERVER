@@ -8,6 +8,8 @@ import com.lokoko.global.auth.line.dto.LineLoginResponse;
 import com.lokoko.global.auth.line.dto.LoginUrlResponse;
 import com.lokoko.global.auth.service.AuthService;
 import com.lokoko.global.common.response.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,12 +17,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "AUTH")
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
 
+    @Operation(summary = "라인 소셜 로그인, JWT 토큰 발급")
     @GetMapping("/line/login")
     public ApiResponse<LineLoginResponse> lineLogin(@RequestParam("code") String code) {
         JwtTokenDto tokens = authService.loginWithLine(code);
@@ -28,6 +32,7 @@ public class AuthController {
         return ApiResponse.success(HttpStatus.OK, LOGIN_SUCCESS.getMessage(), new LineLoginResponse(tokens));
     }
 
+    @Operation(summary = "라인 로그인 URL 생성 (클라에서 호출)")
     @GetMapping("/url")
     public ApiResponse<LoginUrlResponse> getLoginUrl() {
         String url = authService.generateLineLoginUrl();
