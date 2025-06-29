@@ -4,7 +4,6 @@ import static com.lokoko.domain.product.exception.ErrorMessage.PRODUCT_NOT_FOUND
 import static com.lokoko.domain.product.exception.ErrorMessage.SUBCATEGORY_NOT_FOUND;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toList;
 
 import com.lokoko.domain.image.entity.ProductImage;
@@ -113,13 +112,17 @@ public class ProductService {
         return images.stream()
                 .collect(groupingBy(
                         img -> img.getProduct().getId(),
-                        // groupingBy 에서는 같은 product id 에 대해 이미지를 그룹핑한다.
-                        mapping(ProductImage::getUrl, collectingAndThen(toList(),
-                                list -> list.get(0)))
-                        //mapping 에서는, 위에서 그룹핑 된 (product id, image) 쌍에서
-                        // 첫번째 이미지 URL 을 가져온다 (즉 대표 이미지를 가져오는 것).
+                        collectingAndThen(
+                                toList(), // ProductImage 객체들을 리스트로 수집
+                                imageList -> {
+                                    return imageList.stream()
+                                            .filter(ProductImage::isMain) // 제품의 대표이미지를 먼저 가져옴
+                                            .findFirst()
+                                            .orElse(imageList.get(0))// 대표이미지 설정 안되어 있다면 리스트의 첫 번째 이미지
+                                            .getUrl();
+                                }
+                        )
                 ));
-
     }
 
     private static void validateProductExistence(int size) {
