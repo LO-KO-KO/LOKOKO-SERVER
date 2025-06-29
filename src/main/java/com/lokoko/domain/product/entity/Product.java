@@ -12,6 +12,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -37,6 +38,9 @@ public class Product extends BaseEntity {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String productName;
 
+    @Column(columnDefinition = "TEXT")
+    private String productKoreanName;
+
     @Column(nullable = false)
     private String shippingInfo;
 
@@ -45,6 +49,11 @@ public class Product extends BaseEntity {
 
     @Column(columnDefinition = "TEXT")
     private String ingredients;
+
+    private String unit;
+
+    @Column(columnDefinition = "TEXT")
+    private String option;
 
     @Column(columnDefinition = "TEXT")
     private String youtubeUrl;
@@ -70,4 +79,8 @@ public class Product extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private SubCategory subCategory;
+
+    public void updateYoutubeUrls(List<String> urls) {
+        this.youtubeUrl = String.join(",", urls);
+    }
 }
