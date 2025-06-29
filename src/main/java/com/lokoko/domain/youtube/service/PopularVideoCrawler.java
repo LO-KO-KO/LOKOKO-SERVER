@@ -17,6 +17,10 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class PopularVideoCrawler {
+    private static final List<String> SEARCH_PARTS = List.of("id");
+    private static final List<String> DETAIL_PARTS = List.of("snippet", "statistics");
+    private static final String PUBLISHED_AFTER = "2024-01-01T00:00:00Z";
+    private static final long MAX_RESULTS = 10L;
     private final YouTube youtube;
     private final String apiKey;
 
@@ -36,13 +40,13 @@ public class PopularVideoCrawler {
     }
 
     private List<String> searchVideoIds(String topic) throws IOException {
-        YouTube.Search.List search = youtube.search().list(List.of("id"));
+        YouTube.Search.List search = youtube.search().list(SEARCH_PARTS);
         search.setKey(apiKey)
                 .setQ(topic)
                 .setType(List.of("video"))
                 .setOrder("viewCount")
-                .setPublishedAfter("2024-01-01T00:00:00Z")
-                .setMaxResults(10L);
+                .setPublishedAfter(PUBLISHED_AFTER)
+                .setMaxResults(MAX_RESULTS);
 
         return search.execute()
                 .getItems()
@@ -56,11 +60,9 @@ public class PopularVideoCrawler {
             return List.of();
         }
 
-        YouTube.Videos.List list = youtube.videos()
-                .list(List.of("snippet", "statistics"));
+        YouTube.Videos.List list = youtube.videos().list(DETAIL_PARTS);
 
-        list.setKey(apiKey)
-                .setId(ids);
+        list.setKey(apiKey).setId(ids);
 
         return list.execute()
                 .getItems()
