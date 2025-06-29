@@ -1,6 +1,5 @@
 package com.lokoko.domain.product.service;
 
-import static com.lokoko.domain.product.exception.ErrorMessage.PRODUCT_NOT_FOUND;
 import static com.lokoko.domain.product.exception.ErrorMessage.SUBCATEGORY_NOT_FOUND;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.groupingBy;
@@ -12,7 +11,6 @@ import com.lokoko.domain.product.dto.CategoryProductResponse;
 import com.lokoko.domain.product.dto.ProductResponse;
 import com.lokoko.domain.product.entity.Product;
 import com.lokoko.domain.product.entity.enums.SubCategory;
-import com.lokoko.domain.product.exception.ProductNotFoundException;
 import com.lokoko.domain.product.exception.SubCategoryNotFoundException;
 import com.lokoko.domain.product.repository.ProductRepository;
 import com.lokoko.domain.review.repository.ReviewRepository;
@@ -41,9 +39,6 @@ public class ProductService {
 
         // SubCategory 를 통해 productRepository 에서 product 리스트 검색
         List<Product> products = productRepository.findBySubCategory(subCategory);
-
-        // 카테고리 검색을 한 결과, 일치하는 product 가 없을 경우 예외 던지기
-        validateProductExistence(products.size());
 
         // 제품과 관련있는 이미지들을 한번에 in 쿼리로 받아오기 위해, product 의 Id 만 리스트로 가져온다.
         List<Long> productIds = getProductIds(products);
@@ -123,12 +118,6 @@ public class ProductService {
                                 }
                         )
                 ));
-    }
-
-    private static void validateProductExistence(int size) {
-        if (size == 0) { // 검색되는 제품이 없으면, 예외 던지기
-            throw new ProductNotFoundException(PRODUCT_NOT_FOUND.getMessage());
-        }
     }
 
 
