@@ -1,7 +1,7 @@
 package com.lokoko.domain.product.service;
 
-import static com.lokoko.global.common.exception.ErrorCode.PRODUCT_NOT_FOUND;
-import static com.lokoko.global.common.exception.ErrorCode.SUBCATEGORY_NOT_FOUND;
+import static com.lokoko.domain.product.exception.ErrorMessage.PRODUCT_NOT_FOUND;
+import static com.lokoko.domain.product.exception.ErrorMessage.SUBCATEGORY_NOT_FOUND;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
@@ -47,9 +47,7 @@ public class ProductService {
         validateProductExistence(products.size());
 
         // 제품과 관련있는 이미지들을 한번에 in 쿼리로 받아오기 위해, product 의 Id 만 리스트로 가져온다.
-        List<Long> productIds = products.stream()
-                .map(product -> product.getId())
-                .toList();
+        List<Long> productIds = getProductIds(products);
 
         // product id 의 리스트를 매개변수로 하여 이와 관련 있는 이미지를 in 쿼리로 한번에 가져오는 메소드
         // N+1 문제 발생하지 않는다.
@@ -57,15 +55,7 @@ public class ProductService {
 
         // productIdToImageUrl 에는, 하나의 제품에 대한 대표 이미지가 포함되어있다.
         // 즉, Long 은 제품의 ID 이고, String 은 해당 제품의 대표 이미지의 URL 이다.
-        Map<Long, String> productIdToImageUrl = images.stream()
-                .collect(groupingBy(
-                        img -> img.getProduct().getId(),
-                        // groupingBy 에서는 같은 product id 에 대해 이미지를 그룹핑한다.
-                        mapping(ProductImage::getUrl, collectingAndThen(toList(),
-                                list -> list.get(0)))
-                        //mapping 에서는, 위에서 그룹핑 된 (product id, image) 쌍에서
-                        // 첫번째 이미지 URL 을 가져온다 (즉 대표 이미지를 가져오는 것).
-                ));
+        Map<Long, String> productIdToImageUrl = createProductImageMap(images);
 
         // Review 테이블에서 product id 의 리스트를 in 쿼리에 넣어 관련 있는 리뷰를 조회하고,
         // 조회된 리뷰는 product id 를 기준으로 그룹핑 한다.
@@ -84,17 +74,8 @@ public class ProductService {
         sortProductByReviewCount(products, productIdToReviewCount);
 
         // 최종적으로 클라이언트에게 반환될 DTO를 만드는 과정
-        List<ProductResponse> productResponses = products.stream()
-                .map(product -> new ProductResponse(
-                                product.getId(),
-                                productIdToImageUrl.get(product.getId()),
-                                product.getProductName(),
-                                productIdToReviewCount.getOrDefault(product.getId(), 0L))
-                        // product 의 id 를 key 로 Map 의 value 를 검색할 때,
-                        // 해당 key 에 대응하는 value 가 없으면 0을 반환
-                        // 해당 key 에 대응하는 value 가 존재한다면 그 값을 반환한다.
-                )
-                .toList();
+        List<ProductResponse> productResponses = makeProductResponse(products, productIdToImageUrl,
+                productIdToReviewCount);
 
         // 최종 DTO 반환
         return new CategoryProductResponse(
@@ -106,8 +87,43 @@ public class ProductService {
 
     }
 
+    private static List<ProductResponse> makeProductResponse(List<Product> products,
+                                                             Map<Long, String> productIdToImageUrl,
+                                                             Map<Long, Long> productIdToReviewCount) {
+        return products.stream()
+                .map(product -> new ProductResponse(
+                                product.getId(), //제품 id
+                                productIdToImageUrl.get(product.getId()), // 제품의 대표이미지 id
+                                product.getProductName(), // 제품 명
+                                productIdToReviewCount.getOrDefault(product.getId(), 0L)) // 제품의 리뷰 수
+                        // product 의 id 를 key 로 Map 의 value 를 검색할 때,
+                        // 해당 key 에 대응하는 value 가 없으면 0을 반환
+                        // 해당 key 에 대응하는 value 가 존재한다면 그 값을 반환한다.
+                )
+                .toList();
+    }
+
+    private static List<Long> getProductIds(List<Product> products) {
+        return products.stream()
+                .map(product -> product.getId())
+                .toList();
+    }
+
+    private Map<Long, String> createProductImageMap(List<ProductImage> images) {
+        return images.stream()
+                .collect(groupingBy(
+                        img -> img.getProduct().getId(),
+                        // groupingBy 에서는 같은 product id 에 대해 이미지를 그룹핑한다.
+                        mapping(ProductImage::getUrl, collectingAndThen(toList(),
+                                list -> list.get(0)))
+                        //mapping 에서는, 위에서 그룹핑 된 (product id, image) 쌍에서
+                        // 첫번째 이미지 URL 을 가져온다 (즉 대표 이미지를 가져오는 것).
+                ));
+
+    }
+
     private static void validateProductExistence(int size) {
-        if (size == 0) {
+        if (size == 0) { // 검색되는 제품이 없으면, 예외 던지기
             throw new ProductNotFoundException(PRODUCT_NOT_FOUND.getMessage());
         }
     }
