@@ -48,6 +48,9 @@ public class YoutubeTrendService {
                 break;
             }
         }
+        for (int i = 0; i < top10Unique.size(); i++) {
+            top10Unique.get(i).updatePopularity(i + 1);
+        }
 
         saveService.replaceAll(top10Unique);
     }

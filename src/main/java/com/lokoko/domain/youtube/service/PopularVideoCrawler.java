@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class PopularVideoCrawler {
-
     private final YouTube youtube;
     private final String apiKey;
 
@@ -27,14 +26,12 @@ public class PopularVideoCrawler {
         for (String topic : topics) {
             try {
                 List<String> ids = searchVideoIds(topic);
-                log.info("Topic='{}' 검색된 영상 ID 수={}", topic, ids.size());
                 result.addAll(fetchVideoDetails(topic, ids));
             } catch (IOException e) {
                 log.error("유튜브 API 에러 ({}): {}", topic, e.getMessage(), e);
                 throw new YoutubeApiException();
             }
         }
-        log.info("크롤러 전체 결과 개수={}", result.size());
         return result;
     }
 

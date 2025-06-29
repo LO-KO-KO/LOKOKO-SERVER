@@ -52,4 +52,8 @@ public class YoutubeVideo extends BaseEntity {
         video.uploadedAt = uploadedAt;
         return video;
     }
+
+    public void updatePopularity(Integer popularity) {
+        this.popularity = popularity;
+    }
 }
