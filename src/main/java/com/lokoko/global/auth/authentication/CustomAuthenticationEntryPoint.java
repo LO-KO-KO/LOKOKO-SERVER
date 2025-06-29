@@ -25,7 +25,6 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,
                          AuthenticationException authException) throws IOException, ServletException {
-        JwtErrorMessage jwtError = (JwtErrorMessage) request.getAttribute(JWT_ERROR_ATTR);
         Object jwtErrorObj = request.getAttribute(JWT_ERROR_ATTR);
 
         String errorMessage;
