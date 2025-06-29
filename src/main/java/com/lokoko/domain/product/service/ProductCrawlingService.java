@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class CrawlingService {
+public class ProductCrawlingService {
     private static final int MAX_PER_SUB = 5;
     private static final int SAFETY_SLEEP = 300;
 
