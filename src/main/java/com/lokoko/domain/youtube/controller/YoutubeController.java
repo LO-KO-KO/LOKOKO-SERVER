@@ -4,6 +4,7 @@ import com.lokoko.domain.product.controller.enums.ResponseMessage;
 import com.lokoko.domain.product.dto.CrawlResponse;
 import com.lokoko.domain.youtube.service.YoutubeCrawlerService;
 import com.lokoko.global.common.response.ApiResponse;
+import io.swagger.v3.oas.annotations.Hidden;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class YoutubeController {
     private final YoutubeCrawlerService youtubeCrawlerService;
 
+    @Hidden
     @PostMapping("/{productId}/crawl")
     public ApiResponse<CrawlResponse> crawl(@PathVariable Long productId) {
         List<String> videoUrls = youtubeCrawlerService.crawlAndStoreReviews(productId);
