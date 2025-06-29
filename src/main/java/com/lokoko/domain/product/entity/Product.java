@@ -53,7 +53,7 @@ public class Product extends BaseEntity {
     private String unit;
 
     @Column(columnDefinition = "TEXT")
-    private String option;
+    private String productOption;
 
     @Column(columnDefinition = "TEXT")
     private String youtubeUrl;
