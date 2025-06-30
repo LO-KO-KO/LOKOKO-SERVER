@@ -3,6 +3,7 @@ package com.lokoko.domain.video.entity;
 import static jakarta.persistence.FetchType.LAZY;
 
 import com.lokoko.domain.review.entity.Review;
+import com.lokoko.global.common.entity.BaseEntity;
 import com.lokoko.global.common.entity.MediaFile;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
@@ -21,7 +22,7 @@ import lombok.experimental.SuperBuilder;
 @Entity
 @SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ReviewVideo {
+public class ReviewVideo extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
