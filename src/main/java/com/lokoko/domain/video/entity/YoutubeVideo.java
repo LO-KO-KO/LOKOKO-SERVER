@@ -38,7 +38,7 @@ public class YoutubeVideo extends BaseEntity {
     @Column(nullable = false)
     private Integer popularity;
 
-    @Column
+    @Column(nullable = false)
     private LocalDateTime uploadedAt;
 
     public static YoutubeVideo of(String topic, String title, String url, Integer popularity, Long viewCount,
