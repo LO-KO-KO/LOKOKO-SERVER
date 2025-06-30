@@ -6,6 +6,8 @@ import static com.lokoko.domain.product.controller.enums.ResponseMessage.CRAWL_S
 
 import com.lokoko.domain.product.dto.CategoryProductResponse;
 import com.lokoko.domain.product.dto.CrawlRequest;
+import com.lokoko.domain.product.dto.CrawlResponse;
+import com.lokoko.domain.product.service.ProductService;
 import com.lokoko.domain.product.service.ProductCrawlingService;
 import com.lokoko.domain.product.dto.CrawlResponse;
 import com.lokoko.domain.product.service.CrawlingService;
@@ -25,6 +27,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
 public class ProductController {
+    
+    private final ProductService productService;
     private final ProductCrawlingService productCrawlingService;
     private final ProductService productService;
 
@@ -34,6 +38,7 @@ public class ProductController {
         productCrawlingService.scrapeByCategory(request.mainCategory(), request.middleCategory());
 
         return ApiResponse.success(HttpStatus.OK, ResponseMessage.CRAWL_SUCCESS.getMessage(), null);
+
     }
 
 
