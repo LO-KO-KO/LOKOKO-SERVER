@@ -1,6 +1,5 @@
 package com.lokoko.domain.product.service;
 
-import static com.lokoko.domain.product.exception.ErrorMessage.SUBCATEGORY_NOT_FOUND;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
@@ -30,6 +29,28 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final ProductImageRepository productImageRepository;
     private final ReviewRepository reviewRepository;
+
+    private static List<ProductResponse> makeProductResponse(List<Product> products,
+                                                             Map<Long, String> productIdToImageUrl,
+                                                             Map<Long, Long> productIdToReviewCount) {
+        return products.stream()
+                .map(product -> new ProductResponse(
+                                product.getId(), //제품 id
+                                productIdToImageUrl.get(product.getId()), // 제품의 대표이미지 id
+                                product.getProductName(), // 제품 명
+                                productIdToReviewCount.getOrDefault(product.getId(), 0L)) // 제품의 리뷰 수
+                        // product 의 id 를 key 로 Map 의 value 를 검색할 때,
+                        // 해당 key 에 대응하는 value 가 없으면 0을 반환
+                        // 해당 key 에 대응하는 value 가 존재한다면 그 값을 반환한다.
+                )
+                .toList();
+    }
+
+    private static List<Long> getProductIds(List<Product> products) {
+        return products.stream()
+                .map(product -> product.getId())
+                .toList();
+    }
 
     // 카테고리 id 로 제품 리스트 조회
     public CategoryProductResponse searchProductsByCategory(String subCategoryId) {
@@ -81,28 +102,6 @@ public class ProductService {
 
     }
 
-    private static List<ProductResponse> makeProductResponse(List<Product> products,
-                                                             Map<Long, String> productIdToImageUrl,
-                                                             Map<Long, Long> productIdToReviewCount) {
-        return products.stream()
-                .map(product -> new ProductResponse(
-                                product.getId(), //제품 id
-                                productIdToImageUrl.get(product.getId()), // 제품의 대표이미지 id
-                                product.getProductName(), // 제품 명
-                                productIdToReviewCount.getOrDefault(product.getId(), 0L)) // 제품의 리뷰 수
-                        // product 의 id 를 key 로 Map 의 value 를 검색할 때,
-                        // 해당 key 에 대응하는 value 가 없으면 0을 반환
-                        // 해당 key 에 대응하는 value 가 존재한다면 그 값을 반환한다.
-                )
-                .toList();
-    }
-
-    private static List<Long> getProductIds(List<Product> products) {
-        return products.stream()
-                .map(product -> product.getId())
-                .toList();
-    }
-
     private Map<Long, String> createProductImageMap(List<ProductImage> images) {
         return images.stream()
                 .collect(groupingBy(
@@ -120,15 +119,13 @@ public class ProductService {
                 ));
     }
 
-
     // 클라이언트에서 카테고리 number 를 전달하므로, 이 number 에 해당하는 카테고리 이름을 검색해야함.
     private SubCategory getSubCategory(String subCategoryId) {
         return Arrays.stream(SubCategory.values())
                 .filter(sub -> sub.getCtgrNo().equals(subCategoryId))
                 .findFirst()
-                .orElseThrow(() -> new SubCategoryNotFoundException(SUBCATEGORY_NOT_FOUND.getMessage()));
+                .orElseThrow(SubCategoryNotFoundException::new);
     }
-
 
     // 제품을 내림차순(리뷰 수 기준)으로 정렬하는 메소드
     private void sortProductByReviewCount(List<Product> products, Map<Long, Long> reviewCountMap) {
@@ -139,6 +136,4 @@ public class ProductService {
         ));
 
     }
-
-
 }

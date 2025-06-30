@@ -2,15 +2,11 @@ package com.lokoko.domain.product.controller;
 
 
 import static com.lokoko.domain.product.controller.enums.ResponseMessage.CATEGORY_SEARCH_SUCCESS;
-import static com.lokoko.domain.product.controller.enums.ResponseMessage.CRAWL_SUCCESS;
 
+import com.lokoko.domain.product.controller.enums.ResponseMessage;
 import com.lokoko.domain.product.dto.CategoryProductResponse;
 import com.lokoko.domain.product.dto.CrawlRequest;
-import com.lokoko.domain.product.dto.CrawlResponse;
-import com.lokoko.domain.product.service.ProductService;
 import com.lokoko.domain.product.service.ProductCrawlingService;
-import com.lokoko.domain.product.dto.CrawlResponse;
-import com.lokoko.domain.product.service.CrawlingService;
 import com.lokoko.domain.product.service.ProductService;
 import com.lokoko.global.common.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -27,10 +23,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
 public class ProductController {
-    
+
     private final ProductService productService;
     private final ProductCrawlingService productCrawlingService;
-    private final ProductService productService;
 
     @Hidden
     @PostMapping("/crawl")
@@ -40,7 +35,6 @@ public class ProductController {
         return ApiResponse.success(HttpStatus.OK, ResponseMessage.CRAWL_SUCCESS.getMessage(), null);
 
     }
-
 
     // 카테고리별 제품 검색
     // 매개변수인 subCategoryId 는 서브 카테고리의 "ctgrNo" 입니다.
@@ -55,6 +49,4 @@ public class ProductController {
                 categoryProductResponse);
 
     }
-
-
 }

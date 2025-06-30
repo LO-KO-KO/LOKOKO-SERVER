@@ -7,7 +7,7 @@ import org.springframework.http.HttpStatus;
 // 해당하는 서브 카테고리가 없는 경우 던지는 예외입니다.
 public class SubCategoryNotFoundException extends BaseException {
 
-    public SubCategoryNotFoundException(String message) {
-        super(HttpStatus.NOT_FOUND, message);
+    public SubCategoryNotFoundException() {
+        super(HttpStatus.NOT_FOUND, ErrorMessage.SUBCATEGORY_NOT_FOUND.getMessage());
     }
 }
