@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 public class JwtProvider {
     public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String REFRESH_TOKEN_HEADER = "RefreshToken";
-    private static final String ID_CLAIM = "id";
+    public static final String ID_CLAIM = "id";
     private static final String ROLE_CLAIM = "role";
     private static final String ROLE_PREFIX = "ROLE_";
 
