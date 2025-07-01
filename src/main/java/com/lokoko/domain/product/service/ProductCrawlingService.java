@@ -26,9 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class ProductCrawlingService {
+    public static final int SAFETY_SLEEP = 300;
     private static final int MAX_PER_SUB = 5;
-    private static final int SAFETY_SLEEP = 300;
-
     private final WebDriver driver;
     private final ProductRepository productRepository;
     private final ProductImageRepository productImageRepository;
@@ -58,7 +57,7 @@ public class ProductCrawlingService {
             util.waitForPresence(ProductCrawlerConstants.SELECTORS_SUBCATEGORY_AREA[0], 15);
             util.waitForNonEmpty(ProductCrawlerConstants.SELECTORS_SUBCATEGORY_AREA[1], 15);
 
-            clearOtherSubCategories(middle, sub, js);
+            util.clearOtherSubCategories(middle, sub, js);
             selectTargetSubCategory(sub, js);
 
             util.waitForPresence(
@@ -85,41 +84,6 @@ public class ProductCrawlingService {
 
         } catch (Exception e) {
             log.error("크롤링 실패: {} -> {} -> {}", main, middle, sub, e);
-        }
-    }
-
-    private void clearOtherSubCategories(MiddleCategory middle, SubCategory target,
-                                         JavascriptExecutor js) {
-        List<SubCategory> all = List.of(SubCategory.values());
-        all.stream()
-                .filter(sc -> sc.getMiddleCategory() == middle && !sc.equals(target))
-                .forEach(other -> {
-                    String selector = String.format(
-                            ProductCrawlerConstants.SELECTOR_INPUT_SUBCATEGORY_FORMAT,
-                            other.getCtgrNo());
-                    driver.findElements(By.cssSelector(selector)).stream()
-                            .filter(WebElement::isSelected)
-                            .findFirst()
-                            .ifPresent(cb -> {
-                                util.scrollAndClick(cb);
-                                util.safeSleep(SAFETY_SLEEP);
-                            });
-                });
-    }
-
-    private void selectTargetSubCategory(SubCategory sub, JavascriptExecutor js) {
-        String labelSelector = String.format(
-                ProductCrawlerConstants.SELECTOR_LABEL_SUBCATEGORY_FORMAT,
-                sub.getCtgrNo());
-        try {
-            WebElement lbl = driver.findElement(By.cssSelector(labelSelector));
-            util.scrollAndClick(lbl);
-        } catch (Exception e) {
-            String inputSelector = String.format(
-                    ProductCrawlerConstants.SELECTOR_INPUT_SUBCATEGORY_FORMAT,
-                    sub.getCtgrNo());
-            WebElement inp = driver.findElement(By.cssSelector(inputSelector));
-            util.scrollAndClick(inp);
         }
     }
 
@@ -156,7 +120,7 @@ public class ProductCrawlingService {
                     .productName(detail)
                     .shippingInfo(ship != null ? ship : "배송 정보 없음")
                     .tag(tag)
-                    .mainCategory(null) // 필요시 매개변수로 전달
+                    .mainCategory(null)
                     .middleCategory(null)
                     .subCategory(null)
                     .productDetail(productDetail)
@@ -180,6 +144,22 @@ public class ProductCrawlingService {
             return false;
         } finally {
             util.closeCurrentTabAndSwitchBack(originalTab);
+        }
+    }
+
+    public void selectTargetSubCategory(SubCategory sub, JavascriptExecutor js) {
+        String labelSelector = String.format(
+                ProductCrawlerConstants.SELECTOR_LABEL_SUBCATEGORY_FORMAT,
+                sub.getCtgrNo());
+        try {
+            WebElement lbl = driver.findElement(By.cssSelector(labelSelector));
+            util.scrollAndClick(lbl);
+        } catch (Exception e) {
+            String inputSelector = String.format(
+                    ProductCrawlerConstants.SELECTOR_INPUT_SUBCATEGORY_FORMAT,
+                    sub.getCtgrNo());
+            WebElement inp = driver.findElement(By.cssSelector(inputSelector));
+            util.scrollAndClick(inp);
         }
     }
 }

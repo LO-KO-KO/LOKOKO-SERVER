@@ -1,6 +1,8 @@
 package com.lokoko.global.utils;
 
 
+import com.lokoko.domain.product.entity.enums.MiddleCategory;
+import com.lokoko.domain.product.entity.enums.SubCategory;
 import com.lokoko.domain.product.entity.enums.Tag;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -24,6 +26,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class ProductCrawlerUtil {
+    public static final int SAFETY_SLEEP = 300;
     private final WebDriver driver;
 
     public void waitForPresence(String cssSelector, long timeoutSec) {
@@ -31,9 +34,19 @@ public class ProductCrawlerUtil {
                 .until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(cssSelector)));
     }
 
+    public void waitForPresence(By locator, long timeoutSec) {
+        new WebDriverWait(driver, Duration.ofSeconds(timeoutSec))
+                .until(ExpectedConditions.presenceOfElementLocated(locator));
+    }
+
     public void waitForNonEmpty(String cssSelector, long timeoutSec) {
         new WebDriverWait(driver, Duration.ofSeconds(timeoutSec))
                 .until(d -> !d.findElements(By.cssSelector(cssSelector)).isEmpty());
+    }
+
+    public WebElement waitForElementVisible(By locator, long timeoutSec) {
+        return new WebDriverWait(driver, Duration.ofSeconds(timeoutSec))
+                .until(ExpectedConditions.visibilityOfElementLocated(locator));
     }
 
     public void scrollAndClick(WebElement element) {
@@ -224,4 +237,40 @@ public class ProductCrawlerUtil {
             log.error("{}{}", ProductCrawlerConstants.ERROR_MSG_SLEEP_INTERRUPTED, e.getMessage(), e);
         }
     }
+
+    public void selectTargetSubCategory(SubCategory sub, JavascriptExecutor js) {
+        String labelSelector = String.format(
+                ProductCrawlerConstants.SELECTOR_LABEL_SUBCATEGORY_FORMAT,
+                sub.getCtgrNo());
+        try {
+            WebElement lbl = driver.findElement(By.cssSelector(labelSelector));
+            scrollAndClick(lbl);
+        } catch (Exception e) {
+            String inputSelector = String.format(
+                    ProductCrawlerConstants.SELECTOR_INPUT_SUBCATEGORY_FORMAT,
+                    sub.getCtgrNo());
+            WebElement inp = driver.findElement(By.cssSelector(inputSelector));
+            scrollAndClick(inp);
+        }
+    }
+
+    public void clearOtherSubCategories(MiddleCategory middle, SubCategory target,
+                                        JavascriptExecutor js) {
+        List<SubCategory> all = List.of(SubCategory.values());
+        all.stream()
+                .filter(sc -> sc.getMiddleCategory() == middle && !sc.equals(target))
+                .forEach(other -> {
+                    String selector = String.format(
+                            ProductCrawlerConstants.SELECTOR_INPUT_SUBCATEGORY_FORMAT,
+                            other.getCtgrNo());
+                    driver.findElements(By.cssSelector(selector)).stream()
+                            .filter(WebElement::isSelected)
+                            .findFirst()
+                            .ifPresent(cb -> {
+                                scrollAndClick(cb);
+                                safeSleep(SAFETY_SLEEP);
+                            });
+                });
+    }
+
 }
