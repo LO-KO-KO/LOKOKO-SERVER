@@ -3,11 +3,13 @@ package com.lokoko.global.auth.controller;
 import static com.lokoko.global.auth.controller.enums.ResponseMessage.LOGIN_SUCCESS;
 import static com.lokoko.global.auth.controller.enums.ResponseMessage.REFRESH_TOKEN_REISSUE;
 import static com.lokoko.global.auth.controller.enums.ResponseMessage.URL_GET_SUCCESS;
-import static com.lokoko.global.auth.jwt.utils.JwtProvider.AUTHORIZATION_HEADER;
+import static com.lokoko.global.auth.jwt.utils.JwtProvider.ACCESS_TOKEN_HEADER;
 import static com.lokoko.global.auth.jwt.utils.JwtProvider.REFRESH_TOKEN_HEADER;
 
 import com.lokoko.global.auth.jwt.dto.JwtTokenDto;
+import com.lokoko.global.auth.jwt.dto.LoginDto;
 import com.lokoko.global.auth.jwt.service.JwtService;
+import com.lokoko.global.auth.jwt.utils.CookieUtil;
 import com.lokoko.global.auth.line.dto.LineLoginResponse;
 import com.lokoko.global.auth.line.dto.LoginUrlResponse;
 import com.lokoko.global.auth.service.AuthService;
@@ -32,12 +34,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
     private final AuthService authService;
     private final JwtService jwtService;
+    private final CookieUtil cookieUtil;
 
     @Operation(summary = "라인 소셜 로그인, JWT 토큰 발급")
     @GetMapping("/line/login")
-    public ApiResponse<LineLoginResponse> lineLogin(@RequestParam("code") String code) {
-        JwtTokenDto tokens = authService.loginWithLine(code);
-
+    public ApiResponse<LineLoginResponse> lineLogin(@RequestParam("code") String code, HttpServletResponse response) {
+        LoginDto tokens = authService.loginWithLine(code);
+        cookieUtil.setCookie(ACCESS_TOKEN_HEADER, tokens.accessToken(), response);
         return ApiResponse.success(HttpStatus.OK, LOGIN_SUCCESS.getMessage(), new LineLoginResponse(tokens));
     }
 
@@ -54,13 +57,9 @@ public class AuthController {
     public ApiResponse<Void> reissueRefreshToken(@RequestHeader(REFRESH_TOKEN_HEADER) String refreshToken,
                                                  HttpServletResponse response) {
         JwtTokenDto jwtTokenDto = jwtService.reissueJwtToken(refreshToken);
-        responseToken(jwtTokenDto, response);
+        cookieUtil.setCookie(ACCESS_TOKEN_HEADER, jwtTokenDto.accessToken(), response);
+        response.setHeader(REFRESH_TOKEN_HEADER, jwtTokenDto.refreshToken());
 
         return ApiResponse.success(HttpStatus.OK, REFRESH_TOKEN_REISSUE.getMessage());
-    }
-
-    private void responseToken(JwtTokenDto jwtTokenDto, HttpServletResponse response) {
-        response.setHeader(AUTHORIZATION_HEADER, jwtTokenDto.accessToken());
-        response.setHeader(REFRESH_TOKEN_HEADER, jwtTokenDto.refreshToken());
     }
 }
