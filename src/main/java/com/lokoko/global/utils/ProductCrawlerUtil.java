@@ -26,7 +26,6 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class ProductCrawlerUtil {
-    public static final int SAFETY_SLEEP = 300;
     private final WebDriver driver;
 
     public void waitForPresence(String cssSelector, long timeoutSec) {
@@ -268,7 +267,7 @@ public class ProductCrawlerUtil {
                             .findFirst()
                             .ifPresent(cb -> {
                                 scrollAndClick(cb);
-                                safeSleep(SAFETY_SLEEP);
+                                safeSleep(ProductCrawlerConstants.SAFETY_SLEEP_MS);
                             });
                 });
     }

@@ -26,7 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class ProductCrawlingService {
-    public static final int SAFETY_SLEEP = 300;
     private static final int MAX_PER_SUB = 5;
     private final WebDriver driver;
     private final ProductRepository productRepository;
@@ -76,7 +75,7 @@ public class ProductCrawlingService {
                 if (savedCount >= MAX_PER_SUB) {
                     break;
                 }
-                if (scrapeDetailPageSafelyInNewTab(detailUrl)) {
+                if (scrapeDetailPageSafelyInNewTab(detailUrl, main, middle, sub)) {
                     savedCount++;
                 }
                 util.safeSleep(ProductCrawlerConstants.SHORT_WAIT_SEC);
@@ -87,7 +86,8 @@ public class ProductCrawlingService {
         }
     }
 
-    private boolean scrapeDetailPageSafelyInNewTab(String url) {
+    private boolean scrapeDetailPageSafelyInNewTab(String url, MainCategory main, MiddleCategory middle,
+                                                   SubCategory sub) {
         String originalTab = util.openNewTabAndSwitch();
         try {
             driver.get(url);
@@ -120,9 +120,9 @@ public class ProductCrawlingService {
                     .productName(detail)
                     .shippingInfo(ship != null ? ship : "배송 정보 없음")
                     .tag(tag)
-                    .mainCategory(null)
-                    .middleCategory(null)
-                    .subCategory(null)
+                    .mainCategory(main)
+                    .middleCategory(middle)
+                    .subCategory(sub)
                     .productDetail(productDetail)
                     .ingredients(ingredients)
                     .oliveYoungUrl(url)
