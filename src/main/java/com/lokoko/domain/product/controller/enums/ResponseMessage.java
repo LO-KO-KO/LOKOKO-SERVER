@@ -6,7 +6,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum ResponseMessage {
-    CRAWL_SUCCESS("상품 크롤링에 성공했습니다.");
+    PRODUCT_CRAWL_SUCCESS("상품 크롤링에 성공했습니다.");
 
     private final String message;
 }
