@@ -20,9 +20,9 @@ public class CookieUtil {
         ResponseCookie cookie = ResponseCookie.from(name, value)
                 .maxAge(cookieMaxAge)
                 .path(cookiePathOption)
-                .secure(secureOption) //https 적용 시 true
+                .secure(secureOption)
                 .httpOnly(true)
-                .sameSite("None")
+                .sameSite("Lax")
                 .build();
 
         response.setHeader("Set-Cookie", cookie.toString());

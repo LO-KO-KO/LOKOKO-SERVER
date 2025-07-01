@@ -16,15 +16,18 @@ import com.lokoko.global.auth.entity.enums.OauthLoginStatus;
 import com.lokoko.global.auth.exception.ErrorMessage;
 import com.lokoko.global.auth.exception.OauthException;
 import com.lokoko.global.auth.exception.StateValidationException;
-import com.lokoko.global.auth.jwt.dto.JwtTokenDto;
+import com.lokoko.global.auth.jwt.dto.LoginDto;
 import com.lokoko.global.auth.jwt.utils.JwtProvider;
 import com.lokoko.global.auth.line.LineOAuthClient;
 import com.lokoko.global.auth.line.LineProperties;
 import com.lokoko.global.auth.line.dto.LineProfileResponse;
 import com.lokoko.global.auth.line.dto.LineTokenResponse;
+import com.lokoko.global.utils.RedisUtil;
 import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,9 +40,13 @@ public class AuthService {
     private final UserRepository userRepository;
     private final JwtProvider jwtProvider;
     private final LineProperties props;
+    private final RedisUtil redisUtil;
+
+    @Value("${lokoko.jwt.refresh.expiration}")
+    private long refreshTokenExpiration;
 
     @Transactional
-    public JwtTokenDto loginWithLine(String code) {
+    public LoginDto loginWithLine(String code) {
         try {
             LineTokenResponse tokenResp = oAuthClient.issueToken(code);
             DecodedJWT idToken = JWT.decode(tokenResp.id_token());
@@ -65,9 +72,12 @@ public class AuthService {
             }
 
             String accessToken = jwtProvider.generateAccessToken(user.getId(), user.getRole().name());
-            String refreshToken = jwtProvider.generateRefreshToken(user.getId(), user.getRole().name());
+            String tokenId = UUID.randomUUID().toString();
+            String refreshToken = jwtProvider.generateRefreshToken(user.getId(), user.getRole().name(), tokenId);
+            String redisKey = "refreshToken:" + user.getId() + ":" + tokenId;
+            redisUtil.setRefreshToken(redisKey, refreshToken, refreshTokenExpiration);
 
-            return JwtTokenDto.of(accessToken, refreshToken, loginStatus);
+            return LoginDto.of(accessToken, refreshToken, loginStatus);
         } catch (StateValidationException ex) {
             log.warn("State 검증 실패: {}", ex.getMessage());
             throw ex;
