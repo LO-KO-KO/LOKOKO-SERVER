@@ -1,5 +1,6 @@
 package com.lokoko.global.auth.service;
 
+import static com.lokoko.global.auth.jwt.utils.JwtProvider.EMAIL_CLAIM;
 import static com.lokoko.global.utils.LineConstants.AUTHORIZE_PATH;
 import static com.lokoko.global.utils.LineConstants.PARAM_CLIENT_ID;
 import static com.lokoko.global.utils.LineConstants.PARAM_REDIRECT_URI;
@@ -7,6 +8,8 @@ import static com.lokoko.global.utils.LineConstants.PARAM_RESPONSE_TYPE;
 import static com.lokoko.global.utils.LineConstants.PARAM_SCOPE;
 import static com.lokoko.global.utils.LineConstants.PARAM_STATE;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.lokoko.domain.user.entity.User;
 import com.lokoko.domain.user.repository.UserRepository;
 import com.lokoko.global.auth.entity.enums.OauthLoginStatus;
@@ -39,6 +42,8 @@ public class AuthService {
     public JwtTokenDto loginWithLine(String code) {
         try {
             LineTokenResponse tokenResp = oAuthClient.issueToken(code);
+            DecodedJWT idToken = JWT.decode(tokenResp.id_token());
+            String email = idToken.getClaim(EMAIL_CLAIM).asString();
 
             LineProfileResponse profile = oAuthClient.fetchProfile(tokenResp.access_token());
             String lineUserId = profile.userId();
@@ -50,19 +55,19 @@ public class AuthService {
             if (userOpt.isPresent()) {
                 user = userOpt.get();
                 user.updateLastLoginAt();
+                user.updateEmail(email);
                 userRepository.save(user);
                 loginStatus = OauthLoginStatus.LOGIN;
             } else {
-                user = User.createLineUser(lineUserId);
+                user = User.createLineUser(lineUserId, email);
                 user = userRepository.save(user);
                 loginStatus = OauthLoginStatus.REGISTER;
             }
 
             String accessToken = jwtProvider.generateAccessToken(user.getId(), user.getRole().name());
-            String refreshToken = jwtProvider.generateRefreshToken(user.getId());
+            String refreshToken = jwtProvider.generateRefreshToken(user.getId(), user.getRole().name());
 
             return JwtTokenDto.of(accessToken, refreshToken, loginStatus);
-
         } catch (StateValidationException ex) {
             log.warn("State 검증 실패: {}", ex.getMessage());
             throw ex;
