@@ -11,6 +11,11 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
     hibernate:
       ddl-auto: update
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
 
 lokoko:
   jwt:
@@ -18,6 +23,9 @@ lokoko:
     access:
       expiration: ${ACCESS_EXP}
       header: ${ACCESS_HEAD}
+    cookieMaxAge: ${COOKIE_MAX_AGE}
+    secureOption: ${SECURE_OPTION}
+    cookiePathOption: ${COOKIE_PATH_OPTION}
     refresh:
       expiration: ${REFRESH_EXP}
       header: ${REFRESH_HEAD}
