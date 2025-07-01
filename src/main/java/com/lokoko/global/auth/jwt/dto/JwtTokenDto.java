@@ -16,4 +16,8 @@ public record JwtTokenDto(
     ) {
         return new JwtTokenDto(accessToken, refreshToken, loginStatus);
     }
+
+    public static JwtTokenDto of(String accessToken, String refreshToken) {
+        return new JwtTokenDto(accessToken, refreshToken, OauthLoginStatus.LOGIN);
+    }
 }
