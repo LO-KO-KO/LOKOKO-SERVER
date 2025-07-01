@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class JwtProvider {
     public static final String AUTHORIZATION_HEADER = "Authorization";
+    public static final String ACCESS_TOKEN_HEADER = "AccessToken";
     public static final String REFRESH_TOKEN_HEADER = "RefreshToken";
     public static final String ID_CLAIM = "id";
     public static final String EMAIL_CLAIM = "email";
@@ -44,8 +45,9 @@ public class JwtProvider {
                 .compact();
     }
 
-    public String generateRefreshToken(Long userId, String role) {
+    public String generateRefreshToken(Long userId, String role, String tokenId) {
         return Jwts.builder()
+                .setId(tokenId)
                 .setSubject(userId.toString())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis()
