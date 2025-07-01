@@ -2,10 +2,14 @@ package com.lokoko.domain.review.entity;
 
 import static jakarta.persistence.FetchType.LAZY;
 
+import com.lokoko.domain.product.entity.Product;
+import com.lokoko.domain.review.entity.enums.Rating;
 import com.lokoko.domain.user.entity.User;
 import com.lokoko.global.common.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -31,16 +35,19 @@ public class Review extends BaseEntity {
     @JoinColumn(name = "user_id")
     private User author; // 리뷰 작성자 foreign key 매핑
 
-    // Product 엔티티가 만들어지고 난 후, 주석 해제 해야합니다.
-    // @ManyToOne
-    // @JoinColumn(name = "product_id")
-    // private Product product;
+    @ManyToOne
+    @JoinColumn(name = "product_id")
+    private Product product;
 
     private String positiveContent; // 긍정 리뷰 내용
 
     private String negativeContent; // 부정 리뷰 내용
 
     private int likeCount; // 좋아요 수
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 5)
+    private Rating rating;
 
     public static Review createReview(User user, String positive, String negative) {
         return Review.builder()
