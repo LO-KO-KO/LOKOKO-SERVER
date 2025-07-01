@@ -1,7 +1,7 @@
 package com.lokoko.domain.youtube.service;
 
 import com.lokoko.domain.product.entity.Product;
-import com.lokoko.domain.product.exception.ProductException;
+import com.lokoko.domain.product.exception.ProductNotFoundException;
 import com.lokoko.domain.product.repository.ProductRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -13,13 +13,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class YoutubeCrawlerService {
+public class YoutubeReviewCrawler {
     private final YoutubeApiService youtubeApiService;
     private final ProductRepository productRepository;
 
     public List<String> crawlAndStoreReviews(Long productId) {
         Product product = productRepository.findById(productId)
-                .orElseThrow(ProductException::new);
+                .orElseThrow(ProductNotFoundException::new);
 
         List<String> videoUrls = youtubeApiService.searchReviewVideos(
                 product.getProductKoreanName()
