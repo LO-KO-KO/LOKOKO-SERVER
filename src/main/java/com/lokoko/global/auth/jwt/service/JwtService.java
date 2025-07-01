@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class JwtService {
+    private static final String REFRESH_TOKEN_KEY_PREFIX = "refreshToken:";
+    private static final String KEY_DELIMITER = ":";
     private final JwtProvider jwtProvider;
     private final JwtExtractor jwtExtractor;
     private final RedisUtil redisUtil;
@@ -36,14 +38,11 @@ public class JwtService {
     }
 
     public JwtTokenDto reissueJwtToken(String refreshToken) {
-        if (jwtExtractor.isExpired(refreshToken)) {
-            throw new TokenExpiredException();
-        }
-
         Long userId = jwtExtractor.getId(refreshToken);
         String tokenId = jwtExtractor.getTokenId(refreshToken);
-        String redisKey = "refreshToken:" + userId + ":" + tokenId;
+        String redisKey = REFRESH_TOKEN_KEY_PREFIX + userId + KEY_DELIMITER + tokenId;
         String stored = redisUtil.getRefreshToken(redisKey);
+
         if (!MessageDigest.isEqual(
                 stored.getBytes(StandardCharsets.UTF_8),
                 refreshToken.getBytes(StandardCharsets.UTF_8)
@@ -51,9 +50,14 @@ public class JwtService {
             throw new TokenInvalidException();
         }
 
-        redisUtil.deleteRefreshToken(redisKey);
+        if (jwtExtractor.isExpired(refreshToken)) {
+            throw new TokenExpiredException();
+        }
 
         String role = jwtExtractor.getRole(refreshToken);
-        return generateJwtToken(GenerateTokenDto.of(userId, role));
+        JwtTokenDto newTokens = generateJwtToken(GenerateTokenDto.of(userId, role));
+
+        redisUtil.deleteRefreshToken(redisKey);
+        return newTokens;
     }
 }
