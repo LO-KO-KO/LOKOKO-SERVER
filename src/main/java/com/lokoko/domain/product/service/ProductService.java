@@ -10,6 +10,7 @@ import com.lokoko.domain.product.dto.CategoryProductResponse;
 import com.lokoko.domain.product.dto.ProductResponse;
 import com.lokoko.domain.product.entity.Product;
 import com.lokoko.domain.product.entity.enums.SubCategory;
+import com.lokoko.domain.product.exception.ProductNotFoundException;
 import com.lokoko.domain.product.exception.SubCategoryNotFoundException;
 import com.lokoko.domain.product.repository.ProductRepository;
 import com.lokoko.domain.review.repository.ReviewRepository;
@@ -48,7 +49,12 @@ public class ProductService {
 
     private static List<Long> getProductIds(List<Product> products) {
         return products.stream()
-                .map(product -> product.getId())
+                .map(product -> {
+                    if (product == null || product.getId() == null) {
+                        throw new ProductNotFoundException();
+                    }
+                    return product.getId();
+                })
                 .toList();
     }
 
