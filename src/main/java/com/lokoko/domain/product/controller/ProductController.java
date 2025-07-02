@@ -11,6 +11,8 @@ import com.lokoko.domain.product.service.ProductCrawlingService;
 import com.lokoko.domain.product.service.ProductService;
 import com.lokoko.global.common.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "PRODUCT")
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
@@ -38,6 +41,7 @@ public class ProductController {
 
     }
 
+    @Operation(summary = "카테고리 별 상품 검색")
     @GetMapping("/categories/search")
     public ApiResponse<CategoryProductResponse> searchProductsByCategory(@RequestParam String middleCategoryId,
                                                                          @RequestParam(required = false) String subCategoryId) {
