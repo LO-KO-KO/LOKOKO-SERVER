@@ -22,6 +22,7 @@ import com.lokoko.global.auth.line.LineOAuthClient;
 import com.lokoko.global.auth.line.LineProperties;
 import com.lokoko.global.auth.line.dto.LineProfileResponse;
 import com.lokoko.global.auth.line.dto.LineTokenResponse;
+import com.lokoko.global.auth.line.dto.LineUserInfoResponse;
 import com.lokoko.global.utils.RedisUtil;
 import java.util.Optional;
 import java.util.UUID;
@@ -46,14 +47,19 @@ public class AuthService {
     private long refreshTokenExpiration;
 
     @Transactional
-    public LoginDto loginWithLine(String code) {
+    public LoginDto loginWithLine(String code, String state) {
         try {
+            stateService.verify(state);
+
             LineTokenResponse tokenResp = oAuthClient.issueToken(code);
             DecodedJWT idToken = JWT.decode(tokenResp.id_token());
             String email = idToken.getClaim(EMAIL_CLAIM).asString();
 
             LineProfileResponse profile = oAuthClient.fetchProfile(tokenResp.access_token());
             String lineUserId = profile.userId();
+
+            LineUserInfoResponse userInfo = oAuthClient.fetchUserInfo(tokenResp.access_token());
+            String displayName = userInfo.name();
 
             Optional<User> userOpt = userRepository.findByLineId(lineUserId);
             User user;
@@ -63,10 +69,11 @@ public class AuthService {
                 user = userOpt.get();
                 user.updateLastLoginAt();
                 user.updateEmail(email);
+                user.updateDisplayName(displayName);
                 userRepository.save(user);
                 loginStatus = OauthLoginStatus.LOGIN;
             } else {
-                user = User.createLineUser(lineUserId, email);
+                user = User.createLineUser(lineUserId, email, displayName);
                 user = userRepository.save(user);
                 loginStatus = OauthLoginStatus.REGISTER;
             }

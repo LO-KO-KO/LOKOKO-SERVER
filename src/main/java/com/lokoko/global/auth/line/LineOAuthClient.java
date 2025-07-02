@@ -2,6 +2,7 @@ package com.lokoko.global.auth.line;
 
 import com.lokoko.global.auth.line.dto.LineProfileResponse;
 import com.lokoko.global.auth.line.dto.LineTokenResponse;
+import com.lokoko.global.auth.line.dto.LineUserInfoResponse;
 import com.lokoko.global.utils.LineConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -33,6 +34,16 @@ public class LineOAuthClient {
                 .headers(h -> h.setBearerAuth(accessToken))
                 .retrieve()
                 .bodyToMono(LineProfileResponse.class)
+                .block();
+    }
+
+    public LineUserInfoResponse fetchUserInfo(String accessToken) {
+        return lineWebClient
+                .get()
+                .uri(LineConstants.USER_INFO_PATH)
+                .headers(h -> h.setBearerAuth(accessToken))
+                .retrieve()
+                .bodyToMono(LineUserInfoResponse.class)
                 .block();
     }
 }
