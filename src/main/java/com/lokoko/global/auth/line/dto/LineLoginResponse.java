@@ -1,8 +1,8 @@
 package com.lokoko.global.auth.line.dto;
 
-import com.lokoko.global.auth.jwt.dto.JwtTokenDto;
+import com.lokoko.global.auth.jwt.dto.LoginDto;
 
 public record LineLoginResponse(
-        JwtTokenDto tokens
+        LoginDto tokens
 ) {
 }

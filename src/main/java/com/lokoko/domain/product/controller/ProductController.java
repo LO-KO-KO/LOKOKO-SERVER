@@ -6,6 +6,7 @@ import static com.lokoko.domain.product.controller.enums.ResponseMessage.CATEGOR
 import com.lokoko.domain.product.controller.enums.ResponseMessage;
 import com.lokoko.domain.product.dto.CategoryProductResponse;
 import com.lokoko.domain.product.dto.CrawlRequest;
+import com.lokoko.domain.product.service.NewProductCrawlingService;
 import com.lokoko.domain.product.service.ProductCrawlingService;
 import com.lokoko.domain.product.service.ProductService;
 import com.lokoko.global.common.response.ApiResponse;
@@ -26,6 +27,7 @@ public class ProductController {
 
     private final ProductService productService;
     private final ProductCrawlingService productCrawlingService;
+    private final NewProductCrawlingService newProductCrawlingService;
 
     @Hidden
     @PostMapping("/crawl")
@@ -43,5 +45,12 @@ public class ProductController {
 
         return ApiResponse.success(HttpStatus.OK, CATEGORY_SEARCH_SUCCESS.getMessage(),
                 categoryProductResponse);
+    }
+
+    @Hidden
+    @PostMapping("/crawl/new")
+    public ApiResponse<Void> crawlNew(@RequestBody CrawlRequest request) {
+        newProductCrawlingService.scrapeNewByCategory(request.mainCategory(), request.middleCategory());
+        return ApiResponse.success(HttpStatus.OK, ResponseMessage.PRODUCT_CRAWL_NEW_SUCCESS.getMessage(), null);
     }
 }

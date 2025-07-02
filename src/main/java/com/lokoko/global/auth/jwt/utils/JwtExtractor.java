@@ -47,6 +47,11 @@ public class JwtExtractor {
         return getClaimFromToken(token, ROLE_CLAIM);
     }
 
+    public String getTokenId(String token) {
+        Claims claims = parseClaims(token);
+        return claims.getId();
+    }
+
     public Boolean isExpired(String token) {
         Claims claims = parseClaims(token);
         return claims.getExpiration().before(new Date());

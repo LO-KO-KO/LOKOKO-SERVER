@@ -25,8 +25,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ProductCrawlingService {
+public class NewProductCrawlingService {
     private static final int MAX_PER_SUB = 5;
+
     private final WebDriver driver;
     private final ProductRepository productRepository;
     private final ProductImageRepository productImageRepository;
@@ -34,81 +35,89 @@ public class ProductCrawlingService {
     private final ProductCrawlerUtil util;
 
     @Transactional
-    public void scrapeByCategory(MainCategory main, MiddleCategory middle) {
+    public void scrapeNewByCategory(MainCategory main, MiddleCategory middle) {
         preferenceManager.ensureJapanCountry();
         List<SubCategory> subs = List.of(SubCategory.values());
         subs.stream()
                 .filter(sc -> sc.getMiddleCategory() == middle)
-                .forEach(sub -> scrapeBySub(main, middle, sub));
+                .forEach(sub -> scrapeNewBySub(main, middle, sub));
     }
 
-    private void scrapeBySub(MainCategory main, MiddleCategory middle, SubCategory sub) {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(ProductCrawlerConstants.DEFAULT_WAIT_SEC));
+    private void scrapeNewBySub(MainCategory main,
+                                MiddleCategory middle,
+                                SubCategory sub) {
         JavascriptExecutor js = (JavascriptExecutor) driver;
-
         try {
-            String url = String.format(ProductCrawlerConstants.BASE_URL +
-                    ProductCrawlerConstants.PATH_DISPLAY_CATEGORY, middle.getCtgrNo());
+            String url = String.format(
+                    ProductCrawlerConstants.BASE_URL +
+                            ProductCrawlerConstants.PATH_DISPLAY_CATEGORY,
+                    middle.getCtgrNo()
+            );
             driver.get(url);
-            log.info("크롤링 시작 URL 접근: {}", url);
 
-            util.waitForPresence(ProductCrawlerConstants.SELECTOR_WRAP_LNB_FILTER, 15);
-            util.waitForPresence(ProductCrawlerConstants.SELECTORS_SUBCATEGORY_AREA[0], 15);
-            util.waitForNonEmpty(ProductCrawlerConstants.SELECTORS_SUBCATEGORY_AREA[1], 15);
-
+            util.waitForPresence(ProductCrawlerConstants.SELECTOR_WRAP_LNB_FILTER, 20);
             util.clearOtherSubCategories(middle, sub, js);
-            selectTargetSubCategory(sub, js);
-
-            util.waitForPresence(
-                    String.format(ProductCrawlerConstants.SELECTOR_FILTER_TAG_FORMAT, sub.getCtgrNo()),
-                    15);
-            util.waitForNonEmpty(ProductCrawlerConstants.SELECTOR_CATEGORY_PRODUCT_LIST_ITEM, 15);
+            util.selectTargetSubCategory(sub, js);
             util.safeSleep(ProductCrawlerConstants.DEFAULT_SLEEP_AFTER_FILTER_MS);
 
-            List<String> detailUrls = util.collectProductUrls(
-                    By.cssSelector(ProductCrawlerConstants.SELECTOR_CATEGORY_PRODUCT_LIST_LINK)
-            );
-            int savedCount = (int) productRepository
-                    .countByMainCategoryAndMiddleCategoryAndSubCategory(main, middle, sub);
+            clickSortOption(js, "20");
+            waitForSortApplied(ProductCrawlerConstants.TAG_TEXT_NEW, 20);
 
+            util.waitForNonEmpty(
+                    ProductCrawlerConstants.SELECTOR_CATEGORY_PRODUCT_LIST_ITEM, 25
+            );
+            util.safeSleep(3_000);
+
+            List<String> detailUrls = driver.findElements(
+                            By.cssSelector(ProductCrawlerConstants.SELECTOR_CATEGORY_PRODUCT_LIST_LINK)
+                    )
+                    .stream()
+                    .map(a -> a.getAttribute("href"))
+                    .filter(h -> h != null && h.contains("prdtNo="))
+                    .map(h -> h.startsWith("http")
+                            ? h
+                            : ProductCrawlerConstants.BASE_URL + h)
+                    .distinct()
+                    .toList();
+
+            int saved = 0;
             for (String detailUrl : detailUrls) {
-                if (savedCount >= MAX_PER_SUB) {
+                if (saved >= MAX_PER_SUB) {
                     break;
                 }
-                if (scrapeDetailPageSafelyInNewTab(detailUrl, main, middle, sub)) {
-                    savedCount++;
+                if (scrapeNewDetailPageSafelyInNewTab(
+                        detailUrl, main, middle, sub
+                )) {
+                    saved++;
                 }
                 util.safeSleep(ProductCrawlerConstants.SHORT_WAIT_SEC);
             }
 
         } catch (Exception e) {
-            log.error("크롤링 실패: {} -> {} -> {}", main, middle, sub, e);
+            log.error("신제품 크롤링 실패: {} > {} > {}", main, middle, sub, e);
         }
     }
 
-    private boolean scrapeDetailPageSafelyInNewTab(String url, MainCategory main, MiddleCategory middle,
-                                                   SubCategory sub) {
+    private boolean scrapeNewDetailPageSafelyInNewTab(String url,
+                                                      MainCategory main, MiddleCategory middle, SubCategory sub) {
+
         String originalTab = util.openNewTabAndSwitch();
         try {
             driver.get(url);
-            util.waitForPresence(ProductCrawlerConstants.SELECTOR_PRICE_INFO, 15);
-            util.safeSleep(1000);
+            util.waitForPresence(ProductCrawlerConstants.SELECTOR_PRICE_INFO, 20);
+            util.safeSleep(2_000);
 
             long price = util.extractPrice();
             String ship = util.safeText(By.cssSelector(".prd-delivery-info"));
             String brand = util.safeText(By.cssSelector(".prd-brand-info h3"));
             String detail = util.safeText(By.cssSelector(".prd-brand-info dl"));
             Tag tag = util.extractTag();
-
             String productDetail = util.expandAndExtract(
-                    ProductCrawlerConstants.SELECTORS_PRODUCT_DETAIL,
-                    "#agreeList1"
+                    ProductCrawlerConstants.SELECTORS_PRODUCT_DETAIL, "#agreeList1"
             );
             String ingredients = util.expandAndExtract(
-                    ProductCrawlerConstants.SELECTORS_INGREDIENTS,
-                    "#agreeList2"
+                    ProductCrawlerConstants.SELECTORS_INGREDIENTS, "#agreeList2"
             );
-
             if ((productDetail == null && ingredients == null)
                     || brand == null || detail == null) {
                 return false;
@@ -137,29 +146,51 @@ public class ProductCrawlingService {
                                     .build()
                     )
             );
-
             return true;
         } catch (Exception e) {
-            log.error("상세 페이지 크롤링 오류 (URL={}): {}", url, e.getMessage(), e);
+            log.error("신제품 상세 페이지 크롤링 오류 (URL={}): {}", url, e.getMessage());
             return false;
         } finally {
             util.closeCurrentTabAndSwitchBack(originalTab);
         }
     }
 
-    public void selectTargetSubCategory(SubCategory sub, JavascriptExecutor js) {
-        String labelSelector = String.format(
-                ProductCrawlerConstants.SELECTOR_LABEL_SUBCATEGORY_FORMAT,
-                sub.getCtgrNo());
+    private void clickSortOption(JavascriptExecutor js, String sortValue) {
         try {
-            WebElement lbl = driver.findElement(By.cssSelector(labelSelector));
-            util.scrollAndClick(lbl);
+            WebElement sortButton = driver.findElement(By.id("prdtSortStdrCode"));
+            String beforeText = sortButton.getText();
+            util.scrollAndClick(sortButton);
+            util.safeSleep(500);
+
+            By optionListLocator = By.cssSelector("ul.sort-list");
+            WebElement optionList = util.waitForElementVisible(optionListLocator, 5);
+            List<WebElement> options = optionList.findElements(By.tagName("li"));
+
+            for (WebElement opt : options) {
+                if (sortValue.equals(opt.getAttribute("value"))) {
+                    util.scrollAndClick(opt);
+                    util.safeSleep(1000);
+
+                    String afterText = driver.findElement(By.id("prdtSortStdrCode")).getText();
+                    log.info("정렬 변경: {} → {}", beforeText, afterText);
+                    return;
+                }
+            }
+            log.warn("정렬 옵션 미발견: value={}", sortValue);
         } catch (Exception e) {
-            String inputSelector = String.format(
-                    ProductCrawlerConstants.SELECTOR_INPUT_SUBCATEGORY_FORMAT,
-                    sub.getCtgrNo());
-            WebElement inp = driver.findElement(By.cssSelector(inputSelector));
-            util.scrollAndClick(inp);
+            log.error("정렬 처리 실패: {}", e.getMessage());
         }
+    }
+
+    private void waitForSortApplied(String expectedText, int timeoutSec) {
+        new WebDriverWait(driver, Duration.ofSeconds(timeoutSec))
+                .until((WebDriver d) -> {
+                    try {
+                        WebElement sortBtn = d.findElement(By.id("prdtSortStdrCode"));
+                        return sortBtn.getText().contains(expectedText);
+                    } catch (Exception e) {
+                        return false;
+                    }
+                });
     }
 }
