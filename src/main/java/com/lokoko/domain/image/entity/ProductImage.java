@@ -31,4 +31,9 @@ public class ProductImage extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
+
+    @Column(name = "is_main")
+    private boolean isMain; // 제품에 대한 대표 이미지인지 아난지
+
+
 }
