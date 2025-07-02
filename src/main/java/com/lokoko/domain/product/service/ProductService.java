@@ -9,15 +9,18 @@ import com.lokoko.domain.image.repository.ProductImageRepository;
 import com.lokoko.domain.product.dto.CategoryProductResponse;
 import com.lokoko.domain.product.dto.ProductResponse;
 import com.lokoko.domain.product.entity.Product;
+import com.lokoko.domain.product.entity.enums.MiddleCategory;
 import com.lokoko.domain.product.entity.enums.SubCategory;
 import com.lokoko.domain.product.exception.ProductNotFoundException;
 import com.lokoko.domain.product.exception.SubCategoryNotFoundException;
 import com.lokoko.domain.product.repository.ProductRepository;
+import com.lokoko.domain.review.entity.enums.Rating;
 import com.lokoko.domain.review.repository.ReviewRepository;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,41 +34,24 @@ public class ProductService {
     private final ProductImageRepository productImageRepository;
     private final ReviewRepository reviewRepository;
 
-    private static List<ProductResponse> makeProductResponse(List<Product> products,
-                                                             Map<Long, String> productIdToImageUrl,
-                                                             Map<Long, Long> productIdToReviewCount) {
-        return products.stream()
-                .map(product -> new ProductResponse(
-                                product.getId(), //제품 id
-                                productIdToImageUrl.get(product.getId()), // 제품의 대표이미지 id
-                                product.getProductName(), // 제품 명
-                                productIdToReviewCount.getOrDefault(product.getId(), 0L)) // 제품의 리뷰 수
-                        // product 의 id 를 key 로 Map 의 value 를 검색할 때,
-                        // 해당 key 에 대응하는 value 가 없으면 0을 반환
-                        // 해당 key 에 대응하는 value 가 존재한다면 그 값을 반환한다.
-                )
-                .toList();
-    }
-
-    private static List<Long> getProductIds(List<Product> products) {
-        return products.stream()
-                .map(product -> {
-                    if (product == null || product.getId() == null) {
-                        throw new ProductNotFoundException();
-                    }
-                    return product.getId();
-                })
-                .toList();
-    }
-
     // 카테고리 id 로 제품 리스트 조회
-    public CategoryProductResponse searchProductsByCategory(String subCategoryId) {
+    public CategoryProductResponse searchProductsByCategory(String middleCategoryId, String subCategoryId) {
 
-        // 카테고리 id 를 통해 SubCategory 검색
-        SubCategory subCategory = getSubCategory(subCategoryId);
+        MiddleCategory middleCategory = getMiddleCategory(middleCategoryId);
 
-        // SubCategory 를 통해 productRepository 에서 product 리스트 검색
-        List<Product> products = productRepository.findBySubCategory(subCategory);
+        List<Product> products;
+
+        SubCategory subCategory = null;
+
+        // 서브 카테고리 id 가 존재하는 경우
+        if (subCategoryId != null && !subCategoryId.isBlank()) {
+            subCategory = getSubCategory(subCategoryId);
+            // middle 카테고리 + sub 카테고리 조합으로 검색
+            products = productRepository.findByMiddleCategoryAndSubCategory(middleCategory, subCategory);
+        } else { // 서브 카테고리 id 가 존재하지 않는 경우
+            // middle 카테고리만으로 검색
+            products = productRepository.findByMiddleCategory(middleCategory);
+        }
 
         // 제품과 관련있는 이미지들을 한번에 in 쿼리로 받아오기 위해, product 의 Id 만 리스트로 가져온다.
         List<Long> productIds = getProductIds(products);
@@ -82,30 +68,128 @@ public class ProductService {
         // 조회된 리뷰는 product id 를 기준으로 그룹핑 한다.
         // count 쿼리를 통해서 같은 제품에 대한 리뷰의 개수를 집계할 수 있다.
         // 역시 IN 쿼리를 이용하므로 N+1 문제 발생 X
-        List<Object[]> reviewCounts = reviewRepository.countReviewsByProductIds(productIds);
 
-        // productId, reviewCount 쌍으로 구성된 Map 만들기
-        Map<Long, Long> productIdToReviewCount = reviewCounts.stream()
-                .collect(Collectors.toMap(
-                        row -> (Long) row[0],
-                        row -> (Long) row[1]
-                ));
+        List<Object[]> reviewStats = reviewRepository.countAndAvgRatingByProductIds(productIds);
+        // reviewStats 안에 있는 Object 배열의 구성요소
+        // Object[0] 은 product id , Object[1] 은 리뷰의 평점  , Object[2] 는 리뷰의 개수
 
-        // 리뷰 수를 기준으로 내림차순 정렬
-        sortProductByReviewCount(products, productIdToReviewCount);
+        // (제품id : 리뷰수) Map
+        Map<Long, Long> productIdToReviewCount = new HashMap<>();
+
+        // (제품id : 평균별점) Map
+        Map<Long, Double> productIdToAvgRating = new HashMap<>();
+
+        Map<Long, List<Object[]>> productGroups = new HashMap<>();
+
+        for (Object[] row : reviewStats) {
+            Long productId = (Long) row[0];
+            productGroups.computeIfAbsent(productId, k -> new ArrayList<>()).add(row);
+            //productGroups 에서 , productId 에 대한 리스트가 없으면 리스트를 새로 만들고, row 를 추가
+        }
+
+        // 각 상품별로 평균 별점 계산
+        for (Map.Entry<Long, List<Object[]>> entry : productGroups.entrySet()) {
+            Long productId = entry.getKey();
+            List<Object[]> ratings = entry.getValue();
+
+            long totalReviews = 0; // 특정 상품에 대한 리뷰 총 개수
+            double weightedSum = 0.0; // 평점의 합
+            Map<Integer, Long> ratingCounts = new HashMap<>();
+
+            // 총 리뷰수, 별점별 개수 계산하기
+            for (Object[] row : ratings) {
+                Rating rating = (Rating) row[1]; // 별점
+                Long count = (Long) row[2]; // 해당 별점의 개수
+
+                int ratingValue = Integer.parseInt(rating.getValue());
+
+                totalReviews += count;
+                weightedSum += ratingValue * count;
+                ratingCounts.put(ratingValue, count);
+            }
+
+            // 평균 별점 계산하기
+            productIdToReviewCount.put(productId, totalReviews);
+            productIdToAvgRating.put(productId, totalReviews > 0 ? weightedSum / totalReviews : 0.0);
+
+            // 상품의 별점별 비율 계산하기
+            calculateRatingRatioForProduct(ratingCounts, totalReviews, productId);
+        }
+
+        // 리뷰 수를 기준으로 내림차순 정렬(리뷰 수가 동일 할 경우 평균 별점이 높은 순으로 정렬)
+        sortProductByReviewCountAndRating(products, productIdToReviewCount, productIdToAvgRating);
 
         // 최종적으로 클라이언트에게 반환될 DTO를 만드는 과정
         List<ProductResponse> productResponses = makeProductResponse(products, productIdToImageUrl,
-                productIdToReviewCount);
+                productIdToReviewCount, productIdToAvgRating);
 
         // 최종 DTO 반환
+        if (subCategory == null) { // Middle 카테고리만으로 검색 한 경우
+            return new CategoryProductResponse(
+                    middleCategory.getDisplayName(),
+                    middleCategory.getParent().getDisplayName(),
+                    middleCategory.getDisplayName(),
+                    products.size(),
+                    productResponses);
+
+        }
+
+        // Middle, Sub 카테고리 모두 사용하여 검색 한 경우
         return new CategoryProductResponse(
-                subCategory.getDisplayName(), //사용자가 검색한 서브 카테고리 이름
+                subCategory.getDisplayName(), //사용자의 검색어 (searchQuery)
                 subCategory.getMiddleCategory().getParent().getDisplayName(), // 서브 카테고리 부모 이름
                 subCategory.getDisplayName(), //사용자가 검색한 서브 카테고리 이름
                 products.size(), // 검색 결과 상품 수
                 productResponses); // 검색 결과 상품 list
 
+    }
+
+    private void calculateRatingRatioForProduct(Map<Integer, Long> ratingCounts, long totalReviews,
+                                                Long productId) {
+        // 상품의 별점별 비율 계산 하기
+        // ex) (상품1 : (1점 : 0.1), (2점 : 0.3) ......)
+        Map<Long, Map<Integer, Double>> productIdToRatingRatios = new HashMap<>();
+        // 별점별 비율 저장하기 위한 map
+        // ex) ( (1점 : 0.1), (2점 : 0.2 ) ,,,,, )
+        Map<Integer, Double> ratios = new HashMap<>();
+
+        for (Map.Entry<Integer, Long> ratingEntry : ratingCounts.entrySet()) {
+            Integer rating = ratingEntry.getKey(); // 별점 값
+            Long count = ratingEntry.getValue(); // 그 별점의 개수 
+            double ratio = (double) count / totalReviews * 100; // 백분율로 계산
+            ratios.put(rating, ratio);
+        }
+        productIdToRatingRatios.put(productId, ratios); // 현재는, 사용되지 않으나 상품 상세조회에서 사용됨
+    }
+
+    private List<ProductResponse> makeProductResponse(List<Product> products,
+                                                      Map<Long, String> productIdToImageUrl,
+                                                      Map<Long, Long> productIdToReviewCount,
+                                                      Map<Long, Double> productIdToAvgRating) {
+        return products.stream()
+                .map(product -> new ProductResponse(
+                                product.getId(), //제품 id
+                                productIdToImageUrl.get(product.getId()), // 제품의 대표이미지 id
+                                product.getProductName(), // 제품 명
+                                productIdToReviewCount.getOrDefault(product.getId(), 0L),
+                                productIdToAvgRating.getOrDefault(product.getId(), 0.0)
+                        ) // 제품의 리뷰 수
+                        // product 의 id 를 key 로 Map 의 value 를 검색할 때,
+                        // 해당 key 에 대응하는 value 가 없으면 0을 반환
+                        // 해당 key 에 대응하는 value 가 존재한다면 그 값을 반환한다.
+                )
+                .toList();
+    }
+
+    private List<Long> getProductIds(List<Product> products) {
+        return products.stream()
+                .map(product -> {
+                    if (product == null || product.getId() == null) {
+                        throw new ProductNotFoundException();
+                    }
+                    return product.getId();
+                })
+                .toList();
     }
 
     private Map<Long, String> createProductImageMap(List<ProductImage> images) {
@@ -125,6 +209,13 @@ public class ProductService {
                 ));
     }
 
+    private MiddleCategory getMiddleCategory(String middleCategoryId) {
+        return Arrays.stream(MiddleCategory.values())
+                .filter(mid -> mid.getCtgrNo().equals(middleCategoryId))
+                .findFirst()
+                .orElseThrow(SubCategoryNotFoundException::new);
+    }
+
     // 클라이언트에서 카테고리 number 를 전달하므로, 이 number 에 해당하는 카테고리 이름을 검색해야함.
     private SubCategory getSubCategory(String subCategoryId) {
         return Arrays.stream(SubCategory.values())
@@ -133,13 +224,24 @@ public class ProductService {
                 .orElseThrow(SubCategoryNotFoundException::new);
     }
 
-    // 제품을 내림차순(리뷰 수 기준)으로 정렬하는 메소드
-    private void sortProductByReviewCount(List<Product> products, Map<Long, Long> reviewCountMap) {
-        products.sort((p1, p2) -> Long.compare(
-                // 리뷰 많은 순으로 내림차순 정렬해야하므로, p2 이 먼저, p1 이 이후에.
-                reviewCountMap.getOrDefault(p2.getId(), 0L),
-                reviewCountMap.getOrDefault(p1.getId(), 0L)
-        ));
+    // 제품을 내림차순(리뷰 수 기준)으로 정렬하는 메소드. 리뷰 수가 같을 경우 평균 별점 내림차순으로 정렬
+    private void sortProductByReviewCountAndRating(List<Product> products, Map<Long, Long> reviewCountMap,
+                                                   Map<Long, Double> ratingMap) {
+        products.sort((p1, p2) -> {
+
+            Long count1 = reviewCountMap.getOrDefault(p1.getId(), 0L);
+            Long count2 = reviewCountMap.getOrDefault(p2.getId(), 0L);
+
+            int tmp = count2.compareTo(count1); // 리뷰 수를 내림 차순정렬
+
+            if (tmp == 0) { // 만약, 리뷰 수가 같은 경우
+                Double rating1 = ratingMap.getOrDefault(p1.getId(), 0.0);
+                Double rating2 = ratingMap.getOrDefault(p2.getId(), 0.0);
+                return Double.compare(rating2, rating1); // 평균 별점을 내림차순 정렬
+            }
+
+            return tmp;
+        });
 
     }
 }
