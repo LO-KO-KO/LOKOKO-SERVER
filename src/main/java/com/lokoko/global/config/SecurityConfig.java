@@ -70,6 +70,9 @@ public class SecurityConfig {
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setExposedHeaders(Arrays.asList("Authorization", "RefreshToken"));
         configuration.setAllowCredentials(false);
+        /*
+         * TODO: 추후에 true로 변경, setAllowedOrigins에 클라이언트 URL을 명시
+         */
 
         UrlBasedCorsConfigurationSource urlBasedCorsConfigurationSource = new UrlBasedCorsConfigurationSource();
         urlBasedCorsConfigurationSource.registerCorsConfiguration("/**", configuration);
