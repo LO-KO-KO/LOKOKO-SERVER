@@ -15,7 +15,6 @@ public class PermitUrlConfig {
 
     public String[] getUserUrl() {
         return new String[]{
-                "/api/youtubes/**"
         };
     }
 
@@ -23,6 +22,8 @@ public class PermitUrlConfig {
         return new String[]{
                 "/api/admin/**",
                 "/api/products/crawl",
+                "/api/youtube/{productId}/crawl",
+                "/api/youtube/trends/crawl"
         };
     }
 

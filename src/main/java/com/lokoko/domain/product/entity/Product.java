@@ -44,10 +44,10 @@ public class Product extends BaseEntity {
     @Column(nullable = false)
     private String shippingInfo;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String productDetail;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String ingredients;
 
     private String unit;
@@ -58,7 +58,7 @@ public class Product extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String youtubeUrl;
 
-    @Column
+    @Column(nullable = false)
     private String oliveYoungUrl;
 
     @Column

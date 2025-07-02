@@ -36,10 +36,6 @@ public class ProductController {
 
     }
 
-    // 카테고리별 제품 검색
-    // 매개변수인 subCategoryId 는 서브 카테고리의 "ctgrNo" 입니다.
-    // MainCategory, MiddleCategory 를 굳이 파라미터로 받지 않은 이유는,
-    // SubCategory 만 있어도, 이에 대한 상위 계층인 MiddleCategory , MainCategory 모두 접근할 수 있기 때문입니다.
     @GetMapping("/categories/search")
     public ApiResponse<CategoryProductResponse> searchProductsByCategory(@RequestParam String subCategoryId) {
 
@@ -47,6 +43,5 @@ public class ProductController {
 
         return ApiResponse.success(HttpStatus.OK, CATEGORY_SEARCH_SUCCESS.getMessage(),
                 categoryProductResponse);
-
     }
 }
