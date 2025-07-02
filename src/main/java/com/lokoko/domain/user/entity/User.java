@@ -40,6 +40,9 @@ public class User extends BaseEntity {
     private String email;
 
     @Column
+    private String nickname;
+
+    @Column
     private LocalDateTime lastLoginAt;
 
     @Enumerated(EnumType.STRING)
@@ -68,9 +71,10 @@ public class User extends BaseEntity {
      * TODO: 추후 scope 확장 시, 필드추가
      */
 
-    public static User createLineUser(String lineUserId) {
+    public static User createLineUser(String lineUserId, String email) {
         return User.builder()
                 .lineId(lineUserId)
+                .email(email)
                 .role(Role.USER)
                 .status(UserStatus.ACTIVE)
                 .lastLoginAt(LocalDateTime.now())
@@ -79,5 +83,9 @@ public class User extends BaseEntity {
 
     public void updateLastLoginAt() {
         this.lastLoginAt = LocalDateTime.now();
+    }
+
+    public void updateEmail(String email) {
+        this.email = email;
     }
 }

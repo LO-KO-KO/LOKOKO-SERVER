@@ -4,6 +4,7 @@ public record LineProfileResponse(
         String userId,
         String displayName,
         String pictureUrl,
-        String statusMessage
+        String statusMessage,
+        String email
 ) {
 }
