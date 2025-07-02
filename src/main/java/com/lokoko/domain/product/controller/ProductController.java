@@ -34,7 +34,7 @@ public class ProductController {
     public ApiResponse<Void> crawl(@RequestBody CrawlRequest request) {
         productCrawlingService.scrapeByCategory(request.mainCategory(), request.middleCategory());
 
-        return ApiResponse.success(HttpStatus.OK, ResponseMessage.CRAWL_SUCCESS.getMessage(), null);
+        return ApiResponse.success(HttpStatus.OK, ResponseMessage.PRODUCT_CRAWL_SUCCESS.getMessage(), null);
 
     }
 
