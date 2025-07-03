@@ -5,6 +5,7 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
 import io.swagger.v3.oas.models.tags.Tag;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
@@ -16,7 +17,10 @@ public class SwaggerConfig {
 
     @Bean
     public OpenAPI openAPI() {
+        Server server = new Server().url("https://52.79.208.129.nip.io");
+
         return new OpenAPI()
+                .addServersItem(server)
                 .addTagsItem(new Tag().name("AUTH"))
                 .addTagsItem(new Tag().name("YOUTUBE"))
                 .addTagsItem(new Tag().name("PRODUCT"))
