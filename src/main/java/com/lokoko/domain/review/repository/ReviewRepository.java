@@ -10,7 +10,11 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
-    @Query("SELECT r.product.id, COUNT(r) FROM Review r WHERE r.product.id IN :productIds GROUP BY r.product.id")
-    List<Object[]> countReviewsByProductIds(@Param("productIds") List<Long> productIds);
+    @Query("SELECT r.product.id, r.rating , COUNT(r) "
+            + "FROM Review r "
+            + "WHERE r.product.id IN :productIds "
+            + "GROUP BY r.product.id, r.rating")
+    List<Object[]> countAndAvgRatingByProductIds(@Param("productIds") List<Long> productIds);
+
 
 }
