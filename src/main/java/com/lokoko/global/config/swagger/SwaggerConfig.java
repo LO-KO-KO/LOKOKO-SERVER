@@ -19,8 +19,9 @@ public class SwaggerConfig {
         return new OpenAPI()
                 .addTagsItem(new Tag().name("AUTH"))
                 .addTagsItem(new Tag().name("YOUTUBE"))
+                .addTagsItem(new Tag().name("PRODUCT"))
                 /*
-                 * TODO: 상품 컨트롤러 등 추가 예정
+                 * TODO: 나머지 컨트롤러 완성시 추가 예정
                  */
                 .addSecurityItem(new SecurityRequirement().addList(JWT_SCHEME))
                 .components(new Components()
