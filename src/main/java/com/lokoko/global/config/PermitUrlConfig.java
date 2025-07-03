@@ -24,7 +24,6 @@ public class PermitUrlConfig {
                 "/api/products/crawl",
                 "/api/youtube/{productId}/crawl",
                 "/api/youtube/trends/crawl",
-                "/api/products/crawl",
                 "/api/products/crawl/new",
                 "/api/products/crawl/options"
         };
