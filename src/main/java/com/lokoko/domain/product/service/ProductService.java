@@ -22,7 +22,6 @@ import com.lokoko.domain.review.entity.enums.Rating;
 import com.lokoko.domain.review.repository.ReviewRepository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -86,48 +85,14 @@ public class ProductService {
         // (제품id : 평균별점) Map
         Map<Long, BigDecimal> productIdToAvgRating = new HashMap<>();
 
-        Map<Long, List<Object[]>> productGroups = new HashMap<>();
+        Map<Long, Map<Rating, Long>> tempRatingCounts = new HashMap<>();
+        Map<Long, BigDecimal> tempWeightedSums = new HashMap<>();
 
-        for (Object[] row : reviewStats) {
-            Long productId = (Long) row[0];
-            productGroups.computeIfAbsent(productId, k -> new ArrayList<>()).add(row);
-            //productGroups 에서 , productId 에 대한 리스트가 없으면 리스트를 새로 만들고, row 를 추가
-        }
+        // 리뷰 통계 집계
+        aggregateReviewStats(reviewStats, productIdToReviewCount, tempWeightedSums, tempRatingCounts);
 
-        // 각 상품별로 평균 별점 계산
-        for (Map.Entry<Long, List<Object[]>> entry : productGroups.entrySet()) {
-            Long productId = entry.getKey();
-            List<Object[]> ratings = entry.getValue();
-
-            long totalReviews = 0; // 특정 상품에 대한 리뷰 총 개수
-            BigDecimal weightedSum = ZERO; // 평점의 합
-
-            Map<Rating, Long> ratingCounts = new EnumMap<>(Rating.class);
-
-            // 총 리뷰수, 별점별 개수 계산하기
-            for (Object[] row : ratings) {
-                Rating rating = (Rating) row[1]; // 별점
-                Long count = (Long) row[2]; // 해당 별점의 개수
-
-                totalReviews += count; // 전체 리뷰수 증가
-
-                weightedSum = weightedSum
-                        .add(BigDecimal.valueOf(Integer.parseInt(rating.getValue()))
-                                .multiply(BigDecimal.valueOf(count)));
-
-                ratingCounts.put(rating, count);
-            }
-
-            // 평균 별점 계산하기
-            productIdToReviewCount.put(productId, totalReviews);
-            BigDecimal avg = totalReviews > 0
-                    ? weightedSum.divide(valueOf(totalReviews), 1, RoundingMode.DOWN)
-                    : ZERO;
-            productIdToAvgRating.put(productId, avg);
-
-            // 상품의 별점별 비율 계산하기
-            calculateRatingRatioForProduct(ratingCounts, totalReviews, productId);
-        }
+        // 평균 별점 계산
+        calculateAverageRatings(productIdToReviewCount, tempWeightedSums, tempRatingCounts, productIdToAvgRating);
 
         // 리뷰 수를 기준으로 내림차순 정렬(리뷰 수가 동일 할 경우 평균 별점이 높은 순으로 정렬)
         sortProductByReviewCountAndRating(products, productIdToReviewCount, productIdToAvgRating);
@@ -159,11 +124,61 @@ public class ProductService {
 
     }
 
+    private void aggregateReviewStats(List<Object[]> reviewStats,
+                                      Map<Long, Long> productIdToReviewCount,
+                                      Map<Long, BigDecimal> tempWeightedSums,
+                                      Map<Long, Map<Rating, Long>> tempRatingCounts) {
+
+        for (Object[] row : reviewStats) {
+            Long productId = (Long) row[0];
+            Rating rating = (Rating) row[1];
+            Long count = (Long) row[2];
+
+            // 리뷰 수 계산
+            productIdToReviewCount.merge(productId, count, Long::sum);
+
+            // 평점의 합 계산
+            BigDecimal weightedValue = valueOf(Integer.parseInt(rating.getValue()))
+                    .multiply(valueOf(count));
+            tempWeightedSums.merge(productId, weightedValue, BigDecimal::add);
+
+            // 별점별 개수 저장
+            tempRatingCounts.computeIfAbsent(productId, k -> new EnumMap<>(Rating.class))
+                    .put(rating, count);
+        }
+    }
+
+    private void calculateAverageRatings(Map<Long, Long> productIdToReviewCount,
+                                         Map<Long, BigDecimal> tempWeightedSums,
+                                         Map<Long, Map<Rating, Long>> tempRatingCounts,
+                                         Map<Long, BigDecimal> productIdToAvgRating) {
+
+        for (Map.Entry<Long, Long> entry : productIdToReviewCount.entrySet()) {
+            Long productId = entry.getKey();
+            Long totalReviews = entry.getValue();
+
+            BigDecimal weightedSum = tempWeightedSums.get(productId);
+
+            BigDecimal avg = totalReviews > 0
+                    ? weightedSum.divide(valueOf(totalReviews), 1, RoundingMode.DOWN)
+                    : ZERO;
+
+            productIdToAvgRating.put(productId, avg);
+
+            Map<Rating, Long> ratingCounts = tempRatingCounts.get(productId);
+            if (ratingCounts != null) {
+                calculateRatingRatioForProduct(ratingCounts, totalReviews, productId);
+            }
+        }
+    }
+
     private Map<Long, ProductSummary> createProductSummaryMap(List<Product> products,
                                                               Map<Long, String> productIdToImageUrl,
                                                               Map<Long, Long> productIdToReviewCount,
                                                               Map<Long, BigDecimal> productIdToAvgRating) {
+
         Map<Long, ProductSummary> summaryMap = new HashMap<>();
+
         for (Product product : products) {
             Long productId = product.getId();
             String imageUrl = productIdToImageUrl.getOrDefault(productId, null);
@@ -176,6 +191,7 @@ public class ProductService {
         return summaryMap;
     }
 
+    // 현재는, 사용되지 않으나 상품 상세조회에서 사용됨
     private void calculateRatingRatioForProduct(Map<Rating, Long> ratingCounts, long totalReviews,
                                                 Long productId) {
         // 상품의 별점별 비율 계산 하기
@@ -189,13 +205,13 @@ public class ProductService {
             Rating rating = ratingEntry.getKey(); // 별점 값
             Long count = ratingEntry.getValue(); // 그 별점의 개수 
 
-            BigDecimal ratio = BigDecimal.valueOf(count)
-                    .multiply(BigDecimal.valueOf(100))
-                    .divide(BigDecimal.valueOf(totalReviews), 1, RoundingMode.DOWN);
+            BigDecimal ratio = valueOf(count)
+                    .multiply(valueOf(100))
+                    .divide(valueOf(totalReviews), 1, RoundingMode.DOWN);
 
             ratios.put(rating, ratio);
         }
-        productIdToRatingRatios.put(productId, ratios); // 현재는, 사용되지 않으나 상품 상세조회에서 사용됨
+        productIdToRatingRatios.put(productId, ratios);
     }
 
     private List<ProductResponse> makeProductResponse(List<Product> products,
