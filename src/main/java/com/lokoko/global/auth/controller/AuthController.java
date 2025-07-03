@@ -14,9 +14,11 @@ import com.lokoko.global.auth.line.dto.LineLoginResponse;
 import com.lokoko.global.auth.line.dto.LoginUrlResponse;
 import com.lokoko.global.auth.service.AuthService;
 import com.lokoko.global.common.response.ApiResponse;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,14 +37,30 @@ public class AuthController {
     private final JwtService jwtService;
     private final CookieUtil cookieUtil;
 
-    @Operation(summary = "라인 소셜 로그인, JWT 토큰 발급")
-    @GetMapping("/line/login")
-    public ApiResponse<LineLoginResponse> lineLogin(@RequestParam("code") String code, HttpServletResponse response) {
-        LoginDto tokens = authService.loginWithLine(code);
-        cookieUtil.setCookie(ACCESS_TOKEN_HEADER, tokens.accessToken(), response);
-        return ApiResponse.success(HttpStatus.OK, LOGIN_SUCCESS.getMessage(), new LineLoginResponse(tokens));
+    @Operation(summary = "라인 소셜 로그인, 리다이렉션")
+    @GetMapping("/line/redirect")
+    public void redirectToLineAuth(HttpServletResponse response) throws IOException {
+        String authorizeUrl = authService.generateLineLoginUrl();
+        response.sendRedirect(authorizeUrl);
     }
 
+    @Operation(summary = "라인 소셜 로그인, JWT 토큰 발급")
+    @GetMapping("/line/login")
+    public ApiResponse<LineLoginResponse> lineLogin(@RequestParam("code") String code,
+                                                    @RequestParam("state") String state,
+                                                    HttpServletResponse response) {
+        LoginDto tokens = authService.loginWithLine(code, state);
+        cookieUtil.setCookie(ACCESS_TOKEN_HEADER, tokens.accessToken(), response);
+        cookieUtil.setCookie(REFRESH_TOKEN_HEADER, tokens.refreshToken(), response);
+        return ApiResponse.success(HttpStatus.OK, LOGIN_SUCCESS.getMessage(),
+                new LineLoginResponse(tokens.loginStatus()));
+    }
+
+    /*
+     * TODO: 명세서 작성 후 플로우 확정 예정
+     */
+
+    @Hidden
     @Operation(summary = "라인 로그인 URL 생성 (클라에서 호출)")
     @GetMapping("/url")
     public ApiResponse<LoginUrlResponse> getLoginUrl() {

@@ -1,12 +1,18 @@
 package com.lokoko.domain.product.service;
 
+import static com.lokoko.global.utils.ProductCrawlerConstants.SELECTOR_OPTION_BUTTON;
+import static com.lokoko.global.utils.ProductCrawlerConstants.SELECTOR_OPTION_LIST;
+import static com.lokoko.global.utils.ProductCrawlerConstants.SELECTOR_OPTION_NAME;
+
 import com.lokoko.domain.image.entity.ProductImage;
 import com.lokoko.domain.image.repository.ProductImageRepository;
 import com.lokoko.domain.product.entity.Product;
+import com.lokoko.domain.product.entity.ProductOption;
 import com.lokoko.domain.product.entity.enums.MainCategory;
 import com.lokoko.domain.product.entity.enums.MiddleCategory;
 import com.lokoko.domain.product.entity.enums.SubCategory;
 import com.lokoko.domain.product.entity.enums.Tag;
+import com.lokoko.domain.product.repository.ProductOptionRepository;
 import com.lokoko.domain.product.repository.ProductRepository;
 import com.lokoko.global.utils.ProductCrawlerConstants;
 import com.lokoko.global.utils.ProductCrawlerUtil;
@@ -30,6 +36,7 @@ public class ProductCrawlingService {
     private final WebDriver driver;
     private final ProductRepository productRepository;
     private final ProductImageRepository productImageRepository;
+    private final ProductOptionRepository productOptionRepository;
     private final ShoppingPreferenceManager preferenceManager;
     private final ProductCrawlerUtil util;
 
@@ -42,6 +49,54 @@ public class ProductCrawlingService {
                 .forEach(sub -> scrapeBySub(main, middle, sub));
     }
 
+    @Transactional
+    public void crawlAllOptions() {
+        List<Product> products = productRepository.findAllByOliveYoungUrlNotNull();
+
+        for (Product p : products) {
+            if (!productOptionRepository.findByProduct(p).isEmpty()) {
+                continue;
+            }
+            String originalTab = util.openNewTabAndSwitch();
+            try {
+                driver.get(p.getOliveYoungUrl());
+                util.waitForPresence(ProductCrawlerConstants.SELECTOR_PRICE_INFO, 10);
+
+                List<WebElement> optionBtns = driver.findElements(
+                        By.cssSelector(SELECTOR_OPTION_BUTTON));
+                if (optionBtns.isEmpty()) {
+                    continue;
+                }
+
+                By btn = By.cssSelector(SELECTOR_OPTION_BUTTON);
+                WebElement optionButton = util.waitForElementVisible(btn, 5);
+                if ("false".equals(optionButton.getAttribute("aria-expanded"))) {
+                    optionButton.click();
+                    util.safeSleep(500);
+                }
+                By listItems = By.cssSelector(SELECTOR_OPTION_LIST);
+                util.waitForPresence(listItems, 5);
+                List<WebElement> names = driver.findElements(
+                        By.cssSelector(SELECTOR_OPTION_NAME)
+                );
+                for (WebElement nameEl : names) {
+                    String optionName = nameEl.getText().trim();
+                    if (!optionName.isEmpty()) {
+                        ProductOption opt = ProductOption.builder()
+                                .product(p)
+                                .optionName(optionName)
+                                .build();
+                        productOptionRepository.save(opt);
+                    }
+                }
+            } catch (Exception ex) {
+                log.error("옵션 크롤링 실패 URL={} : {}", p.getOliveYoungUrl(), ex.getMessage());
+            } finally {
+                util.closeCurrentTabAndSwitchBack(originalTab);
+            }
+        }
+    }
+
     private void scrapeBySub(MainCategory main, MiddleCategory middle, SubCategory sub) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(ProductCrawlerConstants.DEFAULT_WAIT_SEC));
         JavascriptExecutor js = (JavascriptExecutor) driver;
@@ -50,24 +105,22 @@ public class ProductCrawlingService {
             String url = String.format(ProductCrawlerConstants.BASE_URL +
                     ProductCrawlerConstants.PATH_DISPLAY_CATEGORY, middle.getCtgrNo());
             driver.get(url);
-            log.info("크롤링 시작 URL 접근: {}", url);
-
             util.waitForPresence(ProductCrawlerConstants.SELECTOR_WRAP_LNB_FILTER, 15);
-            util.waitForPresence(ProductCrawlerConstants.SELECTORS_SUBCATEGORY_AREA[0], 15);
-            util.waitForNonEmpty(ProductCrawlerConstants.SELECTORS_SUBCATEGORY_AREA[1], 15);
+            By subInputLocator = By.cssSelector(
+                    String.format(ProductCrawlerConstants.SELECTOR_INPUT_SUBCATEGORY_FORMAT, sub.getCtgrNo())
+            );
+            util.waitForPresence(subInputLocator, 15);
+
+            By subLabelLocator = By.cssSelector(
+                    String.format(ProductCrawlerConstants.SELECTOR_LABEL_SUBCATEGORY_FORMAT, sub.getCtgrNo())
+            );
+            util.waitForPresence(subLabelLocator, 5);
 
             util.clearOtherSubCategories(middle, sub, js);
             selectTargetSubCategory(sub, js);
-
-            util.waitForPresence(
-                    String.format(ProductCrawlerConstants.SELECTOR_FILTER_TAG_FORMAT, sub.getCtgrNo()),
-                    15);
             util.waitForNonEmpty(ProductCrawlerConstants.SELECTOR_CATEGORY_PRODUCT_LIST_ITEM, 15);
             util.safeSleep(ProductCrawlerConstants.DEFAULT_SLEEP_AFTER_FILTER_MS);
-
-            List<String> detailUrls = util.collectProductUrls(
-                    By.cssSelector(ProductCrawlerConstants.SELECTOR_CATEGORY_PRODUCT_LIST_LINK)
-            );
+            List<String> detailUrls = util.collectUniqueProductUrls(sub);
             int savedCount = (int) productRepository
                     .countByMainCategoryAndMiddleCategoryAndSubCategory(main, middle, sub);
 
@@ -137,6 +190,29 @@ public class ProductCrawlingService {
                                     .build()
                     )
             );
+
+            By optionBtnLocator = By.cssSelector(SELECTOR_OPTION_BUTTON);
+            WebElement optionButton = util.waitForElementVisible(optionBtnLocator, 5);
+            if ("false".equals(optionButton.getAttribute("aria-expanded"))) {
+                optionButton.click();
+            }
+
+            By listLocator = By.cssSelector(SELECTOR_OPTION_LIST);
+            util.waitForPresence(listLocator, 5);
+
+            List<WebElement> optionItems = driver.findElements(
+                    By.cssSelector(SELECTOR_OPTION_NAME)
+            );
+            for (WebElement item : optionItems) {
+                String optionName = item.getText().trim();
+                if (!optionName.isEmpty()) {
+                    ProductOption opt = ProductOption.builder()
+                            .optionName(optionName)
+                            .product(saved)
+                            .build();
+                    productOptionRepository.save(opt);
+                }
+            }
 
             return true;
         } catch (Exception e) {

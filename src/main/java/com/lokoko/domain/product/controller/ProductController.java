@@ -33,6 +33,7 @@ public class ProductController {
     private final NewProductCrawlingService newProductCrawlingService;
 
     @Hidden
+    @Operation(summary = "카테고리별 상품 크롤링")
     @PostMapping("/crawl")
     public ApiResponse<Void> crawl(@RequestBody CrawlRequest request) {
         productCrawlingService.scrapeByCategory(request.mainCategory(), request.middleCategory());
@@ -54,9 +55,18 @@ public class ProductController {
     }
 
     @Hidden
+    @Operation(summary = "카테고리별 신제품 크롤링")
     @PostMapping("/crawl/new")
     public ApiResponse<Void> crawlNew(@RequestBody CrawlRequest request) {
         newProductCrawlingService.scrapeNewByCategory(request.mainCategory(), request.middleCategory());
         return ApiResponse.success(HttpStatus.OK, ResponseMessage.PRODUCT_CRAWL_NEW_SUCCESS.getMessage(), null);
+    }
+
+    @Hidden
+    @Operation(summary = "상품 옵션 크롤링")
+    @PostMapping("/crawl/options")
+    public ApiResponse<Void> crawlOptions() {
+        productCrawlingService.crawlAllOptions();
+        return ApiResponse.success(HttpStatus.OK, ResponseMessage.PRODUCT_OPTION_SUCCESS.getMessage(), null);
     }
 }

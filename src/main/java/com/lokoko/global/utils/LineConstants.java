@@ -5,6 +5,8 @@ public class LineConstants {
     public static final String AUTHORIZE_PATH = "https://access.line.me/oauth2/v2.1/authorize";
     public static final String TOKEN_PATH = "/oauth2/v2.1/token";
     public static final String PROFILE_PATH = "/v2/profile";
+    public static final String USER_INFO_PATH = "/oauth2/v2.1/userinfo";
+
     // OAuth
     public static final String PARAM_RESPONSE_TYPE = "?response_type=code";
     public static final String PARAM_GRANT_TYPE = "grant_type";
