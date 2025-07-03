@@ -50,6 +50,11 @@ public final class ProductCrawlerConstants {
     public static final long DEFAULT_WAIT_SEC = 15L;
     public static final long SHORT_WAIT_SEC = 5L;
 
+    // 상품 옵션
+    public static final String SELECTOR_OPTION_BUTTON = ".prd-option-select .sel-option.item";
+    public static final String SELECTOR_OPTION_LIST = "ul.sel-option-list.scroll-bar li";
+    public static final String SELECTOR_OPTION_NAME = "ul.sel-option-list.scroll-bar li .list-thumb-info.line-ellipsis2";
+
     // 에러 메시지
     public static final String ERROR_MSG_EXTRACT_ID = "Error extracting product ID from URL: ";
     public static final String ERROR_MSG_PARSE_PRICE = "Failed to parse price: ";

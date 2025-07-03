@@ -1,5 +1,9 @@
 package com.lokoko.domain.product.service;
 
+import static com.lokoko.global.utils.ProductCrawlerConstants.SELECTOR_OPTION_BUTTON;
+import static com.lokoko.global.utils.ProductCrawlerConstants.SELECTOR_OPTION_LIST;
+import static com.lokoko.global.utils.ProductCrawlerConstants.SELECTOR_OPTION_NAME;
+
 import com.lokoko.domain.image.entity.ProductImage;
 import com.lokoko.domain.image.repository.ProductImageRepository;
 import com.lokoko.domain.product.entity.Product;
@@ -51,32 +55,29 @@ public class ProductCrawlingService {
 
         for (Product p : products) {
             if (!productOptionRepository.findByProduct(p).isEmpty()) {
-                log.info("옵션 이미 존재, 스킵: {}", p.getOliveYoungUrl());
                 continue;
             }
-            log.info("▶ 옵션 크롤링 시작: {}", p.getOliveYoungUrl());
             String originalTab = util.openNewTabAndSwitch();
             try {
                 driver.get(p.getOliveYoungUrl());
                 util.waitForPresence(ProductCrawlerConstants.SELECTOR_PRICE_INFO, 10);
 
                 List<WebElement> optionBtns = driver.findElements(
-                        By.cssSelector(".prd-option-select .sel-option.item"));
+                        By.cssSelector(SELECTOR_OPTION_BUTTON));
                 if (optionBtns.isEmpty()) {
-                    log.info("  → 옵션 없음, 스킵: {}", p.getOliveYoungUrl());
                     continue;
                 }
 
-                By btn = By.cssSelector(".prd-option-select .sel-option.item");
+                By btn = By.cssSelector(SELECTOR_OPTION_BUTTON);
                 WebElement optionButton = util.waitForElementVisible(btn, 5);
                 if ("false".equals(optionButton.getAttribute("aria-expanded"))) {
                     optionButton.click();
                     util.safeSleep(500);
                 }
-                By listItems = By.cssSelector("ul.sel-option-list.scroll-bar li");
+                By listItems = By.cssSelector(SELECTOR_OPTION_LIST);
                 util.waitForPresence(listItems, 5);
                 List<WebElement> names = driver.findElements(
-                        By.cssSelector("ul.sel-option-list .list-thumb-info.line-ellipsis2")
+                        By.cssSelector(SELECTOR_OPTION_NAME)
                 );
                 for (WebElement nameEl : names) {
                     String optionName = nameEl.getText().trim();
@@ -86,7 +87,6 @@ public class ProductCrawlingService {
                                 .optionName(optionName)
                                 .build();
                         productOptionRepository.save(opt);
-                        log.info("   • 옵션 저장: {}", optionName);
                     }
                 }
             } catch (Exception ex) {
@@ -105,10 +105,7 @@ public class ProductCrawlingService {
             String url = String.format(ProductCrawlerConstants.BASE_URL +
                     ProductCrawlerConstants.PATH_DISPLAY_CATEGORY, middle.getCtgrNo());
             driver.get(url);
-            log.info("크롤링 시작 URL 접근: {}", url);
-
             util.waitForPresence(ProductCrawlerConstants.SELECTOR_WRAP_LNB_FILTER, 15);
-            log.info("   ✔ 필터 영역 OK");
             By subInputLocator = By.cssSelector(
                     String.format(ProductCrawlerConstants.SELECTOR_INPUT_SUBCATEGORY_FORMAT, sub.getCtgrNo())
             );
@@ -121,12 +118,9 @@ public class ProductCrawlingService {
 
             util.clearOtherSubCategories(middle, sub, js);
             selectTargetSubCategory(sub, js);
-            log.info("[{}→{}→{}] 6. 상품 목록 갱신 대기", main, middle, sub);
             util.waitForNonEmpty(ProductCrawlerConstants.SELECTOR_CATEGORY_PRODUCT_LIST_ITEM, 15);
             util.safeSleep(ProductCrawlerConstants.DEFAULT_SLEEP_AFTER_FILTER_MS);
-            log.info("   ✔ 상품 리스트 로드 완료");
             List<String> detailUrls = util.collectUniqueProductUrls(sub);
-            log.info("[{}→{}→{}] 7. 수집된 상세 URL (총 {}): {}", main, middle, sub, detailUrls.size(), detailUrls);
             int savedCount = (int) productRepository
                     .countByMainCategoryAndMiddleCategoryAndSubCategory(main, middle, sub);
 
@@ -197,17 +191,17 @@ public class ProductCrawlingService {
                     )
             );
 
-            By optionBtnLocator = By.cssSelector(".prd-option-select .sel-option.item");
+            By optionBtnLocator = By.cssSelector(SELECTOR_OPTION_BUTTON);
             WebElement optionButton = util.waitForElementVisible(optionBtnLocator, 5);
             if ("false".equals(optionButton.getAttribute("aria-expanded"))) {
                 optionButton.click();
             }
 
-            By listLocator = By.cssSelector("ul.sel-option-list.scroll-bar li");
+            By listLocator = By.cssSelector(SELECTOR_OPTION_LIST);
             util.waitForPresence(listLocator, 5);
 
             List<WebElement> optionItems = driver.findElements(
-                    By.cssSelector("ul.sel-option-list.scroll-bar li .list-thumb-info.line-ellipsis2")
+                    By.cssSelector(SELECTOR_OPTION_NAME)
             );
             for (WebElement item : optionItems) {
                 String optionName = item.getText().trim();
