@@ -160,7 +160,7 @@ public class ProductService {
             BigDecimal weightedSum = tempWeightedSums.get(productId);
 
             BigDecimal avg = totalReviews > 0
-                    ? weightedSum.divide(valueOf(totalReviews), 1, RoundingMode.DOWN)
+                    ? weightedSum.divide(valueOf(totalReviews), 1, RoundingMode.HALF_UP)
                     : ZERO;
 
             productIdToAvgRating.put(productId, avg);
@@ -207,7 +207,7 @@ public class ProductService {
 
             BigDecimal ratio = valueOf(count)
                     .multiply(valueOf(100))
-                    .divide(valueOf(totalReviews), 1, RoundingMode.DOWN);
+                    .divide(valueOf(totalReviews), 1, RoundingMode.HALF_UP);
 
             ratios.put(rating, ratio);
         }
