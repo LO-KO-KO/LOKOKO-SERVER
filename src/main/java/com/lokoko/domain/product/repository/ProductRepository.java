@@ -18,4 +18,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT p FROM Product p WHERE p.oliveYoungUrl IS NOT NULL")
     List<Product> findAllByOliveYoungUrlNotNull();
+
+    List<Product> findByMiddleCategoryAndSubCategory(MiddleCategory middleCategory, SubCategory subCategory);
+
+    List<Product> findByMiddleCategory(MiddleCategory middleCategory);
 }
