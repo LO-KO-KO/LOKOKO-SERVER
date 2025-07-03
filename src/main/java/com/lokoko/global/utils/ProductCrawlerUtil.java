@@ -1,9 +1,12 @@
 package com.lokoko.global.utils;
 
 
+import com.lokoko.domain.product.entity.Product;
+import com.lokoko.domain.product.entity.ProductOption;
 import com.lokoko.domain.product.entity.enums.MiddleCategory;
 import com.lokoko.domain.product.entity.enums.SubCategory;
 import com.lokoko.domain.product.entity.enums.Tag;
+import com.lokoko.domain.product.repository.ProductOptionRepository;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -27,6 +30,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ProductCrawlerUtil {
     private final WebDriver driver;
+    private final ProductOptionRepository productOptionRepository;
 
     public void waitForPresence(String cssSelector, long timeoutSec) {
         new WebDriverWait(driver, Duration.ofSeconds(timeoutSec))
@@ -69,17 +73,21 @@ public class ProductCrawlerUtil {
         driver.switchTo().window(originalTab);
     }
 
-    public List<String> collectProductUrls(By linkSelector) {
+    public List<String> collectUniqueProductUrls(SubCategory sub) {
         List<String> urls = new ArrayList<>();
         Set<String> seen = new HashSet<>();
-        driver.findElements(linkSelector).forEach(a -> {
+        for (WebElement a : driver.findElements(
+                By.cssSelector(ProductCrawlerConstants.SELECTOR_CATEGORY_PRODUCT_LIST_LINK))) {
             String href = a.getAttribute("href");
+            if (href == null || href.isBlank()) {
+                continue;
+            }
             String abs = convertToAbsoluteUrl(href);
             String id = extractProductId(abs);
             if (id != null && seen.add(id)) {
                 urls.add(abs);
             }
-        });
+        }
         return urls;
     }
 
@@ -272,4 +280,35 @@ public class ProductCrawlerUtil {
                 });
     }
 
+    public void scrapeOptionsOnly(String url, Product saved) {
+        String originalTab = openNewTabAndSwitch();
+        try {
+            driver.get(url);
+            By btnLoc = By.cssSelector(".prd-option-select .sel-option.item");
+            WebElement btn = waitForElementVisible(btnLoc, 5);
+            if ("false".equals(btn.getAttribute("aria-expanded"))) {
+                btn.click();
+                safeSleep(300);
+            }
+            By listLoc = By.cssSelector("ul.sel-option-list.scroll-bar li");
+            waitForPresence(listLoc, 5);
+
+            List<WebElement> items = driver.findElements(
+                    By.cssSelector("ul.sel-option-list.scroll-bar li .list-thumb-info.line-ellipsis2")
+            );
+            for (WebElement it : items) {
+                String name = it.getText().trim();
+                if (!name.isEmpty()) {
+                    productOptionRepository.save(
+                            ProductOption.builder()
+                                    .optionName(name)
+                                    .product(saved)
+                                    .build()
+                    );
+                }
+            }
+        } finally {
+            closeCurrentTabAndSwitchBack(originalTab);
+        }
+    }
 }
