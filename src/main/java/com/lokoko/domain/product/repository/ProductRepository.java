@@ -6,6 +6,7 @@ import com.lokoko.domain.product.entity.enums.MiddleCategory;
 import com.lokoko.domain.product.entity.enums.SubCategory;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -14,4 +15,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                                                             SubCategory subCategory);
 
     List<Product> findBySubCategory(SubCategory subCategory);
+
+    @Query("SELECT p FROM Product p WHERE p.oliveYoungUrl IS NOT NULL")
+    List<Product> findAllByOliveYoungUrlNotNull();
 }
