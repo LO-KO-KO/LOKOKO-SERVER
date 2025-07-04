@@ -6,6 +6,7 @@ import static com.lokoko.domain.product.controller.enums.ResponseMessage.CATEGOR
 import com.lokoko.domain.product.controller.enums.ResponseMessage;
 import com.lokoko.domain.product.dto.CategoryProductResponse;
 import com.lokoko.domain.product.dto.CrawlRequest;
+import com.lokoko.domain.product.dto.NameBrandProductResponse;
 import com.lokoko.domain.product.service.NewProductCrawlingService;
 import com.lokoko.domain.product.service.ProductCrawlingService;
 import com.lokoko.domain.product.service.ProductService;
@@ -68,5 +69,14 @@ public class ProductController {
     public ApiResponse<Void> crawlOptions() {
         productCrawlingService.crawlAllOptions();
         return ApiResponse.success(HttpStatus.OK, ResponseMessage.PRODUCT_OPTION_SUCCESS.getMessage(), null);
+    }
+
+    @Operation(summary = "상품명 또는 브랜드명 상품 검색")
+    @GetMapping("/search")
+    public ApiResponse<NameBrandProductResponse> search(@RequestParam String keyword) {
+        NameBrandProductResponse searchResults = productService.search(keyword);
+        return ApiResponse.success(HttpStatus.OK, ResponseMessage.NAME_BRAND_SEARCH_SUCCESS.getMessage(),
+                searchResults);
+        
     }
 }
