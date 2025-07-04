@@ -77,7 +77,16 @@ public class Product extends BaseEntity {
     @Column(nullable = false, length = 30)
     private SubCategory subCategory;
 
+    private String searchToken;
+
+
     public void updateYoutubeUrls(List<String> urls) {
         this.youtubeUrl = String.join(",", urls);
     }
+
+    public void updateSearchToken(String join) {
+        this.searchToken = join;
+    }
+
+
 }
