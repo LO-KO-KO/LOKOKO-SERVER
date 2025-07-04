@@ -84,6 +84,9 @@ dependencies {
     implementation 'com.google.apis:google-api-services-youtube:v3-rev20230816-2.0.0'
     implementation 'com.google.http-client:google-http-client-jackson2:1.39.2'
 
+    // AWS S3 - Spring Cloud AWS Starter
+    implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+
     // QueryDSL
     implementation "com.querydsl:querydsl-jpa:5.0.0:jakarta"
     annotationProcessor "com.querydsl:querydsl-apt:5.0.0:jakarta"
