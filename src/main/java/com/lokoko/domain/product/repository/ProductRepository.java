@@ -4,6 +4,7 @@ import com.lokoko.domain.product.entity.Product;
 import com.lokoko.domain.product.entity.enums.MainCategory;
 import com.lokoko.domain.product.entity.enums.MiddleCategory;
 import com.lokoko.domain.product.entity.enums.SubCategory;
+import com.lokoko.domain.product.entity.enums.Tag;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -22,4 +23,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByMiddleCategoryAndSubCategory(MiddleCategory middleCategory, SubCategory subCategory);
 
     List<Product> findByMiddleCategory(MiddleCategory middleCategory);
+
+    List<Product> findByMiddleCategoryAndTag(MiddleCategory middleCategory, Tag tag);
 }
