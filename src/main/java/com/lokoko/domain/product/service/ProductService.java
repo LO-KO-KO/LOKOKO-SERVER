@@ -9,18 +9,22 @@ import static java.util.stream.Collectors.toList;
 import com.lokoko.domain.image.entity.ProductImage;
 import com.lokoko.domain.image.repository.ProductImageRepository;
 import com.lokoko.domain.product.dto.CategoryProductResponse;
+import com.lokoko.domain.product.dto.NameBrandProductResponse;
 import com.lokoko.domain.product.dto.ProductResponse;
 import com.lokoko.domain.product.dto.ProductSummary;
 import com.lokoko.domain.product.entity.Product;
 import com.lokoko.domain.product.entity.enums.MiddleCategory;
 import com.lokoko.domain.product.entity.enums.SubCategory;
+import com.lokoko.domain.product.exception.MiddleCategoryNotFoundException;
 import com.lokoko.domain.product.exception.ProductNotFoundException;
+import com.lokoko.domain.product.exception.SubCategoryNotFoundException;
 import com.lokoko.domain.product.repository.ProductRepository;
 import com.lokoko.domain.review.entity.enums.Rating;
 import com.lokoko.domain.review.repository.ReviewRepository;
 import com.lokoko.global.kuromoji.service.KuromojiService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -58,6 +62,45 @@ public class ProductService {
             products = productRepository.findByMiddleCategory(middleCategory);
         }
 
+        List<ProductResponse> productResponses = buildProductResponseWithReviewData(products);
+
+        // 최종 DTO 반환
+        if (subCategory == null) { // Middle 카테고리만으로 검색 한 경우
+            return new CategoryProductResponse(
+                    middleCategory.getDisplayName(),
+                    middleCategory.getParent().getDisplayName(),
+                    middleCategory.getDisplayName(),
+                    products.size(),
+                    productResponses);
+
+        }
+
+        // Middle, Sub 카테고리 모두 사용하여 검색 한 경우
+        return new CategoryProductResponse(
+                subCategory.getDisplayName(), //사용자의 검색어 (searchQuery)
+                subCategory.getMiddleCategory().getParent().getDisplayName(), // 서브 카테고리 부모 이름
+                subCategory.getDisplayName(), //사용자가 검색한 서브 카테고리 이름
+                products.size(), // 검색 결과 상품 수
+                productResponses); // 검색 결과 상품 list
+
+    }
+
+    public NameBrandProductResponse search(String keyword) {
+
+        List<String> tokens = kuromojiService.tokenize(keyword);
+        List<Product> products = productRepository.searchByTokens(tokens);
+
+        List<ProductResponse> productResponses = buildProductResponseWithReviewData(products);
+
+        return new NameBrandProductResponse(
+                keyword,
+                products.size(),
+                productResponses
+        );
+
+    }
+
+    private List<ProductResponse> buildProductResponseWithReviewData(List<Product> products) {
         // 제품과 관련있는 이미지들을 한번에 in 쿼리로 받아오기 위해, product 의 Id 만 리스트로 가져온다.
         List<Long> productIds = getProductIds(products);
 
@@ -102,25 +145,7 @@ public class ProductService {
         // 최종적으로 클라이언트에게 반환될 DTO를 만드는 과정
         List<ProductResponse> productResponses = makeProductResponse(products, summaryMap);
 
-        // 최종 DTO 반환
-        if (subCategory == null) { // Middle 카테고리만으로 검색 한 경우
-            return new CategoryProductResponse(
-                    middleCategory.getDisplayName(),
-                    middleCategory.getParent().getDisplayName(),
-                    middleCategory.getDisplayName(),
-                    products.size(),
-                    productResponses);
-
-        }
-
-        // Middle, Sub 카테고리 모두 사용하여 검색 한 경우
-        return new CategoryProductResponse(
-                subCategory.getDisplayName(), //사용자의 검색어 (searchQuery)
-                subCategory.getMiddleCategory().getParent().getDisplayName(), // 서브 카테고리 부모 이름
-                subCategory.getDisplayName(), //사용자가 검색한 서브 카테고리 이름
-                products.size(), // 검색 결과 상품 수
-                productResponses); // 검색 결과 상품 list
-
+        return productResponses;
     }
 
     public void aggregateReviewStats(List<Object[]> reviewStats,
@@ -202,7 +227,7 @@ public class ProductService {
 
         for (Map.Entry<Rating, Long> ratingEntry : ratingCounts.entrySet()) {
             Rating rating = ratingEntry.getKey(); // 별점 값
-            Long count = ratingEntry.getValue(); // 그 별점의 개수 
+            Long count = ratingEntry.getValue(); // 그 별점의 개수
 
             BigDecimal ratio = valueOf(count)
                     .multiply(valueOf(100))
@@ -260,9 +285,24 @@ public class ProductService {
                 ));
     }
 
+    private MiddleCategory getMiddleCategory(String middleCategoryId) {
+        return Arrays.stream(MiddleCategory.values())
+                .filter(mid -> mid.getCtgrNo().equals(middleCategoryId))
+                .findFirst()
+                .orElseThrow(MiddleCategoryNotFoundException::new);
+    }
+    // 클라이언트에서 카테고리 number 를 전달하므로, 이 number 에 해당하는 카테고리 이름을 검색해야함.
+
+    private SubCategory getSubCategory(String subCategoryId) {
+        return Arrays.stream(SubCategory.values())
+                .filter(sub -> sub.getCtgrNo().equals(subCategoryId))
+                .findFirst()
+                .orElseThrow(SubCategoryNotFoundException::new);
+    }
     // 제품을 내림차순(리뷰 수 기준)으로 정렬하는 메소드. 리뷰 수가 같을 경우 평균 별점 내림차순으로 정렬
-    public void sortProductByReviewCountAndRating(List<Product> products, Map<Long, Long> reviewCountMap,
-                                                  Map<Long, BigDecimal> ratingMap) {
+
+    private void sortProductByReviewCountAndRating(List<Product> products, Map<Long, Long> reviewCountMap,
+                                                   Map<Long, BigDecimal> ratingMap) {
         products.sort((p1, p2) -> {
 
             Long count1 = reviewCountMap.getOrDefault(p1.getId(), 0L);

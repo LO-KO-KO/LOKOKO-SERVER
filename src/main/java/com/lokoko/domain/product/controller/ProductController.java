@@ -10,6 +10,8 @@ import com.lokoko.domain.product.controller.enums.ResponseMessage;
 import com.lokoko.domain.product.dto.CategoryNewProductResponse;
 import com.lokoko.domain.product.dto.CategoryProductResponse;
 import com.lokoko.domain.product.dto.CrawlRequest;
+import com.lokoko.domain.product.dto.ProductDetailResponse;
+import com.lokoko.domain.product.dto.ProductDetailYoutubeResponse;
 import com.lokoko.domain.product.dto.NameBrandProductResponse;
 import com.lokoko.domain.product.dto.ProductDetailResponse;
 import com.lokoko.domain.product.service.NewProductCrawlingService;
@@ -84,6 +86,21 @@ public class ProductController {
         productCrawlingService.crawlAllOptions();
         return ApiResponse.success(HttpStatus.OK, ResponseMessage.PRODUCT_OPTION_SUCCESS.getMessage(), null);
     }
+
+    @Operation(summary = "상세조회 제품(별점 포함) 조회")
+    @GetMapping("/details/{productId}")
+    public ApiResponse<ProductDetailResponse> getProductDetail(@PathVariable Long productId) {
+        ProductDetailResponse detail = productReadService.getProductDetail(productId);
+
+        return ApiResponse.success(HttpStatus.OK, PRODUCT_DETAIL_SUCCESS.getMessage(), detail);
+    }
+
+    @Operation(summary = "상세조회 유튜브 리뷰 조회")
+    @GetMapping("/details/{productId}/youtube")
+    public ApiResponse<ProductDetailYoutubeResponse> getProductDetailYoutube(@PathVariable Long productId) {
+        ProductDetailYoutubeResponse detailYoutube = productReadService.getProductDetailYoutube(productId);
+
+        return ApiResponse.success(HttpStatus.OK, PRODUCT_YOUTUBE_DETAIL_SUCCESS.getMessage(), detailYoutube);
 
     @Operation(summary = "상품명 또는 브랜드명 상품 검색")
     @GetMapping("/search")
