@@ -10,7 +10,6 @@ import com.lokoko.domain.image.entity.ProductImage;
 import com.lokoko.domain.product.dto.ProductResponse;
 import com.lokoko.domain.product.dto.ProductSummary;
 import com.lokoko.domain.product.entity.Product;
-import com.lokoko.domain.product.exception.ProductNotFoundException;
 import com.lokoko.domain.review.entity.enums.Rating;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -26,8 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ProductService {
-    public void aggregateReviewStats(List<Object[]> reviewStats,
-                                     Map<Long, Long> productIdToReviewCount,
+    public void aggregateReviewStats(List<Object[]> reviewStats, Map<Long, Long> productIdToReviewCount,
                                      Map<Long, BigDecimal> tempWeightedSums,
                                      Map<Long, Map<Rating, Long>> tempRatingCounts) {
 
@@ -131,17 +129,6 @@ public class ProductService {
                             summary.reviewCount(),
                             summary.avgRating()
                     );
-                })
-                .toList();
-    }
-
-    public List<Long> getProductIds(List<Product> products) {
-        return products.stream()
-                .map(product -> {
-                    if (product == null || product.getId() == null) {
-                        throw new ProductNotFoundException();
-                    }
-                    return product.getId();
                 })
                 .toList();
     }
