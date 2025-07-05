@@ -6,6 +6,7 @@ import com.lokoko.domain.image.repository.ProductImageRepository;
 import com.lokoko.domain.product.dto.CategoryNewProductResponse;
 import com.lokoko.domain.product.dto.CategoryProductResponse;
 import com.lokoko.domain.product.dto.ProductDetailResponse;
+import com.lokoko.domain.product.dto.ProductDetailYoutubeResponse;
 import com.lokoko.domain.product.dto.ProductResponse;
 import com.lokoko.domain.product.dto.ProductSummary;
 import com.lokoko.domain.product.entity.Product;
@@ -163,6 +164,21 @@ public class ProductReadService {
                 product.getMiddleCategory(),
                 product.getSubCategory()
         );
+    }
+
+    public ProductDetailYoutubeResponse getProductDetailYoutube(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(ProductNotFoundException::new);
+
+        String raw = product.getYoutubeUrl();
+        if (raw == null || raw.isBlank()) {
+            return new ProductDetailYoutubeResponse(null);
+        }
+        List<String> urls = Arrays.stream(raw.split(","))
+                .map(String::trim)
+                .toList();
+
+        return new ProductDetailYoutubeResponse(urls);
     }
 
     public List<String> getProductOptionNames(Product product) {
