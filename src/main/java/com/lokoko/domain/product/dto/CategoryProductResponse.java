@@ -4,7 +4,6 @@ import java.util.List;
 
 // 카테고리 검색의 결과를 포함하고 있는 DTO 입니다.
 public record CategoryProductResponse(
-
         // 검색창에는 사용자가 검색한 서브 카테고리 이름
         String searchQuery,
         // 사용자가 선택한 MainCategory
@@ -17,3 +16,4 @@ public record CategoryProductResponse(
         List<ProductResponse> products
 ) {
 }
+
