@@ -54,17 +54,7 @@ public class Review extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 5)
     private Rating rating;
-
-    public static Review createReview(User user, Product product, String positive, String negative, Rating rating) {
-        return Review.builder()
-                .author(user)
-                .product(product)
-                .positiveContent(positive)
-                .negativeContent(negative)
-                .rating(rating)
-                .build();
-    }
-
+    
     // 긍정 리뷰 내용 수정
     public void changePositiveContent(String content) {
         this.positiveContent = content;
