@@ -7,8 +7,8 @@ import java.util.List;
 public record ProductDetailResponse(
         List<ProductResponse> products,
         List<String> productOptions,
+        List<String> imageUrls,
         String brandName,
-        String imageUrl,
         long normalPrice,
         String productDetail,
         String unit,

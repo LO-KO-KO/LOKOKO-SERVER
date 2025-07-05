@@ -4,6 +4,7 @@ import static java.math.BigDecimal.ZERO;
 import static java.math.BigDecimal.valueOf;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toList;
 
 import com.lokoko.domain.image.entity.ProductImage;
@@ -49,7 +50,7 @@ public class ProductService {
         return new NameBrandProductResponse(keyword, products.size(), responses);
     }
 
-    private List<ProductResponse> buildProductResponseWithReviewData(List<Product> products) {
+    public List<ProductResponse> buildProductResponseWithReviewData(List<Product> products) {
         // 1) ID 리스트
         List<Long> productIds = getProductIds(products);
 
@@ -168,6 +169,14 @@ public class ProductService {
                                         .orElse(list.get(0))
                                         .getUrl()
                         )
+                ));
+    }
+
+    public Map<Long, List<String>> createProductImageUrlsMap(List<ProductImage> images) {
+        return images.stream()
+                .collect(groupingBy(
+                        img -> img.getProduct().getId(),
+                        mapping(ProductImage::getUrl, toList())
                 ));
     }
 

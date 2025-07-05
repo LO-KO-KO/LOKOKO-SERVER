@@ -124,9 +124,10 @@ public class ProductReadService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(ProductNotFoundException::new);
 
-        String imageUrl = productService.createProductImageMap(
-                productImageRepository.findByProductIdIn(List.of(productId))
-        ).get(productId);
+        List<Long> productIds = List.of(productId);
+        List<ProductImage> images = productImageRepository.findByProductIdIn(productIds);
+        Map<Long, List<String>> imageUrlsMap = productService.createProductImageUrlsMap(images);
+        List<String> imageUrls = imageUrlsMap.get(productId);
 
         List<Object[]> stats = reviewRepository.countAndAvgRatingByProductIds(List.of(productId));
         Map<Long, Long> reviewCountMap = new HashMap<>();
@@ -137,22 +138,26 @@ public class ProductReadService {
         Map<Long, BigDecimal> avgRatingMap = new HashMap<>();
         productService.calculateAverageRatings(reviewCountMap, weightedSums, counts, avgRatingMap);
 
+        Map<Long, String> imageUrlsStringMap = new HashMap<>();
+        imageUrlsStringMap.put(productId, String.join(",", imageUrls));
+
         List<ProductResponse> products = productService.makeProductResponse(
                 List.of(product),
                 productService.createProductSummaryMap(
                         List.of(product),
-                        Map.of(productId, imageUrl),
+                        imageUrlsStringMap,
                         reviewCountMap,
                         avgRatingMap
                 )
         );
+
         List<String> optionNames = getProductOptionNames(product);
 
         return new ProductDetailResponse(
                 products,
                 optionNames,
+                imageUrls,
                 product.getBrandName(),
-                imageUrl,
                 product.getNormalPrice(),
                 product.getProductDetail(),
                 product.getUnit(),
@@ -187,12 +192,7 @@ public class ProductReadService {
 
     public List<Long> getProductIds(List<Product> products) {
         return products.stream()
-                .map(product -> {
-                    if (product == null || product.getId() == null) {
-                        throw new ProductNotFoundException();
-                    }
-                    return product.getId();
-                })
+                .map(Product::getId)
                 .toList();
     }
 
