@@ -35,6 +35,9 @@ public class Review extends BaseEntity {
     @JoinColumn(name = "user_id")
     private User author; // 리뷰 작성자 foreign key 매핑
 
+    @Column(nullable = false, length = 10)
+    private String productInfo;
+
     @ManyToOne(fetch = LAZY)
     @JoinColumn(name = "product_id")
     private Product product;
@@ -51,17 +54,7 @@ public class Review extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 5)
     private Rating rating;
-
-    public static Review createReview(User user, Product product, String positive, String negative, Rating rating) {
-        return Review.builder()
-                .author(user)
-                .product(product)
-                .positiveContent(positive)
-                .negativeContent(negative)
-                .rating(rating)
-                .build();
-    }
-
+    
     // 긍정 리뷰 내용 수정
     public void changePositiveContent(String content) {
         this.positiveContent = content;
