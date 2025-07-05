@@ -1,5 +1,6 @@
 package com.lokoko.global.kuromoji.service;
 
+import com.lokoko.global.kuromoji.exception.TokenizeFailedException;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -26,7 +27,7 @@ public class KuromojiService {
             }
             ts.end();
         } catch (IOException e) {
-            throw new RuntimeException("Tokenizing failed", e);
+            throw new TokenizeFailedException();
         }
         return out;
     }
