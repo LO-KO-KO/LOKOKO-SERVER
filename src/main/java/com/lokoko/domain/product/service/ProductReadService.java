@@ -64,7 +64,6 @@ public class ProductReadService {
         Map<Long, Map<Rating, Long>> tempRatingCounts = new HashMap<>();
         Map<Long, BigDecimal> tempWeightedSums = new HashMap<>();
         productService.aggregateReviewStats(reviewStats, productIdToReviewCount, tempWeightedSums, tempRatingCounts);
-
         productService.calculateAverageRatings(productIdToReviewCount, tempWeightedSums, tempRatingCounts,
                 productIdToAvgRating);
         productService.sortProductByReviewCountAndRating(products, productIdToReviewCount, productIdToAvgRating);

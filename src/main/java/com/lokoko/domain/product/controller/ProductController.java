@@ -10,18 +10,20 @@ import com.lokoko.domain.product.controller.enums.ResponseMessage;
 import com.lokoko.domain.product.dto.CategoryNewProductResponse;
 import com.lokoko.domain.product.dto.CategoryProductResponse;
 import com.lokoko.domain.product.dto.CrawlRequest;
-import com.lokoko.domain.product.dto.ProductDetailResponse;
-import com.lokoko.domain.product.dto.ProductDetailYoutubeResponse;
 import com.lokoko.domain.product.dto.NameBrandProductResponse;
 import com.lokoko.domain.product.dto.ProductDetailResponse;
+import com.lokoko.domain.product.dto.ProductDetailYoutubeResponse;
+import com.lokoko.domain.product.dto.ProductSearchRequest;
 import com.lokoko.domain.product.service.NewProductCrawlingService;
 import com.lokoko.domain.product.service.ProductCrawlingService;
 import com.lokoko.domain.product.service.ProductReadService;
+import com.lokoko.domain.product.service.ProductService;
 import com.lokoko.global.common.response.ApiResponse;
 import com.lokoko.global.kuromoji.service.ProductMigrationService;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,6 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class ProductController {
     private final ProductReadService productReadService;
+    private final ProductService productService;
     private final ProductCrawlingService productCrawlingService;
     private final NewProductCrawlingService newProductCrawlingService;
     private final ProductMigrationService productMigrationService;
@@ -101,6 +104,7 @@ public class ProductController {
         ProductDetailYoutubeResponse detailYoutube = productReadService.getProductDetailYoutube(productId);
 
         return ApiResponse.success(HttpStatus.OK, PRODUCT_YOUTUBE_DETAIL_SUCCESS.getMessage(), detailYoutube);
+    }
 
     @Operation(summary = "상품명 또는 브랜드명 상품 검색")
     @GetMapping("/search")
@@ -117,21 +121,5 @@ public class ProductController {
     public ApiResponse<String> updateSearchFields() {
         productMigrationService.migrateSearchFields();
         return ApiResponse.success(HttpStatus.OK, ResponseMessage.PRODUCT_MIGRATION_SUCCESS.getMessage(), null);
-    }
-
-    @Operation(summary = "상세조회 제품(별점 포함) 조회")
-    @GetMapping("/details/{productId}")
-    public ApiResponse<ProductDetailResponse> getProductDetail(@PathVariable Long productId) {
-        ProductDetailResponse detail = productReadService.getProductDetail(productId);
-
-        return ApiResponse.success(HttpStatus.OK, PRODUCT_DETAIL_SUCCESS.getMessage(), detail);
-    }
-
-    @Operation(summary = "상세조회 유튜브 리뷰 조회")
-    @GetMapping("/details/{productId}/youtube")
-    public ApiResponse<ProductDetailYoutubeResponse> getProductDetailYoutube(@PathVariable Long productId) {
-        ProductDetailYoutubeResponse detailYoutube = productReadService.getProductDetailYoutube(productId);
-
-        return ApiResponse.success(HttpStatus.OK, PRODUCT_YOUTUBE_DETAIL_SUCCESS.getMessage(), detailYoutube);
     }
 }
