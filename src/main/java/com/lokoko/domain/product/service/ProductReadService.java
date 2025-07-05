@@ -5,6 +5,7 @@ import com.lokoko.domain.image.entity.ProductImage;
 import com.lokoko.domain.image.repository.ProductImageRepository;
 import com.lokoko.domain.product.dto.CategoryNewProductResponse;
 import com.lokoko.domain.product.dto.CategoryProductResponse;
+import com.lokoko.domain.product.dto.ProductDetailResponse;
 import com.lokoko.domain.product.dto.ProductResponse;
 import com.lokoko.domain.product.dto.ProductSummary;
 import com.lokoko.domain.product.entity.Product;
@@ -12,7 +13,9 @@ import com.lokoko.domain.product.entity.enums.MiddleCategory;
 import com.lokoko.domain.product.entity.enums.SubCategory;
 import com.lokoko.domain.product.entity.enums.Tag;
 import com.lokoko.domain.product.exception.MiddleCategoryNotFoundException;
+import com.lokoko.domain.product.exception.ProductNotFoundException;
 import com.lokoko.domain.product.exception.SubCategoryNotFoundException;
+import com.lokoko.domain.product.repository.ProductOptionRepository;
 import com.lokoko.domain.product.repository.ProductRepository;
 import com.lokoko.domain.review.entity.enums.Rating;
 import com.lokoko.domain.review.repository.ReviewRepository;
@@ -32,6 +35,7 @@ public class ProductReadService {
     private final ProductService productService;
     private final ProductRepository productRepository;
     private final ProductImageRepository productImageRepository;
+    private final ProductOptionRepository productOptionRepository;
     private final ReviewRepository reviewRepository;
 
     // 카테고리 id 로 제품 리스트 조회
@@ -48,7 +52,7 @@ public class ProductReadService {
             // middle 카테고리만으로 검색
             products = productRepository.findByMiddleCategory(middleCategory);
         }
-        List<Long> productIds = productService.getProductIds(products);
+        List<Long> productIds = getProductIds(products);
         List<ProductImage> images = productImageRepository.findByProductIdIn(productIds);
         Map<Long, String> productIdToImageUrl = productService.createProductImageMap(images);
 
@@ -91,7 +95,7 @@ public class ProductReadService {
         MiddleCategory middleCategory = getMiddleCategory(middleCategoryId);
         List<Product> products = productRepository.findByMiddleCategoryAndTag(middleCategory, Tag.NEW);
 
-        List<Long> productIds = productService.getProductIds(products);
+        List<Long> productIds = getProductIds(products);
         List<ProductImage> images = productImageRepository.findByProductIdIn(productIds);
         Map<Long, String> productIdToImageUrl = productService.createProductImageMap(images);
 
@@ -114,6 +118,67 @@ public class ProductReadService {
                 middleCategory.name(),
                 productResponses
         );
+    }
+
+    public ProductDetailResponse getProductDetail(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(ProductNotFoundException::new);
+
+        String imageUrl = productService.createProductImageMap(
+                productImageRepository.findByProductIdIn(List.of(productId))
+        ).get(productId);
+
+        List<Object[]> stats = reviewRepository.countAndAvgRatingByProductIds(List.of(productId));
+        Map<Long, Long> reviewCountMap = new HashMap<>();
+        Map<Long, BigDecimal> weightedSums = new HashMap<>();
+        Map<Long, Map<Rating, Long>> counts = new HashMap<>();
+        productService.aggregateReviewStats(stats, reviewCountMap, weightedSums, counts);
+
+        Map<Long, BigDecimal> avgRatingMap = new HashMap<>();
+        productService.calculateAverageRatings(reviewCountMap, weightedSums, counts, avgRatingMap);
+
+        List<ProductResponse> products = productService.makeProductResponse(
+                List.of(product),
+                productService.createProductSummaryMap(
+                        List.of(product),
+                        Map.of(productId, imageUrl),
+                        reviewCountMap,
+                        avgRatingMap
+                )
+        );
+        List<String> optionNames = getProductOptionNames(product);
+
+        return new ProductDetailResponse(
+                products,
+                optionNames,
+                product.getBrandName(),
+                imageUrl,
+                product.getNormalPrice(),
+                product.getProductDetail(),
+                product.getUnit(),
+                product.getIngredients(),
+                product.getShippingInfo(),
+                product.getOliveYoungUrl(),
+                product.getQoo10Url(),
+                product.getMiddleCategory(),
+                product.getSubCategory()
+        );
+    }
+
+    public List<String> getProductOptionNames(Product product) {
+        List<String> names = productOptionRepository.findOptionNamesByProduct(product);
+        return names.isEmpty() ? null : names;
+    }
+
+    public List<Long> getProductIds(List<Product> products) {
+        return products.stream()
+                .map(product -> {
+                    if (product == null || product.getId() == null) {
+                        throw new ProductNotFoundException();
+                    }
+                    return product.getId();
+                })
+                .toList();
     }
 
     private MiddleCategory getMiddleCategory(String middleCategoryId) {

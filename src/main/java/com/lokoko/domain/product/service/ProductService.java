@@ -9,22 +9,18 @@ import static java.util.stream.Collectors.toList;
 import com.lokoko.domain.image.entity.ProductImage;
 import com.lokoko.domain.image.repository.ProductImageRepository;
 import com.lokoko.domain.product.dto.CategoryProductResponse;
-import com.lokoko.domain.product.dto.NameBrandProductResponse;
 import com.lokoko.domain.product.dto.ProductResponse;
 import com.lokoko.domain.product.dto.ProductSummary;
 import com.lokoko.domain.product.entity.Product;
 import com.lokoko.domain.product.entity.enums.MiddleCategory;
 import com.lokoko.domain.product.entity.enums.SubCategory;
-import com.lokoko.domain.product.exception.MiddleCategoryNotFoundException;
 import com.lokoko.domain.product.exception.ProductNotFoundException;
-import com.lokoko.domain.product.exception.SubCategoryNotFoundException;
 import com.lokoko.domain.product.repository.ProductRepository;
 import com.lokoko.domain.review.entity.enums.Rating;
 import com.lokoko.domain.review.repository.ReviewRepository;
 import com.lokoko.global.kuromoji.service.KuromojiService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -40,12 +36,13 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final ProductImageRepository productImageRepository;
     private final ReviewRepository reviewRepository;
+    private final ProductReadService productReadService
     private final KuromojiService kuromojiService;
 
     // 카테고리 id 로 제품 리스트 조회
     public CategoryProductResponse searchProductsByCategory(String middleCategoryId, String subCategoryId) {
 
-        MiddleCategory middleCategory = getMiddleCategory(middleCategoryId);
+        MiddleCategory middleCategory = productReadService.getMiddleCategory(middleCategoryId);
 
         List<Product> products;
 
@@ -53,7 +50,7 @@ public class ProductService {
 
         // 서브 카테고리 id 가 존재하는 경우
         if (subCategoryId != null && !subCategoryId.isBlank()) {
-            subCategory = getSubCategory(subCategoryId);
+            subCategory = productReadService.getSubCategory(subCategoryId);
             // middle 카테고리 + sub 카테고리 조합으로 검색
             products = productRepository.findByMiddleCategoryAndSubCategory(middleCategory, subCategory);
         } else { // 서브 카테고리 id 가 존재하지 않는 경우
@@ -126,10 +123,11 @@ public class ProductService {
 
     }
 
-    private void aggregateReviewStats(List<Object[]> reviewStats,
-                                      Map<Long, Long> productIdToReviewCount,
-                                      Map<Long, BigDecimal> tempWeightedSums,
-                                      Map<Long, Map<Rating, Long>> tempRatingCounts) {
+    public void aggregateReviewStats(List<Object[]> reviewStats,
+                                     Map<Long, Long> productIdToReviewCount,
+                                     Map<Long, BigDecimal> tempWeightedSums,
+                                     Map<Long, Map<Rating, Long>> tempRatingCounts) {
+
         for (Object[] row : reviewStats) {
             Long productId = (Long) row[0];
             Rating rating = (Rating) row[1];
@@ -149,10 +147,10 @@ public class ProductService {
         }
     }
 
-    private void calculateAverageRatings(Map<Long, Long> productIdToReviewCount,
-                                         Map<Long, BigDecimal> tempWeightedSums,
-                                         Map<Long, Map<Rating, Long>> tempRatingCounts,
-                                         Map<Long, BigDecimal> productIdToAvgRating) {
+    public void calculateAverageRatings(Map<Long, Long> productIdToReviewCount,
+                                        Map<Long, BigDecimal> tempWeightedSums,
+                                        Map<Long, Map<Rating, Long>> tempRatingCounts,
+                                        Map<Long, BigDecimal> productIdToAvgRating) {
 
         for (Map.Entry<Long, Long> entry : productIdToReviewCount.entrySet()) {
             Long productId = entry.getKey();
@@ -173,10 +171,10 @@ public class ProductService {
         }
     }
 
-    private Map<Long, ProductSummary> createProductSummaryMap(List<Product> products,
-                                                              Map<Long, String> productIdToImageUrl,
-                                                              Map<Long, Long> productIdToReviewCount,
-                                                              Map<Long, BigDecimal> productIdToAvgRating) {
+    public Map<Long, ProductSummary> createProductSummaryMap(List<Product> products,
+                                                             Map<Long, String> productIdToImageUrl,
+                                                             Map<Long, Long> productIdToReviewCount,
+                                                             Map<Long, BigDecimal> productIdToAvgRating) {
 
         Map<Long, ProductSummary> summaryMap = new HashMap<>();
 
@@ -193,8 +191,8 @@ public class ProductService {
     }
 
     // 현재는, 사용되지 않으나 상품 상세조회에서 사용됨
-    private void calculateRatingRatioForProduct(Map<Rating, Long> ratingCounts, long totalReviews,
-                                                Long productId) {
+    public void calculateRatingRatioForProduct(Map<Rating, Long> ratingCounts, long totalReviews,
+                                               Long productId) {
         // 상품의 별점별 비율 계산 하기
         // ex) (상품1 : (1점 : 0.1), (2점 : 0.3) ......)
         Map<Long, Map<Rating, BigDecimal>> productIdToRatingRatios = new HashMap<>();
@@ -260,21 +258,6 @@ public class ProductService {
                                 }
                         )
                 ));
-    }
-
-    private MiddleCategory getMiddleCategory(String middleCategoryId) {
-        return Arrays.stream(MiddleCategory.values())
-                .filter(mid -> mid.getCtgrNo().equals(middleCategoryId))
-                .findFirst()
-                .orElseThrow(MiddleCategoryNotFoundException::new);
-    }
-
-    // 클라이언트에서 카테고리 number 를 전달하므로, 이 number 에 해당하는 카테고리 이름을 검색해야함.
-    private SubCategory getSubCategory(String subCategoryId) {
-        return Arrays.stream(SubCategory.values())
-                .filter(sub -> sub.getCtgrNo().equals(subCategoryId))
-                .findFirst()
-                .orElseThrow(SubCategoryNotFoundException::new);
     }
 
     // 제품을 내림차순(리뷰 수 기준)으로 정렬하는 메소드. 리뷰 수가 같을 경우 평균 별점 내림차순으로 정렬
