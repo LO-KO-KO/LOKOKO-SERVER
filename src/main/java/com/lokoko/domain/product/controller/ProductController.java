@@ -4,12 +4,14 @@ package com.lokoko.domain.product.controller;
 import static com.lokoko.domain.product.controller.enums.ResponseMessage.CATEGORY_NEW_LIST_SUCCESS;
 import static com.lokoko.domain.product.controller.enums.ResponseMessage.CATEGORY_SEARCH_SUCCESS;
 import static com.lokoko.domain.product.controller.enums.ResponseMessage.PRODUCT_DETAIL_SUCCESS;
+import static com.lokoko.domain.product.controller.enums.ResponseMessage.PRODUCT_YOUTUBE_DETAIL_SUCCESS;
 
 import com.lokoko.domain.product.controller.enums.ResponseMessage;
 import com.lokoko.domain.product.dto.CategoryNewProductResponse;
 import com.lokoko.domain.product.dto.CategoryProductResponse;
 import com.lokoko.domain.product.dto.CrawlRequest;
 import com.lokoko.domain.product.dto.NameBrandProductResponse;
+import com.lokoko.domain.product.dto.ProductDetailResponse;
 import com.lokoko.domain.product.service.NewProductCrawlingService;
 import com.lokoko.domain.product.service.ProductCrawlingService;
 import com.lokoko.domain.product.service.ProductReadService;
@@ -21,6 +23,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -101,18 +104,17 @@ public class ProductController {
 
     @Operation(summary = "상세조회 제품(별점 포함) 조회")
     @GetMapping("/details/{productId}")
-    public ApiResponse<ProductDetailResponse> searchProductsByCategory(@PathVariable Long productId) {
+    public ApiResponse<ProductDetailResponse> getProductDetail(@PathVariable Long productId) {
         ProductDetailResponse detail = productReadService.getProductDetail(productId);
 
         return ApiResponse.success(HttpStatus.OK, PRODUCT_DETAIL_SUCCESS.getMessage(), detail);
     }
 
-//    @Operation(summary = "상세조회 유튜브 리뷰 조회")
-//    @GetMapping("/details/youtube")
-//    public ApiResponse<CategoryProductResponse> searchProductsByCategory() {
-//        CategoryProductResponse categoryProductResponse = productReadService.searchProductsByCategory(middleCategoryId,
-//                subCategoryId);
-//
-//        return ApiResponse.success(HttpStatus.OK, CATEGORY_SEARCH_SUCCESS.getMessage(), categoryProductResponse);
-//    }
+    @Operation(summary = "상세조회 유튜브 리뷰 조회")
+    @GetMapping("/details/{productId}/youtube")
+    public ApiResponse<ProductDetailYoutubeResponse> getProductDetailYoutube(@PathVariable Long productId) {
+        ProductDetailYoutubeResponse detailYoutube = productReadService.getProductDetailYoutube(productId);
+
+        return ApiResponse.success(HttpStatus.OK, PRODUCT_YOUTUBE_DETAIL_SUCCESS.getMessage(), detailYoutube);
+    }
 }
