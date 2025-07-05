@@ -15,6 +15,4 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             + "WHERE r.product.id IN :productIds "
             + "GROUP BY r.product.id, r.rating")
     List<Object[]> countAndAvgRatingByProductIds(@Param("productIds") List<Long> productIds);
-
-
 }
