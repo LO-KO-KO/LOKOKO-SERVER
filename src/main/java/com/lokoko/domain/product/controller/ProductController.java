@@ -9,7 +9,6 @@ import com.lokoko.domain.product.dto.CategoryNewProductResponse;
 import com.lokoko.domain.product.dto.CategoryProductResponse;
 import com.lokoko.domain.product.dto.CrawlRequest;
 import com.lokoko.domain.product.dto.NameBrandProductResponse;
-import com.lokoko.domain.product.dto.ProductSearchRequest;
 import com.lokoko.domain.product.service.NewProductCrawlingService;
 import com.lokoko.domain.product.service.ProductCrawlingService;
 import com.lokoko.domain.product.service.ProductReadService;
@@ -18,7 +17,6 @@ import com.lokoko.global.kuromoji.service.ProductMigrationService;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -99,4 +97,21 @@ public class ProductController {
         productMigrationService.migrateSearchFields();
         return ApiResponse.success(HttpStatus.OK, ResponseMessage.PRODUCT_MIGRATION_SUCCESS.getMessage(), null);
     }
+
+    @Operation(summary = "상세조회 제품(별점 포함) 조회")
+    @GetMapping("/details/{productId}")
+    public ApiResponse<ProductDetailResponse> searchProductsByCategory(@PathVariable Long productId) {
+        ProductDetailResponse detail = productReadService.getProductDetail(productId);
+
+        return ApiResponse.success(HttpStatus.OK, CATEGORY_SEARCH_SUCCESS.getMessage(), detail);
+    }
+
+//    @Operation(summary = "상세조회 유튜브 리뷰 조회")
+//    @GetMapping("/details/youtube")
+//    public ApiResponse<CategoryProductResponse> searchProductsByCategory() {
+//        CategoryProductResponse categoryProductResponse = productReadService.searchProductsByCategory(middleCategoryId,
+//                subCategoryId);
+//
+//        return ApiResponse.success(HttpStatus.OK, CATEGORY_SEARCH_SUCCESS.getMessage(), categoryProductResponse);
+//    }
 }
