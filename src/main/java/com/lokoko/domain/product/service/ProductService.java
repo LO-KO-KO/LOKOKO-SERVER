@@ -8,7 +8,6 @@ import static java.util.stream.Collectors.toList;
 
 import com.lokoko.domain.image.entity.ProductImage;
 import com.lokoko.domain.image.repository.ProductImageRepository;
-import com.lokoko.domain.product.dto.CategoryProductResponse;
 import com.lokoko.domain.product.dto.NameBrandProductResponse;
 import com.lokoko.domain.product.dto.ProductResponse;
 import com.lokoko.domain.product.dto.ProductSummary;
@@ -48,37 +47,6 @@ public class ProductService {
         List<Product> products = productRepository.searchByTokens(tokens);
         List<ProductResponse> responses = buildProductResponseWithReviewData(products);
         return new NameBrandProductResponse(keyword, products.size(), responses);
-    }
-
-    public CategoryProductResponse searchProductsByCategory(String middleCategoryId, String subCategoryId) {
-        MiddleCategory middle = getMiddleCategory(middleCategoryId);
-        List<Product> products;
-        if (subCategoryId != null && !subCategoryId.isBlank()) {
-            SubCategory sub = getSubCategory(subCategoryId);
-            products = productRepository.findByMiddleCategoryAndSubCategory(middle, sub);
-        } else {
-            products = productRepository.findByMiddleCategory(middle);
-        }
-        List<ProductResponse> responses = buildProductResponseWithReviewData(products);
-
-        if (subCategoryId == null || subCategoryId.isBlank()) {
-            return new CategoryProductResponse(
-                    middle.getDisplayName(),
-                    middle.getParent().getDisplayName(),
-                    middle.getDisplayName(),
-                    products.size(),
-                    responses
-            );
-        } else {
-            SubCategory sub = getSubCategory(subCategoryId);
-            return new CategoryProductResponse(
-                    sub.getDisplayName(),
-                    sub.getMiddleCategory().getParent().getDisplayName(),
-                    sub.getDisplayName(),
-                    products.size(),
-                    responses
-            );
-        }
     }
 
     private List<ProductResponse> buildProductResponseWithReviewData(List<Product> products) {
