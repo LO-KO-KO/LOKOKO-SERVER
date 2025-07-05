@@ -3,6 +3,7 @@ package com.lokoko.domain.product.controller;
 
 import static com.lokoko.domain.product.controller.enums.ResponseMessage.CATEGORY_NEW_LIST_SUCCESS;
 import static com.lokoko.domain.product.controller.enums.ResponseMessage.CATEGORY_SEARCH_SUCCESS;
+import static com.lokoko.domain.product.controller.enums.ResponseMessage.PRODUCT_DETAIL_SUCCESS;
 
 import com.lokoko.domain.product.controller.enums.ResponseMessage;
 import com.lokoko.domain.product.dto.CategoryNewProductResponse;
@@ -85,7 +86,7 @@ public class ProductController {
     public ApiResponse<ProductDetailResponse> searchProductsByCategory(@PathVariable Long productId) {
         ProductDetailResponse detail = productReadService.getProductDetail(productId);
 
-        return ApiResponse.success(HttpStatus.OK, CATEGORY_SEARCH_SUCCESS.getMessage(), detail);
+        return ApiResponse.success(HttpStatus.OK, PRODUCT_DETAIL_SUCCESS.getMessage(), detail);
     }
 
 //    @Operation(summary = "상세조회 유튜브 리뷰 조회")
