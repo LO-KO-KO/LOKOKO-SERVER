@@ -9,8 +9,7 @@ public class PermitUrlConfig {
         return new String[]{
                 "/swagger-ui/**",
                 "/v3/api-docs/**",
-                "/api/auth/**",
-                "/api/products/**",
+                "/api/auth/**"
         };
     }
 
