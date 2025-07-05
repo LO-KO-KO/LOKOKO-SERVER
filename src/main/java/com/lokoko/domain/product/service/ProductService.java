@@ -61,45 +61,6 @@ public class ProductService {
             products = productRepository.findByMiddleCategory(middleCategory);
         }
 
-        List<ProductResponse> productResponses = buildProductResponseWithReviewData(products);
-
-        // 최종 DTO 반환
-        if (subCategory == null) { // Middle 카테고리만으로 검색 한 경우
-            return new CategoryProductResponse(
-                    middleCategory.getDisplayName(),
-                    middleCategory.getParent().getDisplayName(),
-                    middleCategory.getDisplayName(),
-                    products.size(),
-                    productResponses);
-
-        }
-
-        // Middle, Sub 카테고리 모두 사용하여 검색 한 경우
-        return new CategoryProductResponse(
-                subCategory.getDisplayName(), //사용자의 검색어 (searchQuery)
-                subCategory.getMiddleCategory().getParent().getDisplayName(), // 서브 카테고리 부모 이름
-                subCategory.getDisplayName(), //사용자가 검색한 서브 카테고리 이름
-                products.size(), // 검색 결과 상품 수
-                productResponses); // 검색 결과 상품 list
-
-    }
-
-    public NameBrandProductResponse search(String keyword) {
-
-        List<String> tokens = kuromojiService.tokenize(keyword);
-        List<Product> products = productRepository.searchByTokens(tokens);
-
-        List<ProductResponse> productResponses = buildProductResponseWithReviewData(products);
-
-        return new NameBrandProductResponse(
-                keyword,
-                products.size(),
-                productResponses
-        );
-
-    }
-
-    private List<ProductResponse> buildProductResponseWithReviewData(List<Product> products) {
         // 제품과 관련있는 이미지들을 한번에 in 쿼리로 받아오기 위해, product 의 Id 만 리스트로 가져온다.
         List<Long> productIds = getProductIds(products);
 
@@ -144,14 +105,31 @@ public class ProductService {
         // 최종적으로 클라이언트에게 반환될 DTO를 만드는 과정
         List<ProductResponse> productResponses = makeProductResponse(products, summaryMap);
 
-        return productResponses;
+        // 최종 DTO 반환
+        if (subCategory == null) { // Middle 카테고리만으로 검색 한 경우
+            return new CategoryProductResponse(
+                    middleCategory.getDisplayName(),
+                    middleCategory.getParent().getDisplayName(),
+                    middleCategory.getDisplayName(),
+                    products.size(),
+                    productResponses);
+
+        }
+
+        // Middle, Sub 카테고리 모두 사용하여 검색 한 경우
+        return new CategoryProductResponse(
+                subCategory.getDisplayName(), //사용자의 검색어 (searchQuery)
+                subCategory.getMiddleCategory().getParent().getDisplayName(), // 서브 카테고리 부모 이름
+                subCategory.getDisplayName(), //사용자가 검색한 서브 카테고리 이름
+                products.size(), // 검색 결과 상품 수
+                productResponses); // 검색 결과 상품 list
+
     }
 
     private void aggregateReviewStats(List<Object[]> reviewStats,
                                       Map<Long, Long> productIdToReviewCount,
                                       Map<Long, BigDecimal> tempWeightedSums,
                                       Map<Long, Map<Rating, Long>> tempRatingCounts) {
-
         for (Object[] row : reviewStats) {
             Long productId = (Long) row[0];
             Rating rating = (Rating) row[1];
@@ -213,8 +191,8 @@ public class ProductService {
         }
         return summaryMap;
     }
-    // 현재는, 사용되지 않으나 상품 상세조회에서 사용됨
 
+    // 현재는, 사용되지 않으나 상품 상세조회에서 사용됨
     private void calculateRatingRatioForProduct(Map<Rating, Long> ratingCounts, long totalReviews,
                                                 Long productId) {
         // 상품의 별점별 비율 계산 하기
@@ -226,7 +204,7 @@ public class ProductService {
 
         for (Map.Entry<Rating, Long> ratingEntry : ratingCounts.entrySet()) {
             Rating rating = ratingEntry.getKey(); // 별점 값
-            Long count = ratingEntry.getValue(); // 그 별점의 개수
+            Long count = ratingEntry.getValue(); // 그 별점의 개수 
 
             BigDecimal ratio = valueOf(count)
                     .multiply(valueOf(100))
@@ -237,8 +215,8 @@ public class ProductService {
         productIdToRatingRatios.put(productId, ratios);
     }
 
-    private List<ProductResponse> makeProductResponse(List<Product> products,
-                                                      Map<Long, ProductSummary> summaryMap) {
+    public List<ProductResponse> makeProductResponse(List<Product> products,
+                                                     Map<Long, ProductSummary> summaryMap) {
         return products.stream()
                 .map(product -> {
 
@@ -256,7 +234,7 @@ public class ProductService {
                 .toList();
     }
 
-    private List<Long> getProductIds(List<Product> products) {
+    public List<Long> getProductIds(List<Product> products) {
         return products.stream()
                 .map(product -> {
                     if (product == null || product.getId() == null) {
@@ -267,7 +245,7 @@ public class ProductService {
                 .toList();
     }
 
-    private Map<Long, String> createProductImageMap(List<ProductImage> images) {
+    public Map<Long, String> createProductImageMap(List<ProductImage> images) {
         return images.stream()
                 .collect(groupingBy(
                         img -> img.getProduct().getId(),
@@ -290,18 +268,18 @@ public class ProductService {
                 .findFirst()
                 .orElseThrow(MiddleCategoryNotFoundException::new);
     }
-    // 클라이언트에서 카테고리 number 를 전달하므로, 이 number 에 해당하는 카테고리 이름을 검색해야함.
 
+    // 클라이언트에서 카테고리 number 를 전달하므로, 이 number 에 해당하는 카테고리 이름을 검색해야함.
     private SubCategory getSubCategory(String subCategoryId) {
         return Arrays.stream(SubCategory.values())
                 .filter(sub -> sub.getCtgrNo().equals(subCategoryId))
                 .findFirst()
                 .orElseThrow(SubCategoryNotFoundException::new);
     }
-    // 제품을 내림차순(리뷰 수 기준)으로 정렬하는 메소드. 리뷰 수가 같을 경우 평균 별점 내림차순으로 정렬
 
-    private void sortProductByReviewCountAndRating(List<Product> products, Map<Long, Long> reviewCountMap,
-                                                   Map<Long, BigDecimal> ratingMap) {
+    // 제품을 내림차순(리뷰 수 기준)으로 정렬하는 메소드. 리뷰 수가 같을 경우 평균 별점 내림차순으로 정렬
+    public void sortProductByReviewCountAndRating(List<Product> products, Map<Long, Long> reviewCountMap,
+                                                  Map<Long, BigDecimal> ratingMap) {
         products.sort((p1, p2) -> {
 
             Long count1 = reviewCountMap.getOrDefault(p1.getId(), 0L);
