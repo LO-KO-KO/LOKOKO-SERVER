@@ -10,6 +10,4 @@ public record ProductResponse(
         Long reviewCount, // 리뷰 개수
         BigDecimal rating // 별점
 ) {
-
-
 }
