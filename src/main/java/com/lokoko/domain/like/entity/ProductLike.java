@@ -2,6 +2,7 @@ package com.lokoko.domain.like.entity;
 
 import com.lokoko.domain.product.entity.Product;
 import com.lokoko.domain.user.entity.User;
+import com.lokoko.global.common.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -28,7 +29,7 @@ import static jakarta.persistence.FetchType.LAZY;
 @Table(uniqueConstraints = {
         @UniqueConstraint(name = "uk_product_like_user", columnNames = {"product_id", "user_id"})
 })
-public class ProductLike {
+public class ProductLike extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
