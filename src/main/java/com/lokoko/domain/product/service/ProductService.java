@@ -146,6 +146,8 @@ public class ProductService {
                             product.getId(),
                             s.imageUrl(),
                             product.getProductName(),
+                            product.getBrandName(),
+                            product.getUnit(),
                             s.reviewCount(),
                             s.avgRating()
                     );
