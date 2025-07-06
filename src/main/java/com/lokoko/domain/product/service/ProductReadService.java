@@ -4,6 +4,7 @@ package com.lokoko.domain.product.service;
 import com.lokoko.domain.image.entity.ProductImage;
 import com.lokoko.domain.image.repository.ProductImageRepository;
 import com.lokoko.domain.product.dto.CategoryNewProductResponse;
+import com.lokoko.domain.product.dto.CategoryPopularProductResponse;
 import com.lokoko.domain.product.dto.CategoryProductResponse;
 import com.lokoko.domain.product.dto.ProductDetailResponse;
 import com.lokoko.domain.product.dto.ProductDetailYoutubeResponse;
@@ -116,6 +117,18 @@ public class ProductReadService {
 
         return new CategoryNewProductResponse(
                 middleCategory.name(),
+                productResponses
+        );
+    }
+
+    public CategoryPopularProductResponse searchPopularProductsByCategory(String middleCategoryId) {
+        MiddleCategory middleCategory = getMiddleCategory(middleCategoryId);
+        List<Product> products = productRepository.findByMiddleCategory(middleCategory);
+        List<ProductResponse> productResponses =
+                productService.buildProductResponseWithReviewData(products);
+
+        return new CategoryPopularProductResponse(
+                middleCategory.getDisplayName(),
                 productResponses
         );
     }
