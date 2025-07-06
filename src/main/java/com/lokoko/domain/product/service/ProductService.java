@@ -13,18 +13,13 @@ import com.lokoko.domain.product.dto.NameBrandProductResponse;
 import com.lokoko.domain.product.dto.ProductResponse;
 import com.lokoko.domain.product.dto.ProductSummary;
 import com.lokoko.domain.product.entity.Product;
-import com.lokoko.domain.product.entity.enums.MiddleCategory;
-import com.lokoko.domain.product.entity.enums.SubCategory;
-import com.lokoko.domain.product.exception.MiddleCategoryNotFoundException;
 import com.lokoko.domain.product.exception.ProductNotFoundException;
-import com.lokoko.domain.product.exception.SubCategoryNotFoundException;
 import com.lokoko.domain.product.repository.ProductRepository;
 import com.lokoko.domain.review.entity.enums.Rating;
 import com.lokoko.domain.review.repository.ReviewRepository;
 import com.lokoko.global.kuromoji.service.KuromojiService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -205,20 +200,6 @@ public class ProductService {
                     return p.getId();
                 })
                 .toList();
-    }
-
-    private MiddleCategory getMiddleCategory(String middleCategoryId) {
-        return Arrays.stream(MiddleCategory.values())
-                .filter(mid -> mid.getCtgrNo().equals(middleCategoryId))
-                .findFirst()
-                .orElseThrow(MiddleCategoryNotFoundException::new);
-    }
-
-    private SubCategory getSubCategory(String subCategoryId) {
-        return Arrays.stream(SubCategory.values())
-                .filter(sub -> sub.getCtgrNo().equals(subCategoryId))
-                .findFirst()
-                .orElseThrow(SubCategoryNotFoundException::new);
     }
 
     public void calculateRatingRatioForProduct(Map<Rating, Long> ratingCounts, long totalReviews, Long productId) {
