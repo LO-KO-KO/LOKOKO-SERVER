@@ -1,6 +1,5 @@
 package com.lokoko.domain.product.service;
 
-import static java.math.BigDecimal.ZERO;
 import static java.math.BigDecimal.valueOf;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.groupingBy;
@@ -27,12 +26,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class ProductService {
 
     private final ProductRepository productRepository;
@@ -48,8 +51,10 @@ public class ProductService {
     }
 
     public List<ProductResponse> buildProductResponseWithReviewData(List<Product> products) {
-        // 1) ID 리스트
-        List<Long> productIds = getProductIds(products);
+        // 1) ID 추출
+        List<Long> productIds = products.stream()
+                .map(Product::getId)
+                .toList();
 
         // 2) 이미지 조회 → 맵 생성
         Map<Long, String> imageMap = createProductImageMap(
@@ -58,31 +63,43 @@ public class ProductService {
 
         // 3) 리뷰 통계 조회
         List<Object[]> stats = reviewRepository.countAndAvgRatingByProductIds(productIds);
-        Map<Long, Long> productIdToReviewCount = new HashMap<>();
-        Map<Long, BigDecimal> tempWeightedSums = new HashMap<>();
-        Map<Long, Map<Rating, Long>> tempRatingCounts = new HashMap<>();
-        aggregateReviewStats(stats, productIdToReviewCount, tempWeightedSums, tempRatingCounts);
+        Map<Long, Long> reviewCountMap = new HashMap<>();
+        Map<Long, BigDecimal> weightedSumsMap = new HashMap<>();
+        Map<Long, Map<Rating, Long>> ratingCountsMap = new HashMap<>();
+        aggregateReviewStats(stats,
+                reviewCountMap,
+                weightedSumsMap,
+                ratingCountsMap);
 
         // 4) 평균 별점 계산
-        Map<Long, BigDecimal> productIdToAvgRating = new HashMap<>();
-        calculateAverageRatings(productIdToReviewCount, tempWeightedSums, tempRatingCounts, productIdToAvgRating);
+        Map<Long, Double> avgMap =
+                calculateAverageRatings(reviewCountMap, weightedSumsMap);
 
         // 5) 정렬
-        sortProductByReviewCountAndRating(products, productIdToReviewCount, productIdToAvgRating);
+        // 4) 이제 ratingCountsMap 과 avgMap 을 각각 사용 가능
+        Map<Long, ProductSummary> summaryMap =
+                createProductSummaryMap(
+                        products,
+                        imageMap,
+                        reviewCountMap,
+                        avgMap
+                );
 
         // 6) summary 맵 생성
-        Map<Long, ProductSummary> summaryMap = createProductSummaryMap(
-                products, imageMap, productIdToReviewCount, productIdToAvgRating
-        );
-
-        // 7) 최종 DTO 변환
         return makeProductResponse(products, summaryMap);
+    }
+
+    public Slice<ProductResponse> buildProductResponseWithReviewData(Slice<Product> slice) {
+        List<ProductResponse> content = buildProductResponseWithReviewData(slice.getContent());
+
+        return new SliceImpl<>(content, slice.getPageable(), slice.hasNext());
     }
 
     public void aggregateReviewStats(List<Object[]> reviewStats,
                                      Map<Long, Long> productIdToReviewCount,
                                      Map<Long, BigDecimal> tempWeightedSums,
                                      Map<Long, Map<Rating, Long>> tempRatingCounts) {
+        log.debug("→ aggregateReviewStats 시작: reviewStatsSize={}", reviewStats.size());
         for (Object[] row : reviewStats) {
             Long productId = (Long) row[0];
             Rating rating = (Rating) row[1];
@@ -90,48 +107,48 @@ public class ProductService {
 
             productIdToReviewCount.merge(productId, count, Long::sum);
 
-            BigDecimal weightedValue = valueOf(Integer.parseInt(rating.getValue()))
-                    .multiply(valueOf(count));
+            BigDecimal weightedValue = BigDecimal
+                    .valueOf(rating.getValue())
+                    .multiply(BigDecimal.valueOf(count));
             tempWeightedSums.merge(productId, weightedValue, BigDecimal::add);
 
-            tempRatingCounts.computeIfAbsent(productId, k -> new EnumMap<>(Rating.class))
-                    .put(rating, count);
+            tempRatingCounts
+                    .computeIfAbsent(productId, k -> new EnumMap<>(Rating.class))
+                    .merge(rating, count, Long::sum);
         }
+        log.info("→ aggregateReviewStats 완료: productIdToReviewCount={}, tempWeightedSums={}, tempRatingCounts={}",
+                productIdToReviewCount, tempWeightedSums, tempRatingCounts);
     }
 
-    public void calculateAverageRatings(Map<Long, Long> productIdToReviewCount,
-                                        Map<Long, BigDecimal> tempWeightedSums,
-                                        Map<Long, Map<Rating, Long>> tempRatingCounts,
-                                        Map<Long, BigDecimal> productIdToAvgRating) {
-        for (Map.Entry<Long, Long> entry : productIdToReviewCount.entrySet()) {
-            Long productId = entry.getKey();
-            Long totalReviews = entry.getValue();
-            BigDecimal weightedSum = tempWeightedSums.get(productId);
-
-            BigDecimal avg = totalReviews > 0
-                    ? weightedSum.divide(valueOf(totalReviews), 1, RoundingMode.HALF_UP)
-                    : ZERO;
-            productIdToAvgRating.put(productId, avg);
-
-            Map<Rating, Long> ratingCounts = tempRatingCounts.get(productId);
-            if (ratingCounts != null) {
-                calculateRatingRatioForProduct(ratingCounts, totalReviews, productId);
-            }
+    public Map<Long, Double> calculateAverageRatings(
+            Map<Long, Long> reviewCount,
+            Map<Long, BigDecimal> weightedSums
+    ) {
+        Map<Long, Double> avgMap = new HashMap<>();
+        for (var e : reviewCount.entrySet()) {
+            long cnt = e.getValue();
+            double avg = cnt == 0
+                    ? 0.0
+                    : weightedSums.get(e.getKey())
+                            .divide(BigDecimal.valueOf(cnt), 1, RoundingMode.HALF_UP)
+                            .doubleValue();
+            avgMap.put(e.getKey(), avg);
         }
+        return avgMap;
     }
 
     public Map<Long, ProductSummary> createProductSummaryMap(List<Product> products,
                                                              Map<Long, String> productIdToImageUrl,
                                                              Map<Long, Long> productIdToReviewCount,
-                                                             Map<Long, BigDecimal> productIdToAvgRating) {
+                                                             Map<Long, Double> productIdToAvgRating) {
         Map<Long, ProductSummary> summaryMap = new HashMap<>();
         for (Product product : products) {
             Long productId = product.getId();
-            String imageUrl = productIdToImageUrl.getOrDefault(productId, null);
-            Long reviewCount = productIdToReviewCount.getOrDefault(productId, 0L);
-            BigDecimal avg = productIdToAvgRating.getOrDefault(productId, ZERO);
+            String imageUrl = productIdToImageUrl.getOrDefault(productId, "");        // null 대신 빈 문자열
+            Long reviewCnt = productIdToReviewCount.getOrDefault(productId, 0L);
+            Double avg = productIdToAvgRating.getOrDefault(productId, 0.0);
 
-            summaryMap.put(productId, new ProductSummary(imageUrl, reviewCount, avg));
+            summaryMap.put(productId, new ProductSummary(imageUrl, reviewCnt, avg));
         }
         return summaryMap;
     }
@@ -142,7 +159,7 @@ public class ProductService {
                 .map(product -> {
                     ProductSummary s = summaryMap.getOrDefault(
                             product.getId(),
-                            new ProductSummary(null, 0L, ZERO)
+                            new ProductSummary("", 0L, 0.0)
                     );
                     List<String> imageUrls = Optional.ofNullable(s.imageUrl())
                             .filter(url -> !url.isBlank())
@@ -197,17 +214,17 @@ public class ProductService {
 
     public void sortProductByReviewCountAndRating(List<Product> products,
                                                   Map<Long, Long> reviewCountMap,
-                                                  Map<Long, BigDecimal> ratingMap) {
+                                                  Map<Long, Double> ratingMap) {
         products.sort((p1, p2) -> {
-            Long c1 = reviewCountMap.getOrDefault(p1.getId(), 0L);
-            Long c2 = reviewCountMap.getOrDefault(p2.getId(), 0L);
-            int cmp = c2.compareTo(c1);
-            if (cmp == 0) {
-                BigDecimal r1 = ratingMap.getOrDefault(p1.getId(), ZERO);
-                BigDecimal r2 = ratingMap.getOrDefault(p2.getId(), ZERO);
-                return r2.compareTo(r1);
+            int cmp = reviewCountMap.getOrDefault(p2.getId(), 0L)
+                    .compareTo(reviewCountMap.getOrDefault(p1.getId(), 0L));
+            if (cmp != 0) {
+                return cmp;
             }
-            return cmp;
+            return Double.compare(
+                    ratingMap.getOrDefault(p2.getId(), 0.0),
+                    ratingMap.getOrDefault(p1.getId(), 0.0)
+            );
         });
     }
 
