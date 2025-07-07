@@ -16,6 +16,7 @@ import com.lokoko.domain.product.exception.ProductNotFoundException;
 import com.lokoko.domain.product.repository.ProductRepository;
 import com.lokoko.domain.review.entity.enums.Rating;
 import com.lokoko.domain.review.repository.ReviewRepository;
+import com.lokoko.global.common.response.PageableResponse;
 import com.lokoko.global.kuromoji.service.KuromojiService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -27,6 +28,8 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
@@ -43,11 +46,17 @@ public class ProductService {
     private final ReviewRepository reviewRepository;
     private final KuromojiService kuromojiService;
 
-    public NameBrandProductResponse search(String keyword) {
+    public NameBrandProductResponse search(String keyword, int page, int size) {
         List<String> tokens = kuromojiService.tokenize(keyword);
-        List<Product> products = productRepository.searchByTokens(tokens);
-        List<ProductResponse> responses = buildProductResponseWithReviewData(products);
-        return new NameBrandProductResponse(keyword, products.size(), responses);
+        Pageable pageable = PageRequest.of(page, size);
+        Slice<Product> slice = productRepository.searchByTokens(tokens, pageable);
+        Slice<ProductResponse> responseSlice = buildProductResponseWithReviewData(slice);
+        
+        return new NameBrandProductResponse(
+                keyword,
+                responseSlice.getContent(),
+                PageableResponse.of(responseSlice)
+        );
     }
 
     public List<ProductResponse> buildProductResponseWithReviewData(List<Product> products) {
