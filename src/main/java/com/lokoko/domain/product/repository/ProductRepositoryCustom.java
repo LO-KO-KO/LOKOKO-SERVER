@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ProductRepositoryCustom {
-    List<Product> searchByTokens(List<String> tokens);
+    Slice<Product> searchByTokens(List<String> tokens, Pageable pageable);
 
     Slice<Product> findProductsByPopularityAndRating(MiddleCategory category, Pageable pageable);
 

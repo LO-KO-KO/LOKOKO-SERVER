@@ -42,61 +42,75 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
      * @return 검색 조건에 부합하는 Product List
      */
     @Override
-    public List<Product> searchByTokens(List<String> tokens) {
-
+    public Slice<Product> searchByTokens(List<String> tokens, Pageable pageable) {
+        List<Product> allMatches;
         if (tokens.isEmpty()) {
-            return List.of();
-        }
-
-        String fullKeyword = String.join("", tokens);
-        List<Product> exactMatches = queryFactory
-                .selectFrom(product)
-                .where(product.searchToken.containsIgnoreCase(fullKeyword))
-                .fetch();
-
-        if (!exactMatches.isEmpty()) {
-            return exactMatches;
-        }
-
-        BooleanBuilder allTokensMatch = new BooleanBuilder();
-        tokens.forEach(token ->
-                allTokensMatch.and(product.searchToken.containsIgnoreCase(token))
-        );
-
-        List<Product> allTokenMatches = queryFactory
-                .selectFrom(product)
-                .where(allTokensMatch)
-                .fetch();
-
-        if (!allTokenMatches.isEmpty()) {
-            return allTokenMatches;
-        }
-
-        if (tokens.size() >= 3) {
-            BooleanBuilder majorTokensMatch = new BooleanBuilder();
-
-            majorTokensMatch.and(product.searchToken.containsIgnoreCase(tokens.get(0)))
-                    .and(product.searchToken.containsIgnoreCase(tokens.get(tokens.size() - 1)));
-
-            List<Product> majorMatches = queryFactory
+            allMatches = List.of();
+        } else {
+            String fullKeyword = String.join("", tokens);
+            List<Product> exactMatches = queryFactory
                     .selectFrom(product)
-                    .where(majorTokensMatch)
+                    .where(product.searchToken.containsIgnoreCase(fullKeyword))
                     .fetch();
-
-            if (!majorMatches.isEmpty()) {
-                return majorMatches;
+            if (!exactMatches.isEmpty()) {
+                allMatches = exactMatches;
+            } else {
+                BooleanBuilder allTokensMatch = new BooleanBuilder();
+                tokens.forEach(token ->
+                        allTokensMatch.and(product.searchToken.containsIgnoreCase(token))
+                );
+                List<Product> allTokenMatches = queryFactory
+                        .selectFrom(product)
+                        .where(allTokensMatch)
+                        .fetch();
+                if (!allTokenMatches.isEmpty()) {
+                    allMatches = allTokenMatches;
+                } else if (tokens.size() >= 3) {
+                    BooleanBuilder majorTokensMatch = new BooleanBuilder()
+                            .and(product.searchToken.containsIgnoreCase(tokens.get(0)))
+                            .and(product.searchToken.containsIgnoreCase(tokens.get(tokens.size() - 1)));
+                    List<Product> majorMatches = queryFactory
+                            .selectFrom(product)
+                            .where(majorTokensMatch)
+                            .fetch();
+                    if (!majorMatches.isEmpty()) {
+                        allMatches = majorMatches;
+                    } else {
+                        BooleanBuilder anyTokenMatch = new BooleanBuilder();
+                        tokens.forEach(token ->
+                                anyTokenMatch.or(product.searchToken.containsIgnoreCase(token))
+                        );
+                        allMatches = queryFactory
+                                .selectFrom(product)
+                                .where(anyTokenMatch)
+                                .fetch();
+                    }
+                } else {
+                    BooleanBuilder anyTokenMatch = new BooleanBuilder();
+                    tokens.forEach(token ->
+                            anyTokenMatch.or(product.searchToken.containsIgnoreCase(token))
+                    );
+                    allMatches = queryFactory
+                            .selectFrom(product)
+                            .where(anyTokenMatch)
+                            .fetch();
+                }
             }
         }
+        int offset = (int) pageable.getOffset();
+        int limit = pageable.getPageSize();
+        List<Product> content;
+        boolean hasNext = false;
 
-        BooleanBuilder anyTokenMatch = new BooleanBuilder();
-        tokens.forEach(token ->
-                anyTokenMatch.or(product.searchToken.containsIgnoreCase(token))
-        );
+        if (offset >= allMatches.size()) {
+            content = List.of();
+        } else {
+            int toIndex = Math.min(offset + limit, allMatches.size());
+            content = allMatches.subList(offset, toIndex);
+            hasNext = allMatches.size() > toIndex;
+        }
 
-        return queryFactory
-                .selectFrom(product)
-                .where(anyTokenMatch)
-                .fetch();
+        return new SliceImpl<>(content, pageable, hasNext);
     }
 
     @Override
