@@ -2,12 +2,14 @@ package com.lokoko.domain.product.controller;
 
 
 import static com.lokoko.domain.product.controller.enums.ResponseMessage.CATEGORY_NEW_LIST_SUCCESS;
+import static com.lokoko.domain.product.controller.enums.ResponseMessage.CATEGORY_POPULAR_LIST_SUCCESS;
 import static com.lokoko.domain.product.controller.enums.ResponseMessage.CATEGORY_SEARCH_SUCCESS;
 import static com.lokoko.domain.product.controller.enums.ResponseMessage.PRODUCT_DETAIL_SUCCESS;
 import static com.lokoko.domain.product.controller.enums.ResponseMessage.PRODUCT_YOUTUBE_DETAIL_SUCCESS;
 
 import com.lokoko.domain.product.controller.enums.ResponseMessage;
 import com.lokoko.domain.product.dto.CategoryNewProductResponse;
+import com.lokoko.domain.product.dto.CategoryPopularProductResponse;
 import com.lokoko.domain.product.dto.CategoryProductResponse;
 import com.lokoko.domain.product.dto.CrawlRequest;
 import com.lokoko.domain.product.dto.NameBrandProductResponse;
@@ -72,6 +74,17 @@ public class ProductController {
                 middleCategoryId);
 
         return ApiResponse.success(HttpStatus.OK, CATEGORY_NEW_LIST_SUCCESS.getMessage(), categoryNewProductResponse);
+    }
+
+    @Operation(summary = "인기상품 카테고리별 조회")
+    @GetMapping("/categories/popular")
+    public ApiResponse<CategoryPopularProductResponse> searchPopularProductsByCategory(
+            @RequestParam String middleCategoryId) {
+        CategoryPopularProductResponse categoryPopularProductResponse = productReadService.searchPopularProductsByCategory(
+                middleCategoryId);
+
+        return ApiResponse.success(HttpStatus.OK, CATEGORY_POPULAR_LIST_SUCCESS.getMessage(),
+                categoryPopularProductResponse);
     }
 
     @Hidden

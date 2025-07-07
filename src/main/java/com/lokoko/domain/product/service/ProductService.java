@@ -13,11 +13,7 @@ import com.lokoko.domain.product.dto.NameBrandProductResponse;
 import com.lokoko.domain.product.dto.ProductResponse;
 import com.lokoko.domain.product.dto.ProductSummary;
 import com.lokoko.domain.product.entity.Product;
-import com.lokoko.domain.product.entity.enums.MiddleCategory;
-import com.lokoko.domain.product.entity.enums.SubCategory;
-import com.lokoko.domain.product.exception.MiddleCategoryNotFoundException;
 import com.lokoko.domain.product.exception.ProductNotFoundException;
-import com.lokoko.domain.product.exception.SubCategoryNotFoundException;
 import com.lokoko.domain.product.repository.ProductRepository;
 import com.lokoko.domain.review.entity.enums.Rating;
 import com.lokoko.domain.review.repository.ReviewRepository;
@@ -29,6 +25,7 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -147,10 +144,28 @@ public class ProductService {
                             product.getId(),
                             new ProductSummary(null, 0L, ZERO)
                     );
+                    List<String> imageUrls = Optional.ofNullable(s.imageUrl())
+                            .filter(url -> !url.isBlank())
+                            .map(url -> {
+                                if (url.contains(",")) {
+
+                                    return Arrays.stream(url.split(","))
+                                            .map(String::trim)
+                                            .filter(u -> !u.isEmpty())
+                                            .toList();
+                                } else {
+
+                                    return List.of(url);
+                                }
+                            })
+                            .orElseGet(List::of);
+
                     return new ProductResponse(
                             product.getId(),
-                            s.imageUrl(),
+                            imageUrls,
                             product.getProductName(),
+                            product.getBrandName(),
+                            product.getUnit(),
                             s.reviewCount(),
                             s.avgRating()
                     );
@@ -205,20 +220,6 @@ public class ProductService {
                     return p.getId();
                 })
                 .toList();
-    }
-
-    private MiddleCategory getMiddleCategory(String middleCategoryId) {
-        return Arrays.stream(MiddleCategory.values())
-                .filter(mid -> mid.getCtgrNo().equals(middleCategoryId))
-                .findFirst()
-                .orElseThrow(MiddleCategoryNotFoundException::new);
-    }
-
-    private SubCategory getSubCategory(String subCategoryId) {
-        return Arrays.stream(SubCategory.values())
-                .filter(sub -> sub.getCtgrNo().equals(subCategoryId))
-                .findFirst()
-                .orElseThrow(SubCategoryNotFoundException::new);
     }
 
     public void calculateRatingRatioForProduct(Map<Rating, Long> ratingCounts, long totalReviews, Long productId) {
