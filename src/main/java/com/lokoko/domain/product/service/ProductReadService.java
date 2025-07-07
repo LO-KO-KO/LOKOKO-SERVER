@@ -26,6 +26,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,19 +43,25 @@ public class ProductReadService {
     private final ReviewRepository reviewRepository;
 
     // 카테고리 id 로 제품 리스트 조회
-    public CategoryProductResponse searchProductsByCategory(String middleCategoryId, String subCategoryId) {
+    public CategoryProductResponse searchProductsByCategory(String middleCategoryId, String subCategoryId,
+                                                            Integer page, Integer size) {
         MiddleCategory middleCategory = getMiddleCategory(middleCategoryId);
-        List<Product> products;
+        Slice<Product> productSlice;
         SubCategory subCategory = null;
+
+        Pageable pageable = PageRequest.of(page, size);
 
         if (subCategoryId != null && !subCategoryId.isBlank()) {
             subCategory = getSubCategory(subCategoryId);
             // middle 카테고리 + sub 카테고리 조합으로 검색
-            products = productRepository.findByMiddleCategoryAndSubCategory(middleCategory, subCategory);
+            productSlice = productRepository.findByMiddleCategoryAndSubCategory(middleCategory, subCategory, pageable);
         } else { // 서브 카테고리 id 가 존재하지 않는 경우
             // middle 카테고리만으로 검색
-            products = productRepository.findByMiddleCategory(middleCategory);
+            productSlice = productRepository.findByMiddleCategory(middleCategory, pageable);
         }
+
+        List<Product> products = productSlice.getContent();
+
         List<Long> productIds = getProductIds(products);
         List<ProductImage> images = productImageRepository.findByProductIdIn(productIds);
         Map<Long, String> productIdToImageUrl = productService.createProductImageMap(images);
@@ -74,21 +83,23 @@ public class ProductReadService {
         List<ProductResponse> productResponses = productService.makeProductResponse(products, summaryMap);
 
         if (subCategory == null) { // Middle 카테고리만으로 검색 한 경우
-            return new CategoryProductResponse(
+            return CategoryProductResponse.of(
                     middleCategory.getDisplayName(),
                     middleCategory.getParent().getDisplayName(),
                     middleCategory.getDisplayName(),
-                    products.size(),
-                    productResponses);
+                    productSlice,
+                    productResponses
+            );
 
         }
         // Middle, Sub 카테고리 모두 사용하여 검색 한 경우
-        return new CategoryProductResponse(
+        return CategoryProductResponse.of(
                 subCategory.getDisplayName(), //사용자의 검색어 (searchQuery)
                 subCategory.getMiddleCategory().getParent().getDisplayName(), // 서브 카테고리 부모 이름
-                subCategory.getDisplayName(), //사용자가 검색한 서브 카테고리 이름
-                products.size(), // 검색 결과 상품 수
-                productResponses); // 검색 결과 상품 list
+                subCategory.getDisplayName(),
+                productSlice,
+                productResponses
+        ); // 검색 결과 상품 list
     }
 
     public CategoryNewProductResponse searchNewProductsByCategory(String middleCategoryId) {

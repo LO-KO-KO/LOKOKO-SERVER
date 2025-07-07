@@ -58,9 +58,11 @@ public class ProductController {
     @Operation(summary = "카테고리 별 상품 검색")
     @GetMapping("/categories/search")
     public ApiResponse<CategoryProductResponse> searchProductsByCategory(@RequestParam String middleCategoryId,
-                                                                         @RequestParam(required = false) String subCategoryId) {
+                                                                         @RequestParam(required = false) String subCategoryId,
+                                                                         @RequestParam Integer page,
+                                                                         @RequestParam Integer size) {
         CategoryProductResponse categoryProductResponse = productReadService.searchProductsByCategory(middleCategoryId,
-                subCategoryId);
+                subCategoryId, page, size);
 
         return ApiResponse.success(HttpStatus.OK, CATEGORY_SEARCH_SUCCESS.getMessage(), categoryProductResponse);
     }

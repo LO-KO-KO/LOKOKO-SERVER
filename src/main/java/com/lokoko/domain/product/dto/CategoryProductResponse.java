@@ -1,6 +1,9 @@
 package com.lokoko.domain.product.dto;
 
+import com.lokoko.domain.product.entity.Product;
+import com.lokoko.global.common.entity.dto.PageableResponse;
 import java.util.List;
+import org.springframework.data.domain.Slice;
 
 // 카테고리 검색의 결과를 포함하고 있는 DTO 입니다.
 public record CategoryProductResponse(
@@ -10,10 +13,30 @@ public record CategoryProductResponse(
         String mainCategory,
         // 사용자가 선택한 SubCategory
         String subCategory,
-        // 제품 검색 결과 개수
-        int resultCount,
         // 검색 결과 제품 리스트
-        List<ProductResponse> products
+        List<ProductResponse> products,
+
+        PageableResponse pageable
 ) {
+
+    public static CategoryProductResponse of(
+            String searchQuery,
+            String mainCategory,
+            String subCategory,
+            Slice<Product> productSlice,
+            List<ProductResponse> products
+    ) {
+        PageableResponse pageable = PageableResponse.from(productSlice);
+
+        return new CategoryProductResponse(
+                searchQuery,
+                mainCategory,
+                subCategory,
+                products,
+                pageable
+        );
+
+
+    }
 }
 
