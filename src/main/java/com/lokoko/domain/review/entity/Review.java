@@ -52,9 +52,9 @@ public class Review extends BaseEntity {
     private int likeCount; // 좋아요 수
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 5)
+    @Column(nullable = false)
     private Rating rating;
-    
+
     // 긍정 리뷰 내용 수정
     public void changePositiveContent(String content) {
         this.positiveContent = content;
