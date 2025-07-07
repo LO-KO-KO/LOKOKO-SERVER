@@ -20,10 +20,12 @@ import com.lokoko.domain.review.repository.ReviewRepository;
 import com.lokoko.global.kuromoji.service.KuromojiService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -142,9 +144,25 @@ public class ProductService {
                             product.getId(),
                             new ProductSummary(null, 0L, ZERO)
                     );
+                    List<String> imageUrls = Optional.ofNullable(s.imageUrl())
+                            .filter(url -> !url.isBlank())
+                            .map(url -> {
+                                if (url.contains(",")) {
+
+                                    return Arrays.stream(url.split(","))
+                                            .map(String::trim)
+                                            .filter(u -> !u.isEmpty())
+                                            .toList();
+                                } else {
+
+                                    return List.of(url);
+                                }
+                            })
+                            .orElseGet(List::of);
+
                     return new ProductResponse(
                             product.getId(),
-                            s.imageUrl(),
+                            imageUrls,
                             product.getProductName(),
                             product.getBrandName(),
                             product.getUnit(),
