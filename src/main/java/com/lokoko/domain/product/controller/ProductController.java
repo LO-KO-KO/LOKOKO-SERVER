@@ -127,8 +127,10 @@ public class ProductController {
 
     @Operation(summary = "상품명 또는 브랜드명 상품 검색")
     @GetMapping("/search")
-    public ApiResponse<NameBrandProductResponse> search(@Valid ProductSearchRequest request) {
-        NameBrandProductResponse searchResults = productService.search(request.keyword());
+    public ApiResponse<NameBrandProductResponse> search(@Valid ProductSearchRequest request,
+                                                        @RequestParam(defaultValue = "0") int page,
+                                                        @RequestParam(defaultValue = "20") int size) {
+        NameBrandProductResponse searchResults = productService.search(request.keyword(), page, size);
         return ApiResponse.success(HttpStatus.OK, ResponseMessage.NAME_BRAND_SEARCH_SUCCESS.getMessage(),
                 searchResults);
 
