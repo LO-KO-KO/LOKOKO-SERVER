@@ -7,7 +7,6 @@ import java.util.List;
 public record ProductDetailResponse(
         List<ProductResponse> products,
         List<String> productOptions,
-        List<String> imageUrls,
         long normalPrice,
         String productDetail,
         String ingredients,

@@ -169,7 +169,6 @@ public class ProductReadService {
         return new ProductDetailResponse(
                 products,
                 optionNames,
-                imageUrls,
                 product.getNormalPrice(),
                 product.getProductDetail(),
                 product.getIngredients(),
