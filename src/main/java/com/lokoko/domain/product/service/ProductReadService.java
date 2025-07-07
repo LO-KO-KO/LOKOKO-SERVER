@@ -5,7 +5,7 @@ import com.lokoko.domain.image.entity.ProductImage;
 import com.lokoko.domain.image.repository.ProductImageRepository;
 import com.lokoko.domain.product.dto.CategoryNewProductResponse;
 import com.lokoko.domain.product.dto.CategoryPopularProductResponse;
-import com.lokoko.domain.product.dto.CategoryProductResponse;
+import com.lokoko.domain.product.dto.CategoryProductPageResponse;
 import com.lokoko.domain.product.dto.ProductDetailResponse;
 import com.lokoko.domain.product.dto.ProductDetailYoutubeResponse;
 import com.lokoko.domain.product.dto.ProductResponse;
@@ -21,18 +21,24 @@ import com.lokoko.domain.product.repository.ProductOptionRepository;
 import com.lokoko.domain.product.repository.ProductRepository;
 import com.lokoko.domain.review.entity.enums.Rating;
 import com.lokoko.domain.review.repository.ReviewRepository;
+import com.lokoko.global.common.response.PageableResponse;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class ProductReadService {
     private final ProductService productService;
     private final ProductRepository productRepository;
@@ -41,95 +47,61 @@ public class ProductReadService {
     private final ReviewRepository reviewRepository;
 
     // 카테고리 id 로 제품 리스트 조회
-    public CategoryProductResponse searchProductsByCategory(String middleCategoryId, String subCategoryId) {
+    public CategoryProductPageResponse searchProductsByCategory(String middleCategoryId, String subCategoryId, int page,
+                                                                int size) {
         MiddleCategory middleCategory = getMiddleCategory(middleCategoryId);
-        List<Product> products;
         SubCategory subCategory = null;
-
         if (subCategoryId != null && !subCategoryId.isBlank()) {
             subCategory = getSubCategory(subCategoryId);
-            // middle 카테고리 + sub 카테고리 조합으로 검색
-            products = productRepository.findByMiddleCategoryAndSubCategory(middleCategory, subCategory);
-        } else { // 서브 카테고리 id 가 존재하지 않는 경우
-            // middle 카테고리만으로 검색
-            products = productRepository.findByMiddleCategory(middleCategory);
         }
-        List<Long> productIds = getProductIds(products);
-        List<ProductImage> images = productImageRepository.findByProductIdIn(productIds);
-        Map<Long, String> productIdToImageUrl = productService.createProductImageMap(images);
+        Pageable pageable = PageRequest.of(page, size);
+        Slice<Product> slice = (subCategory == null)
+                ? productRepository.findProductsByPopularityAndRating(middleCategory, pageable)
+                : productRepository.findProductsByPopularityAndRating(middleCategory, subCategory, pageable);
 
-        List<Object[]> reviewStats = reviewRepository.countAndAvgRatingByProductIds(productIds);
+        Slice<ProductResponse> responseSlice =
+                productService.buildProductResponseWithReviewData(slice);
 
-        Map<Long, Long> productIdToReviewCount = new HashMap<>();
-        Map<Long, BigDecimal> productIdToAvgRating = new HashMap<>();
-        Map<Long, Map<Rating, Long>> tempRatingCounts = new HashMap<>();
-        Map<Long, BigDecimal> tempWeightedSums = new HashMap<>();
-        productService.aggregateReviewStats(reviewStats, productIdToReviewCount, tempWeightedSums, tempRatingCounts);
-        productService.calculateAverageRatings(productIdToReviewCount, tempWeightedSums, tempRatingCounts,
-                productIdToAvgRating);
-        productService.sortProductByReviewCountAndRating(products, productIdToReviewCount, productIdToAvgRating);
-
-        Map<Long, ProductSummary> summaryMap = productService.createProductSummaryMap(products,
-                productIdToImageUrl, productIdToReviewCount, productIdToAvgRating);
-
-        List<ProductResponse> productResponses = productService.makeProductResponse(products, summaryMap);
-
-        if (subCategory == null) { // Middle 카테고리만으로 검색 한 경우
-            return new CategoryProductResponse(
-                    middleCategory.getDisplayName(),
-                    middleCategory.getParent().getDisplayName(),
-                    middleCategory.getDisplayName(),
-                    products.size(),
-                    productResponses);
-
-        }
-        // Middle, Sub 카테고리 모두 사용하여 검색 한 경우
-        return new CategoryProductResponse(
-                subCategory.getDisplayName(), //사용자의 검색어 (searchQuery)
-                subCategory.getMiddleCategory().getParent().getDisplayName(), // 서브 카테고리 부모 이름
-                subCategory.getDisplayName(), //사용자가 검색한 서브 카테고리 이름
-                products.size(), // 검색 결과 상품 수
-                productResponses); // 검색 결과 상품 list
+        return CategoryProductPageResponse.builder()
+                .searchQuery(subCategory == null
+                        ? middleCategory.getDisplayName()
+                        : subCategory.getDisplayName())
+                .parentCategoryName(subCategory == null
+                        ? middleCategory.getParent().getDisplayName()
+                        : subCategory.getMiddleCategory().getParent().getDisplayName())
+                .products(responseSlice.getContent())
+                .pageInfo(PageableResponse.of(responseSlice))
+                .build();
     }
 
-    public CategoryNewProductResponse searchNewProductsByCategory(String middleCategoryId) {
+    public CategoryNewProductResponse searchNewProductsByCategory(String middleCategoryId, int page, int size) {
         MiddleCategory middleCategory = getMiddleCategory(middleCategoryId);
-        List<Product> products = productRepository.findByMiddleCategoryAndTag(middleCategory, Tag.NEW);
-
-        List<Long> productIds = getProductIds(products);
-        List<ProductImage> images = productImageRepository.findByProductIdIn(productIds);
-        Map<Long, String> productIdToImageUrl = productService.createProductImageMap(images);
-
-        List<Object[]> reviewStats = reviewRepository.countAndAvgRatingByProductIds(productIds);
-
-        Map<Long, Long> productIdToReviewCount = new HashMap<>();
-        Map<Long, BigDecimal> productIdToAvgRating = new HashMap<>();
-        Map<Long, Map<Rating, Long>> tempRatingCounts = new HashMap<>();
-        Map<Long, BigDecimal> tempWeightedSums = new HashMap<>();
-
-        productService.aggregateReviewStats(reviewStats, productIdToReviewCount, tempWeightedSums, tempRatingCounts);
-        productService.calculateAverageRatings(productIdToReviewCount, tempWeightedSums, tempRatingCounts,
-                productIdToAvgRating);
-        productService.sortProductByReviewCountAndRating(products, productIdToReviewCount, productIdToAvgRating);
-        Map<Long, ProductSummary> summaryMap = productService.createProductSummaryMap(products, productIdToImageUrl,
-                productIdToReviewCount, productIdToAvgRating);
-        List<ProductResponse> productResponses = productService.makeProductResponse(products, summaryMap);
+        Pageable pageable = PageRequest.of(page, size);
+        Slice<Product> slice = productRepository.findByMiddleCategoryAndTag(
+                middleCategory, Tag.NEW, pageable
+        );
+        Slice<ProductResponse> responseSlice =
+                productService.buildProductResponseWithReviewData(slice);
 
         return new CategoryNewProductResponse(
                 middleCategory.name(),
-                productResponses
+                responseSlice.getContent(),
+                PageableResponse.of(responseSlice)
         );
     }
 
-    public CategoryPopularProductResponse searchPopularProductsByCategory(String middleCategoryId) {
+    public CategoryPopularProductResponse searchPopularProductsByCategory(String middleCategoryId, int page, int size) {
         MiddleCategory middleCategory = getMiddleCategory(middleCategoryId);
-        List<Product> products = productRepository.findByMiddleCategory(middleCategory);
-        List<ProductResponse> productResponses =
-                productService.buildProductResponseWithReviewData(products);
+        Pageable pageable = PageRequest.of(page, size);
+        Slice<Product> slice = productRepository
+                .findProductsByPopularityAndRating(middleCategory, pageable);
+        Slice<ProductResponse> responseSlice =
+                productService.buildProductResponseWithReviewData(slice);
 
         return new CategoryPopularProductResponse(
                 middleCategory.getDisplayName(),
-                productResponses
+                responseSlice.getContent(),
+                PageableResponse.of(responseSlice)
         );
     }
 
@@ -137,38 +109,34 @@ public class ProductReadService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(ProductNotFoundException::new);
 
-        List<Long> productIds = List.of(productId);
-        List<ProductImage> images = productImageRepository.findByProductIdIn(productIds);
+        List<ProductImage> images = productImageRepository.findByProductIdIn(List.of(productId));
         Map<Long, List<String>> imageUrlsMap = productService.createProductImageUrlsMap(images);
-        List<String> imageUrls = imageUrlsMap.get(productId);
+        String joinedUrls = String.join(",", imageUrlsMap.getOrDefault(productId, List.of()));
 
         List<Object[]> stats = reviewRepository.countAndAvgRatingByProductIds(List.of(productId));
         Map<Long, Long> reviewCountMap = new HashMap<>();
-        Map<Long, BigDecimal> weightedSums = new HashMap<>();
-        Map<Long, Map<Rating, Long>> counts = new HashMap<>();
-        productService.aggregateReviewStats(stats, reviewCountMap, weightedSums, counts);
-
-        Map<Long, BigDecimal> avgRatingMap = new HashMap<>();
-        productService.calculateAverageRatings(reviewCountMap, weightedSums, counts, avgRatingMap);
-
-        Map<Long, String> imageUrlsStringMap = new HashMap<>();
-        imageUrlsStringMap.put(productId, String.join(",", imageUrls));
-
-        List<ProductResponse> products = productService.makeProductResponse(
-                List.of(product),
-                productService.createProductSummaryMap(
-                        List.of(product),
-                        imageUrlsStringMap,
-                        reviewCountMap,
-                        avgRatingMap
-                )
+        Map<Long, BigDecimal> weightedSumsMap = new HashMap<>();
+        Map<Long, Map<Rating, Long>> countsMap = new HashMap<>();
+        productService.aggregateReviewStats(
+                stats,
+                reviewCountMap,
+                weightedSumsMap,
+                countsMap
         );
 
-        List<String> optionNames = getProductOptionNames(product);
+        Map<Long, Double> avgRatingMap = productService.calculateAverageRatings(reviewCountMap, weightedSumsMap);
+        Map<Long, ProductSummary> summaryMap = productService.createProductSummaryMap(List.of(product),
+                Map.of(productId, joinedUrls),
+                reviewCountMap,
+                avgRatingMap
+        );
+
+        List<ProductResponse> products =
+                productService.makeProductResponse(List.of(product), summaryMap);
 
         return new ProductDetailResponse(
                 products,
-                optionNames,
+                productOptionRepository.findOptionNamesByProduct(product),
                 product.getNormalPrice(),
                 product.getProductDetail(),
                 product.getIngredients(),

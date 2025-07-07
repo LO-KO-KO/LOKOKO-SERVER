@@ -10,7 +10,7 @@ import static com.lokoko.domain.product.controller.enums.ResponseMessage.PRODUCT
 import com.lokoko.domain.product.controller.enums.ResponseMessage;
 import com.lokoko.domain.product.dto.CategoryNewProductResponse;
 import com.lokoko.domain.product.dto.CategoryPopularProductResponse;
-import com.lokoko.domain.product.dto.CategoryProductResponse;
+import com.lokoko.domain.product.dto.CategoryProductPageResponse;
 import com.lokoko.domain.product.dto.CrawlRequest;
 import com.lokoko.domain.product.dto.NameBrandProductResponse;
 import com.lokoko.domain.product.dto.ProductDetailResponse;
@@ -59,19 +59,24 @@ public class ProductController {
 
     @Operation(summary = "카테고리 별 상품 검색")
     @GetMapping("/categories/search")
-    public ApiResponse<CategoryProductResponse> searchProductsByCategory(@RequestParam String middleCategoryId,
-                                                                         @RequestParam(required = false) String subCategoryId) {
-        CategoryProductResponse categoryProductResponse = productReadService.searchProductsByCategory(middleCategoryId,
-                subCategoryId);
+    public ApiResponse<CategoryProductPageResponse> searchProductsByCategory(@RequestParam String middleCategoryId,
+                                                                             @RequestParam(required = false) String subCategoryId,
+                                                                             @RequestParam(defaultValue = "0") int page,
+                                                                             @RequestParam(defaultValue = "20") int size) {
+        CategoryProductPageResponse categoryProductResponse = productReadService.searchProductsByCategory(
+                middleCategoryId,
+                subCategoryId, page, size);
 
         return ApiResponse.success(HttpStatus.OK, CATEGORY_SEARCH_SUCCESS.getMessage(), categoryProductResponse);
     }
 
     @Operation(summary = "신상품 카테고리별 조회")
     @GetMapping("/categories/new")
-    public ApiResponse<CategoryNewProductResponse> searchNewProductsByCategory(@RequestParam String middleCategoryId) {
+    public ApiResponse<CategoryNewProductResponse> searchNewProductsByCategory(@RequestParam String middleCategoryId,
+                                                                               @RequestParam(defaultValue = "0") int page,
+                                                                               @RequestParam(defaultValue = "20") int size) {
         CategoryNewProductResponse categoryNewProductResponse = productReadService.searchNewProductsByCategory(
-                middleCategoryId);
+                middleCategoryId, page, size);
 
         return ApiResponse.success(HttpStatus.OK, CATEGORY_NEW_LIST_SUCCESS.getMessage(), categoryNewProductResponse);
     }
@@ -79,9 +84,10 @@ public class ProductController {
     @Operation(summary = "인기상품 카테고리별 조회")
     @GetMapping("/categories/popular")
     public ApiResponse<CategoryPopularProductResponse> searchPopularProductsByCategory(
-            @RequestParam String middleCategoryId) {
+            @RequestParam String middleCategoryId, @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
         CategoryPopularProductResponse categoryPopularProductResponse = productReadService.searchPopularProductsByCategory(
-                middleCategoryId);
+                middleCategoryId, page, size);
 
         return ApiResponse.success(HttpStatus.OK, CATEGORY_POPULAR_LIST_SUCCESS.getMessage(),
                 categoryPopularProductResponse);
@@ -121,8 +127,10 @@ public class ProductController {
 
     @Operation(summary = "상품명 또는 브랜드명 상품 검색")
     @GetMapping("/search")
-    public ApiResponse<NameBrandProductResponse> search(@Valid ProductSearchRequest request) {
-        NameBrandProductResponse searchResults = productService.search(request.keyword());
+    public ApiResponse<NameBrandProductResponse> search(@Valid ProductSearchRequest request,
+                                                        @RequestParam(defaultValue = "0") int page,
+                                                        @RequestParam(defaultValue = "20") int size) {
+        NameBrandProductResponse searchResults = productService.search(request.keyword(), page, size);
         return ApiResponse.success(HttpStatus.OK, ResponseMessage.NAME_BRAND_SEARCH_SUCCESS.getMessage(),
                 searchResults);
 

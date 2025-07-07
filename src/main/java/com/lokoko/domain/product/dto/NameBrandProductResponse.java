@@ -1,10 +1,11 @@
 package com.lokoko.domain.product.dto;
 
+import com.lokoko.global.common.response.PageableResponse;
 import java.util.List;
 
 public record NameBrandProductResponse(
         String searchQuery,
-        int resultCount,
-        List<ProductResponse> products
+        List<ProductResponse> products,
+        PageableResponse pageInfo
 ) {
 }

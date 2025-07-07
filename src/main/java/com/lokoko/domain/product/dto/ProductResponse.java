@@ -1,7 +1,6 @@
 package com.lokoko.domain.product.dto;
 
 
-import java.math.BigDecimal;
 import java.util.List;
 
 public record ProductResponse(
@@ -11,6 +10,6 @@ public record ProductResponse(
         String brandName, // 브랜드 이름
         String unit, // 제품 단위
         Long reviewCount, // 리뷰 개수
-        BigDecimal rating // 별점
+        Double rating // 별점
 ) {
 }
