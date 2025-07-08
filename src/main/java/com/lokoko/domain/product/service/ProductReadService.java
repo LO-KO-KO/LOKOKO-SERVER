@@ -47,13 +47,9 @@ public class ProductReadService {
     private final ReviewRepository reviewRepository;
 
     // 카테고리 id 로 제품 리스트 조회
-    public CategoryProductPageResponse searchProductsByCategory(String middleCategoryId, String subCategoryId, int page,
+    public CategoryProductPageResponse searchProductsByCategory(MiddleCategory middleCategory, SubCategory subCategory,
+                                                                int page,
                                                                 int size) {
-        MiddleCategory middleCategory = getMiddleCategory(middleCategoryId);
-        SubCategory subCategory = null;
-        if (subCategoryId != null && !subCategoryId.isBlank()) {
-            subCategory = getSubCategory(subCategoryId);
-        }
         Pageable pageable = PageRequest.of(page, size);
         Slice<Product> slice = (subCategory == null)
                 ? productRepository.findProductsByPopularityAndRating(middleCategory, pageable)
@@ -74,8 +70,7 @@ public class ProductReadService {
                 .build();
     }
 
-    public CategoryNewProductResponse searchNewProductsByCategory(String middleCategoryId, int page, int size) {
-        MiddleCategory middleCategory = getMiddleCategory(middleCategoryId);
+    public CategoryNewProductResponse searchNewProductsByCategory(MiddleCategory middleCategory, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Slice<Product> slice = productRepository.findByMiddleCategoryAndTag(
                 middleCategory, Tag.NEW, pageable
@@ -90,8 +85,8 @@ public class ProductReadService {
         );
     }
 
-    public CategoryPopularProductResponse searchPopularProductsByCategory(String middleCategoryId, int page, int size) {
-        MiddleCategory middleCategory = getMiddleCategory(middleCategoryId);
+    public CategoryPopularProductResponse searchPopularProductsByCategory(MiddleCategory middleCategory, int page,
+                                                                          int size) {
         Pageable pageable = PageRequest.of(page, size);
         Slice<Product> slice = productRepository
                 .findProductsByPopularityAndRating(middleCategory, pageable);

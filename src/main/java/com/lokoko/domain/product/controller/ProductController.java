@@ -16,6 +16,8 @@ import com.lokoko.domain.product.dto.NameBrandProductResponse;
 import com.lokoko.domain.product.dto.ProductDetailResponse;
 import com.lokoko.domain.product.dto.ProductDetailYoutubeResponse;
 import com.lokoko.domain.product.dto.ProductSearchRequest;
+import com.lokoko.domain.product.entity.enums.MiddleCategory;
+import com.lokoko.domain.product.entity.enums.SubCategory;
 import com.lokoko.domain.product.service.NewProductCrawlingService;
 import com.lokoko.domain.product.service.ProductCrawlingService;
 import com.lokoko.domain.product.service.ProductReadService;
@@ -59,24 +61,26 @@ public class ProductController {
 
     @Operation(summary = "카테고리 별 상품 검색")
     @GetMapping("/categories/search")
-    public ApiResponse<CategoryProductPageResponse> searchProductsByCategory(@RequestParam String middleCategoryId,
-                                                                             @RequestParam(required = false) String subCategoryId,
-                                                                             @RequestParam(defaultValue = "0") int page,
-                                                                             @RequestParam(defaultValue = "20") int size) {
+    public ApiResponse<CategoryProductPageResponse> searchProductsByCategory(
+            @RequestParam MiddleCategory middleCategory,
+            @RequestParam(required = false) SubCategory subCategory,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
         CategoryProductPageResponse categoryProductResponse = productReadService.searchProductsByCategory(
-                middleCategoryId,
-                subCategoryId, page, size);
+                middleCategory,
+                subCategory, page, size);
 
         return ApiResponse.success(HttpStatus.OK, CATEGORY_SEARCH_SUCCESS.getMessage(), categoryProductResponse);
     }
 
     @Operation(summary = "신상품 카테고리별 조회")
     @GetMapping("/categories/new")
-    public ApiResponse<CategoryNewProductResponse> searchNewProductsByCategory(@RequestParam String middleCategoryId,
-                                                                               @RequestParam(defaultValue = "0") int page,
-                                                                               @RequestParam(defaultValue = "20") int size) {
+    public ApiResponse<CategoryNewProductResponse> searchNewProductsByCategory(
+            @RequestParam MiddleCategory middleCategory,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
         CategoryNewProductResponse categoryNewProductResponse = productReadService.searchNewProductsByCategory(
-                middleCategoryId, page, size);
+                middleCategory, page, size);
 
         return ApiResponse.success(HttpStatus.OK, CATEGORY_NEW_LIST_SUCCESS.getMessage(), categoryNewProductResponse);
     }
@@ -84,10 +88,10 @@ public class ProductController {
     @Operation(summary = "인기상품 카테고리별 조회")
     @GetMapping("/categories/popular")
     public ApiResponse<CategoryPopularProductResponse> searchPopularProductsByCategory(
-            @RequestParam String middleCategoryId, @RequestParam(defaultValue = "0") int page,
+            @RequestParam MiddleCategory middleCategory, @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         CategoryPopularProductResponse categoryPopularProductResponse = productReadService.searchPopularProductsByCategory(
-                middleCategoryId, page, size);
+                middleCategory, page, size);
 
         return ApiResponse.success(HttpStatus.OK, CATEGORY_POPULAR_LIST_SUCCESS.getMessage(),
                 categoryPopularProductResponse);
