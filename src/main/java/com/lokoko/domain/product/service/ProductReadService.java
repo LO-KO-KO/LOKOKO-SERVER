@@ -129,18 +129,12 @@ public class ProductReadService {
         List<ProductResponse> products =
                 productService.makeProductResponse(List.of(product), summaryMap);
 
-        return new ProductDetailResponse(
-                products,
-                productOptionRepository.findOptionNamesByProduct(product),
-                product.getNormalPrice(),
-                product.getProductDetail(),
-                product.getIngredients(),
-                product.getShippingInfo(),
-                product.getOliveYoungUrl(),
-                product.getQoo10Url(),
-                product.getMiddleCategory(),
-                product.getSubCategory()
-        );
+        ProductResponse productResponse = products.getFirst();
+
+        List<String> options = productOptionRepository.findOptionNamesByProduct(product);
+
+        return ProductDetailResponse.from(productResponse, options, product);
+
     }
 
     public ProductDetailYoutubeResponse getProductDetailYoutube(Long productId) {
