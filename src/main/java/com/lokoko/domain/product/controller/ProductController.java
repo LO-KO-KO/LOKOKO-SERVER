@@ -27,6 +27,7 @@ import com.lokoko.domain.review.dto.ImageReviewResponse;
 import com.lokoko.domain.review.dto.ReviewListResponse;
 import com.lokoko.domain.review.dto.VideoReviewListResponse;
 import com.lokoko.domain.review.dto.VideoReviewResponse;
+import com.lokoko.domain.review.exception.MissingMediaTypeException;
 import com.lokoko.domain.review.service.ReviewReadService;
 import com.lokoko.global.common.entity.MediaType;
 import com.lokoko.global.common.entity.SearchType;
@@ -92,7 +93,7 @@ public class ProductController {
                 return ApiResponse.success(HttpStatus.OK, CATEGORY_REVIEW_SEARCH_SUCCESS.getMessage(),
                         imageReviewListResponse);
             }
-
+            throw new MissingMediaTypeException();
         }
         CategoryProductPageResponse categoryProductResponse = productReadService.searchProductsByCategory(
                 middleCategory, subCategory, page, size);
