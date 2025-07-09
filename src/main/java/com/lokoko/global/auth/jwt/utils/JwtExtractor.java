@@ -54,6 +54,10 @@ public class JwtExtractor {
 
     public Boolean isExpired(String token) {
         Claims claims = parseClaims(token);
+        Date exp = claims.getExpiration();
+        if (exp == null) {
+            return false;
+        }
         return claims.getExpiration().before(new Date());
     }
 

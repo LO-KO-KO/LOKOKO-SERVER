@@ -55,7 +55,8 @@ public class JwtService {
         }
 
         String role = jwtExtractor.getRole(refreshToken);
-        JwtTokenDto newTokens = generateJwtToken(GenerateTokenDto.of(userId, role));
+        String email = jwtExtractor.getEmail(refreshToken);
+        JwtTokenDto newTokens = generateJwtToken(GenerateTokenDto.of(userId, role, email));
 
         redisUtil.deleteRefreshToken(redisKey);
         return newTokens;
