@@ -31,8 +31,16 @@ public class ReviewReadService {
                 ? reviewRepository.findVideoReviewsByCategory(middleCategory, pageable)
                 : reviewRepository.findVideoReviewsByCategory(middleCategory, subCategory, pageable);
 
-        return new VideoReviewListResponse(videoReviews.getContent(), PageableResponse.of(videoReviews));
-
+        return VideoReviewListResponse.builder()
+                .searchQuery(subCategory == null
+                        ? middleCategory.getDisplayName()
+                        : subCategory.getDisplayName())
+                .parentCategoryName(subCategory == null
+                        ? middleCategory.getParent().getDisplayName()
+                        : subCategory.getMiddleCategory().getParent().getDisplayName())
+                .reviews(videoReviews.getContent())
+                .pageInfo(PageableResponse.of(videoReviews))
+                .build();
 
     }
 
@@ -47,7 +55,18 @@ public class ReviewReadService {
                 ? reviewRepository.findImageReviewsByCategory(middleCategory, pageable)
                 : reviewRepository.findImageReviewsByCategory(middleCategory, subCategory, pageable);
 
-        return new ImageReviewListResponse(imageReviews.getContent(), PageableResponse.of(imageReviews));
+//        return new ImageReviewListResponse(imageReviews.getContent(), PageableResponse.of(imageReviews));
+
+        return ImageReviewListResponse.builder()
+                .searchQuery(subCategory == null
+                        ? middleCategory.getDisplayName()
+                        : subCategory.getDisplayName())
+                .parentCategoryName(subCategory == null
+                        ? middleCategory.getParent().getDisplayName()
+                        : subCategory.getMiddleCategory().getParent().getDisplayName())
+                .reviews(imageReviews.getContent())
+                .pageInfo(PageableResponse.of(imageReviews))
+                .build();
 
     }
 
