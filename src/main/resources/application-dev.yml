@@ -52,3 +52,7 @@ cloud:
       auto: false
     stack:
       auto: false
+
+frontend:
+  redirect:
+    url: ${FRONTEND_REDIRECT_URL}
