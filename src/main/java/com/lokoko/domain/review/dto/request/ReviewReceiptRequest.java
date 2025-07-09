@@ -1,6 +1,8 @@
 package com.lokoko.domain.review.dto.request;
 
+import jakarta.validation.constraints.NotNull;
+
 public record ReviewReceiptRequest(
-        String mediaType
+        @NotNull String mediaType
 ) {
 }
