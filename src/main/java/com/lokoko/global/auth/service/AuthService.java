@@ -68,7 +68,9 @@ public class AuthService {
             if (userOpt.isPresent()) {
                 user = userOpt.get();
                 user.updateLastLoginAt();
-                user.updateEmail(email);
+                if (email != null) {
+                    user.updateEmail(email);
+                }
                 user.updateDisplayName(displayName);
                 userRepository.save(user);
                 loginStatus = OauthLoginStatus.LOGIN;
