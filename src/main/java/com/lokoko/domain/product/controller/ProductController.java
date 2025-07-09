@@ -3,6 +3,7 @@ package com.lokoko.domain.product.controller;
 
 import static com.lokoko.domain.product.controller.enums.ResponseMessage.CATEGORY_NEW_LIST_SUCCESS;
 import static com.lokoko.domain.product.controller.enums.ResponseMessage.CATEGORY_POPULAR_LIST_SUCCESS;
+import static com.lokoko.domain.product.controller.enums.ResponseMessage.CATEGORY_REVIEW_SEARCH_SUCCESS;
 import static com.lokoko.domain.product.controller.enums.ResponseMessage.CATEGORY_SEARCH_SUCCESS;
 import static com.lokoko.domain.product.controller.enums.ResponseMessage.PRODUCT_DETAIL_SUCCESS;
 import static com.lokoko.domain.product.controller.enums.ResponseMessage.PRODUCT_YOUTUBE_DETAIL_SUCCESS;
@@ -22,6 +23,11 @@ import com.lokoko.domain.product.service.NewProductCrawlingService;
 import com.lokoko.domain.product.service.ProductCrawlingService;
 import com.lokoko.domain.product.service.ProductReadService;
 import com.lokoko.domain.product.service.ProductService;
+import com.lokoko.domain.review.dto.ImageReviewListResponse;
+import com.lokoko.domain.review.dto.VideoReviewListResponse;
+import com.lokoko.domain.review.service.ReviewReadService;
+import com.lokoko.global.common.entity.MediaType;
+import com.lokoko.global.common.entity.SearchType;
 import com.lokoko.global.common.response.ApiResponse;
 import com.lokoko.global.kuromoji.service.ProductMigrationService;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -48,6 +54,7 @@ public class ProductController {
     private final ProductCrawlingService productCrawlingService;
     private final NewProductCrawlingService newProductCrawlingService;
     private final ProductMigrationService productMigrationService;
+    private final ReviewReadService reviewReadService;
 
     @Hidden
     @Operation(summary = "카테고리별 상품 크롤링")
@@ -61,14 +68,33 @@ public class ProductController {
 
     @Operation(summary = "카테고리 별 상품 검색")
     @GetMapping("/categories/search")
-    public ApiResponse<CategoryProductPageResponse> searchProductsByCategory(
+    public ApiResponse<?> searchProductsByCategory(
             @RequestParam MiddleCategory middleCategory,
             @RequestParam(required = false) SubCategory subCategory,
+            @RequestParam(defaultValue = "false") SearchType searchType,
+            @RequestParam(required = false) MediaType mediaType,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
+
+        if (searchType == SearchType.REVIEW) {
+            if (mediaType == MediaType.VIDEO) {
+                VideoReviewListResponse videoReviewResponse = reviewReadService.searchVideoReviewsByCategory(
+                        middleCategory, subCategory, page, size);
+
+                return ApiResponse.success(HttpStatus.OK, CATEGORY_REVIEW_SEARCH_SUCCESS.getMessage(),
+                        videoReviewResponse);
+
+            } else if (mediaType == MediaType.IMAGE) {
+                ImageReviewListResponse imageReviewListResponse = reviewReadService.searchImageReviewsByCategory(
+                        middleCategory, subCategory, page, size);
+
+                return ApiResponse.success(HttpStatus.OK, CATEGORY_REVIEW_SEARCH_SUCCESS.getMessage(),
+                        imageReviewListResponse);
+            }
+
+        }
         CategoryProductPageResponse categoryProductResponse = productReadService.searchProductsByCategory(
-                middleCategory,
-                subCategory, page, size);
+                middleCategory, subCategory, page, size);
 
         return ApiResponse.success(HttpStatus.OK, CATEGORY_SEARCH_SUCCESS.getMessage(), categoryProductResponse);
     }
