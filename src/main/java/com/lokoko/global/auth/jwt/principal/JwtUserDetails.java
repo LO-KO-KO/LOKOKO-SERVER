@@ -13,7 +13,7 @@ public class JwtUserDetails extends User {
     private final Long id;
 
     public JwtUserDetails(Long id, String email, List<GrantedAuthority> authorities) {
-        super(email, "", authorities);
+        super(email != null ? email : "", "", authorities);
         this.id = id;
     }
 
