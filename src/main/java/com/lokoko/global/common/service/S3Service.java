@@ -23,9 +23,9 @@ public class S3Service {
         String key;
 
         if (fileType.startsWith("image")) {
-            key = "images/" + uuid + ".jpg";
+            key = "image/" + uuid + ".jpg";
         } else if (fileType.startsWith("video")) {
-            key = "videos/" + uuid + ".mp4";
+            key = "video/" + uuid + ".mp4";
         } else {
             throw new FileTypeNotSupportedException();
         }
