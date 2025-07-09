@@ -1,6 +1,6 @@
 package com.lokoko.domain.review.dto.response;
 
-public record ReceiptUrl(
+public record ReviewReceiptUrl(
         String url
 ) {
 }
