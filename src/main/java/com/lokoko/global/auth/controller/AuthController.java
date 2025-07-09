@@ -14,13 +14,11 @@ import com.lokoko.global.auth.line.dto.LineLoginResponse;
 import com.lokoko.global.auth.line.dto.LoginUrlResponse;
 import com.lokoko.global.auth.service.AuthService;
 import com.lokoko.global.common.response.ApiResponse;
-import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,9 +36,6 @@ public class AuthController {
     private final JwtService jwtService;
     private final CookieUtil cookieUtil;
 
-    @Value("${frontend.redirect.url}")
-    private String frontRedirectUrl;
-
     @Operation(summary = "라인 소셜 로그인, 리다이렉션")
     @GetMapping("/line/redirect")
     public void redirectToLineAuth(HttpServletResponse response) throws IOException {
@@ -50,14 +45,14 @@ public class AuthController {
 
     @Operation(summary = "라인 소셜 로그인, JWT 토큰 발급")
     @GetMapping("/line/login")
-    public void lineLogin(@RequestParam("code") String code,
+    public ApiResponse<LineLoginResponse> lineLogin(@RequestParam("code") String code,
                                                     @RequestParam("state") String state,
-                                                    HttpServletResponse response) throws IOException {
+                                                    HttpServletResponse response) {
         LoginDto tokens = authService.loginWithLine(code, state);
         cookieUtil.setCookie(ACCESS_TOKEN_HEADER, tokens.accessToken(), response);
         cookieUtil.setCookie(REFRESH_TOKEN_HEADER, tokens.refreshToken(), response);
-
-        response.sendRedirect(frontRedirectUrl);
+        return ApiResponse.success(HttpStatus.OK, LOGIN_SUCCESS.getMessage(),
+                new LineLoginResponse(tokens.loginStatus()));
     }
 
     /*
