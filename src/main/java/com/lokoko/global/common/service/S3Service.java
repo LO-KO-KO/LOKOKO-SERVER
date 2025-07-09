@@ -1,6 +1,7 @@
 package com.lokoko.global.common.service;
 
-import com.lokoko.domain.image.exception.FileTypeNotSupportedException;import com.lokoko.domain.review.exception.ErrorMessage;
+import com.lokoko.domain.image.exception.FileTypeNotSupportedException;
+import com.lokoko.domain.review.exception.ErrorMessage;
 import com.lokoko.domain.review.exception.InvalidMediaTypeException;
 import com.lokoko.global.common.dto.PresignedUrlResponse;
 import com.lokoko.global.config.S3Config;
@@ -26,9 +27,9 @@ public class S3Service {
         String key;
 
         if (fileType.startsWith("image")) {
-            key = "image/" + uuid + extension;
+            key = "image/" + uuid + "." + extension;
         } else if (fileType.startsWith("video")) {
-            key = "video/" + uuid + extension;
+            key = "video/" + uuid + "." + extension;
         } else {
             throw new FileTypeNotSupportedException();
         }

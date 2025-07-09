@@ -1,8 +1,8 @@
 package com.lokoko.domain.review.service;
 
 import com.lokoko.domain.review.dto.request.ReviewReceiptRequest;
-import com.lokoko.domain.review.dto.response.ReceiptUrl;
 import com.lokoko.domain.review.dto.response.ReviewReceiptResponse;
+import com.lokoko.domain.review.dto.response.ReviewReceiptUrl;
 import com.lokoko.domain.review.exception.ErrorMessage;
 import com.lokoko.domain.review.exception.InvalidMediaTypeException;
 import com.lokoko.global.common.service.S3Service;
@@ -34,7 +34,9 @@ public class ReviewService {
             throw new InvalidMediaTypeException(ErrorMessage.UNSUPPORTED_MEDIA_TYPE);
         }
         String presignedUrl = String.valueOf(s3Service.generatePresignedUrl(mediaType));
-        return new ReviewReceiptResponse(List.of(new ReceiptUrl(presignedUrl)));
+        return new ReviewReceiptResponse(List.of(new ReviewReceiptUrl(presignedUrl)));
 
     }
 }
+
+
