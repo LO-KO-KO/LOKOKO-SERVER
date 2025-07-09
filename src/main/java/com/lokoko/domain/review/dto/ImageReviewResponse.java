@@ -1,7 +1,7 @@
 package com.lokoko.domain.review.dto;
 
 public record ImageReviewResponse(
-        String reviewId,
+        Long reviewId,
         int ranking,
         String brandName,
         String productName,
