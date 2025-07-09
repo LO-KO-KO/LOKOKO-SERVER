@@ -127,6 +127,8 @@ public class ProductController {
                 return ApiResponse.success(HttpStatus.OK, ResponseMessage.NAME_BRAND_REVIEW_SEARCH_SUCCESS.getMessage(),
                         imageReviewResponse);
             }
+
+            throw new MissingMediaTypeException();
         }
         // 상품 검색
         NameBrandProductResponse searchResults = productService.search(keyword, page,
