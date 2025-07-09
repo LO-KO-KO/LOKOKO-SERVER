@@ -35,7 +35,7 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
                                                                  Pageable pageable) {
         List<VideoReviewResponse> content = queryFactory
                 .select(Projections.constructor(VideoReviewResponse.class,
-                        review.id.stringValue(),
+                        review.id,
                         Expressions.constant(0),
                         product.brandName,
                         product.productName,
@@ -56,50 +56,6 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
         for (int i = 0; i < Math.min(content.size(), pageable.getPageSize()); i++) {
             VideoReviewResponse original = content.get(i);
             content.set(i, new VideoReviewResponse(
-                    original.reviewId(),
-                    (int) pageable.getOffset() + i + 1,
-                    original.brandName(),
-                    original.productName(),
-                    original.likeCount(),
-                    original.url()
-            ));
-        }
-
-        boolean hasNext = content.size() > pageable.getPageSize();
-        if (hasNext) {
-            content.remove(content.size() - 1);
-        }
-
-        return new SliceImpl<>(content, pageable, hasNext);
-    }
-
-    @Override
-    public Slice<ImageReviewResponse> findImageReviewsByCategory(MiddleCategory middleCategory,
-                                                                 SubCategory subCategory,
-                                                                 Pageable pageable) {
-        List<ImageReviewResponse> content = queryFactory
-                .select(Projections.constructor(ImageReviewResponse.class,
-                        review.id.stringValue(),
-                        Expressions.constant(0),
-                        product.brandName,
-                        product.productName,
-                        review.likeCount,
-                        reviewImage.mediaFile.fileUrl
-                ))
-                .from(reviewImage)
-                .innerJoin(reviewImage.review, review)
-                .innerJoin(review.product, product)
-                .where(
-                        categoryCondition(middleCategory, subCategory)
-                )
-                .orderBy(review.createdAt.desc())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize() + 1)
-                .fetch();
-
-        for (int i = 0; i < Math.min(content.size(), pageable.getPageSize()); i++) {
-            ImageReviewResponse original = content.get(i);
-            content.set(i, new ImageReviewResponse(
                     original.reviewId(),
                     (int) pageable.getOffset() + i + 1,
                     original.brandName(),
@@ -120,52 +76,17 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
     @Override
     public Slice<VideoReviewResponse> findVideoReviewsByCategory(MiddleCategory middleCategory,
                                                                  Pageable pageable) {
-        List<VideoReviewResponse> content = queryFactory
-                .select(Projections.constructor(VideoReviewResponse.class,
-                        review.id.stringValue(),
-                        Expressions.constant(0),
-                        product.brandName,
-                        product.productName,
-                        review.likeCount,
-                        reviewVideo.mediaFile.fileUrl
-                ))
-                .from(reviewVideo)
-                .innerJoin(reviewVideo.review, review)
-                .innerJoin(review.product, product)
-                .where(
-                        product.middleCategory.eq(middleCategory)
-                )
-                .orderBy(review.createdAt.desc())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize() + 1)
-                .fetch();
-
-        for (int i = 0; i < Math.min(content.size(), pageable.getPageSize()); i++) {
-            VideoReviewResponse original = content.get(i);
-            content.set(i, new VideoReviewResponse(
-                    original.reviewId(),
-                    (int) pageable.getOffset() + i + 1,
-                    original.brandName(),
-                    original.productName(),
-                    original.likeCount(),
-                    original.url()
-            ));
-        }
-
-        boolean hasNext = content.size() > pageable.getPageSize();
-        if (hasNext) {
-            content.remove(content.size() - 1);
-        }
-
-        return new SliceImpl<>(content, pageable, hasNext);
+        return findVideoReviewsByCategory(middleCategory, null, pageable);
     }
+
 
     @Override
     public Slice<ImageReviewResponse> findImageReviewsByCategory(MiddleCategory middleCategory,
+                                                                 SubCategory subCategory,
                                                                  Pageable pageable) {
         List<ImageReviewResponse> content = queryFactory
                 .select(Projections.constructor(ImageReviewResponse.class,
-                        review.id.stringValue(),
+                        review.id,
                         Expressions.constant(0),
                         product.brandName,
                         product.productName,
@@ -176,7 +97,7 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
                 .innerJoin(reviewImage.review, review)
                 .innerJoin(review.product, product)
                 .where(
-                        product.middleCategory.eq(middleCategory)
+                        categoryCondition(middleCategory, subCategory)
                 )
                 .orderBy(review.createdAt.desc())
                 .offset(pageable.getOffset())
@@ -202,6 +123,14 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
 
         return new SliceImpl<>(content, pageable, hasNext);
     }
+
+
+    @Override
+    public Slice<ImageReviewResponse> findImageReviewsByCategory(MiddleCategory middleCategory,
+                                                                 Pageable pageable) {
+        return findImageReviewsByCategory(middleCategory, null, pageable);
+    }
+
 
     private BooleanExpression categoryCondition(MiddleCategory middleCategory, SubCategory subCategory) {
         BooleanExpression condition = product.middleCategory.eq(middleCategory);
