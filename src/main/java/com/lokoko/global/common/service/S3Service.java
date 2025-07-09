@@ -1,6 +1,7 @@
 package com.lokoko.global.common.service;
 
-import com.lokoko.domain.image.exception.FileTypeNotSupportedException;
+import com.lokoko.domain.image.exception.FileTypeNotSupportedException;import com.lokoko.domain.review.exception.ErrorMessage;
+import com.lokoko.domain.review.exception.InvalidMediaTypeException;
 import com.lokoko.global.common.dto.PresignedUrlResponse;
 import com.lokoko.global.config.S3Config;
 import lombok.RequiredArgsConstructor;
@@ -20,12 +21,14 @@ public class S3Service {
 
     public PresignedUrlResponse generatePresignedUrl(String fileType) {
         String uuid = UUID.randomUUID().toString();
+        String extension = getExtensionFromMideaType(fileType);
+
         String key;
 
         if (fileType.startsWith("image")) {
-            key = "image/" + uuid + ".jpg";
+            key = "image/" + uuid + extension;
         } else if (fileType.startsWith("video")) {
-            key = "video/" + uuid + ".mp4";
+            key = "video/" + uuid + extension;
         } else {
             throw new FileTypeNotSupportedException();
         }
@@ -41,5 +44,13 @@ public class S3Service {
         );
 
         return new PresignedUrlResponse(presignedRequest.url().toString());
+    }
+
+    private String getExtensionFromMideaType(String mimeType) {
+        int slashIndex = mimeType.lastIndexOf('/');
+        if (slashIndex == -1 || slashIndex == mimeType.length() - 1) {
+            throw new InvalidMediaTypeException(ErrorMessage.UNSUPPORTED_MEDIA_TYPE);
+        }
+        return mimeType.substring(slashIndex + 1);
     }
 }
