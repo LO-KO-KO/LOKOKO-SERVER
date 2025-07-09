@@ -26,6 +26,8 @@ import com.lokoko.domain.product.service.ProductService;
 import com.lokoko.domain.review.dto.ImageReviewListResponse;
 import com.lokoko.domain.review.dto.VideoReviewListResponse;
 import com.lokoko.domain.review.service.ReviewReadService;
+import com.lokoko.global.common.entity.MediaType;
+import com.lokoko.global.common.entity.SearchType;
 import com.lokoko.global.common.response.ApiResponse;
 import com.lokoko.global.kuromoji.service.ProductMigrationService;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -69,20 +71,20 @@ public class ProductController {
     public ApiResponse<?> searchProductsByCategory(
             @RequestParam MiddleCategory middleCategory,
             @RequestParam(required = false) SubCategory subCategory,
-            @RequestParam(defaultValue = "false") boolean isReview,
-            @RequestParam(required = false) String mediaType,
+            @RequestParam(defaultValue = "false") SearchType searchType,
+            @RequestParam(required = false) MediaType mediaType,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
-        if (isReview) {
-            if (mediaType.equals("video")) {
+        if (searchType == SearchType.REVIEW) {
+            if (mediaType == MediaType.VIDEO) {
                 VideoReviewListResponse videoReviewResponse = reviewReadService.searchVideoReviewsByCategory(
                         middleCategory, subCategory, page, size);
 
                 return ApiResponse.success(HttpStatus.OK, CATEGORY_REVIEW_SEARCH_SUCCESS.getMessage(),
                         videoReviewResponse);
 
-            } else if (mediaType.equals("image")) {
+            } else if (mediaType == MediaType.IMAGE) {
                 ImageReviewListResponse imageReviewListResponse = reviewReadService.searchImageReviewsByCategory(
                         middleCategory, subCategory, page, size);
 
