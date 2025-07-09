@@ -21,7 +21,7 @@ public class S3Service {
 
     public PresignedUrlResponse generatePresignedUrl(String fileType) {
         String uuid = UUID.randomUUID().toString();
-        String extension = getExtensionFromMideaType(fileType);
+        String extension = getExtensionFromMediaType(fileType);
 
         String key;
 
@@ -46,7 +46,7 @@ public class S3Service {
         return new PresignedUrlResponse(presignedRequest.url().toString());
     }
 
-    private String getExtensionFromMideaType(String mimeType) {
+    private String getExtensionFromMediaType(String mimeType) {
         int slashIndex = mimeType.lastIndexOf('/');
         if (slashIndex == -1 || slashIndex == mimeType.length() - 1) {
             throw new InvalidMediaTypeException(ErrorMessage.UNSUPPORTED_MEDIA_TYPE);
