@@ -5,10 +5,9 @@ import com.lokoko.domain.product.entity.QProduct;
 import com.lokoko.domain.product.entity.enums.MiddleCategory;
 import com.lokoko.domain.product.entity.enums.SubCategory;
 import com.lokoko.domain.review.entity.QReview;
-import com.lokoko.domain.review.entity.enums.Rating;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
@@ -46,19 +45,9 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
         if (tokens.isEmpty()) {
             allMatches = List.of();
         } else {
-            // 리뷰 수 계산
             NumberExpression<Long> reviewCount = r.id.count();
 
-            // 평점 평균 계산
-            NumberExpression<Integer> ratingNum = new CaseBuilder()
-                    .when(r.rating.eq(Rating.ONE)).then(1)
-                    .when(r.rating.eq(Rating.TWO)).then(2)
-                    .when(r.rating.eq(Rating.THREE)).then(3)
-                    .when(r.rating.eq(Rating.FOUR)).then(4)
-                    .when(r.rating.eq(Rating.FIVE)).then(5)
-                    .otherwise(0);
-
-            NumberExpression<Double> ratingAvgExpr = ratingNum.castToNum(Double.class).avg();
+            NumberExpression<Double> ratingAvgExpr = Expressions.numberTemplate(Double.class, "avg({0})", r.rating);
 
             String fullKeyword = String.join("", tokens);
             List<Product> exactMatches = queryFactory
@@ -149,14 +138,8 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
     @Override
     public Slice<Product> findProductsByPopularityAndRating(MiddleCategory category, Pageable pageable) {
         NumberExpression<Long> reviewCount = r.id.count();
-        NumberExpression<Integer> ratingNum = new CaseBuilder()
-                .when(r.rating.eq(Rating.ONE)).then(1)
-                .when(r.rating.eq(Rating.TWO)).then(2)
-                .when(r.rating.eq(Rating.THREE)).then(3)
-                .when(r.rating.eq(Rating.FOUR)).then(4)
-                .when(r.rating.eq(Rating.FIVE)).then(5)
-                .otherwise(0);
-        NumberExpression<Double> ratingAvgExpr = ratingNum.castToNum(Double.class).avg();
+
+        NumberExpression<Double> ratingAvgExpr = Expressions.numberTemplate(Double.class, "avg({0})", r.rating);
 
         List<Product> content = queryFactory
                 .select(p)
@@ -165,8 +148,8 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 .where(p.middleCategory.eq(category))
                 .groupBy(p.id)
                 .orderBy(
-                        reviewCount.desc(),                         // 리뷰 수 내림차순
-                        ratingAvgExpr.desc()                        // 평균 평점 내림차순
+                        reviewCount.desc(),
+                        ratingAvgExpr.desc()
                 )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -183,14 +166,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             Pageable pageable
     ) {
         NumberExpression<Long> reviewCount = r.id.count();
-        NumberExpression<Integer> ratingNum = new CaseBuilder()
-                .when(r.rating.eq(Rating.ONE)).then(1)
-                .when(r.rating.eq(Rating.TWO)).then(2)
-                .when(r.rating.eq(Rating.THREE)).then(3)
-                .when(r.rating.eq(Rating.FOUR)).then(4)
-                .when(r.rating.eq(Rating.FIVE)).then(5)
-                .otherwise(0);
-        NumberExpression<Double> ratingAvgExpr = ratingNum.castToNum(Double.class).avg();
+        NumberExpression<Double> ratingAvgExpr = Expressions.numberTemplate(Double.class, "avg({0})", r.rating);
 
         BooleanExpression where = p.middleCategory.eq(category);
         if (subCategory != null) {
