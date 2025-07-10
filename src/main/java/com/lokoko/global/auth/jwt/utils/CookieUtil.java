@@ -22,7 +22,7 @@ public class CookieUtil {
                 .path(cookiePathOption)
                 .secure(secureOption)
                 .httpOnly(true)
-                .sameSite("None")
+                .sameSite("Lax")
                 .build();
 
         response.setHeader("Set-Cookie", cookie.toString());
@@ -32,9 +32,9 @@ public class CookieUtil {
         ResponseCookie cookie = ResponseCookie.from(name, "value")
                 .maxAge(0)
                 .path("/")
-                .secure(false)
+                .secure(true)
                 .httpOnly(true)
-                .sameSite("None")
+                .sameSite("Lax")
                 .build();
 
         response.setHeader("Set-Cookie", cookie.toString());

@@ -83,8 +83,12 @@ public class AuthService {
             String accessToken = jwtProvider.generateAccessToken(user.getId(), user.getRole().name());
             String tokenId = UUID.randomUUID().toString();
             String refreshToken = jwtProvider.generateRefreshToken(user.getId(), user.getRole().name(), tokenId);
+            log.info("[AuthService] JWT 생성 → accessToken={}, refreshToken={}, tokenId={}",
+                    accessToken, refreshToken, tokenId);
+
             String redisKey = "refreshToken:" + user.getId() + ":" + tokenId;
             redisUtil.setRefreshToken(redisKey, refreshToken, refreshTokenExpiration);
+            log.info("[AuthService] Redis에 refreshToken 저장 → key={}, expiration={}", redisKey, refreshTokenExpiration);
 
             return LoginDto.of(accessToken, refreshToken, loginStatus);
         } catch (StateValidationException ex) {
