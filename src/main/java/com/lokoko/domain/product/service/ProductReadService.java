@@ -129,7 +129,8 @@ public class ProductReadService {
         List<ProductResponse> products =
                 productService.makeProductResponse(List.of(product), summaryMap);
 
-        ProductResponse productResponse = products.getFirst();
+        ProductResponse productResponse = products.stream().findFirst()
+                .orElseThrow(ProductNotFoundException::new);
 
         List<String> options = productOptionRepository.findOptionNamesByProduct(product);
 
