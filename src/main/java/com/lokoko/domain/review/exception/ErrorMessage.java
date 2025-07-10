@@ -14,6 +14,8 @@ public enum ErrorMessage {
     MIXED_MEDIA_TYPE_NOT_ALLOWED("image와 video는 동시에 업로드할 수 없습니다."),
     TOO_MANY_VIDEO_FILES("video는 최대 1개까지만 업로드할 수 있습니다."),
     TOO_MANY_IMAGE_FILES("image는 최대 5개까지만 업로드할 수 있습니다."),
+    INVALID_PRESIGNED_URL("Presigned URL 파싱에 실패했습니다."),
+
     ;
 
     private final String message;

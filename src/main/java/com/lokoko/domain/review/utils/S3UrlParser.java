@@ -1,5 +1,6 @@
 package com.lokoko.domain.review.utils;
 
+import com.lokoko.domain.review.exception.PresignedUrlParsingException;
 import com.lokoko.global.common.entity.MediaFile;
 
 import java.net.URI;
@@ -16,7 +17,7 @@ public class S3UrlParser {
 
             return MediaFile.of(fileName, fileUrl);
         } catch (Exception e) {
-            throw new RuntimeException("Presigned URL 파싱 실패: " + presignedUrl, e);
+            throw new PresignedUrlParsingException();
         }
     }
 }
