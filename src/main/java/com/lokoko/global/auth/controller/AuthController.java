@@ -1,5 +1,6 @@
 package com.lokoko.global.auth.controller;
 
+import static com.lokoko.global.auth.controller.enums.ResponseMessage.LOGIN_SUCCESS;
 import static com.lokoko.global.auth.controller.enums.ResponseMessage.REFRESH_TOKEN_REISSUE;
 import static com.lokoko.global.auth.controller.enums.ResponseMessage.URL_GET_SUCCESS;
 import static com.lokoko.global.auth.jwt.utils.JwtProvider.ACCESS_TOKEN_HEADER;
@@ -9,6 +10,7 @@ import com.lokoko.global.auth.jwt.dto.JwtTokenDto;
 import com.lokoko.global.auth.jwt.dto.LoginDto;
 import com.lokoko.global.auth.jwt.service.JwtService;
 import com.lokoko.global.auth.jwt.utils.CookieUtil;
+import com.lokoko.global.auth.line.dto.LineLoginResponse;
 import com.lokoko.global.auth.line.dto.LoginUrlResponse;
 import com.lokoko.global.auth.service.AuthService;
 import com.lokoko.global.common.response.ApiResponse;
@@ -16,10 +18,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,15 +31,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@Slf4j
 public class AuthController {
     private final AuthService authService;
     private final JwtService jwtService;
     private final CookieUtil cookieUtil;
-
-    @Value("${frontend.redirect.url}")
-    private String frontendRedirectUrl;
-
 
     @Operation(summary = "라인 소셜 로그인, 리다이렉션")
     @GetMapping("/line/redirect")
@@ -49,23 +43,16 @@ public class AuthController {
         response.sendRedirect(authorizeUrl);
     }
 
-    @Operation(summary = "라인 소셜 로그인, JWT 토큰 발급")
+    @Operation(summary = "라인 소셜 로그인, JWT 토큰 발급 후 저장")
     @GetMapping("/line/login")
-    public void lineLogin(@RequestParam("code") String code,
-                                                    @RequestParam("state") String state,
-                                                    HttpServletResponse response) throws IOException {
+    public ApiResponse<LineLoginResponse> lineLogin(@RequestParam("code") String code,
+                                                    @RequestParam("state") String state) {
         LoginDto tokens = authService.loginWithLine(code, state);
-        cookieUtil.setCookie(ACCESS_TOKEN_HEADER, tokens.accessToken(), response);
-        cookieUtil.setCookie(REFRESH_TOKEN_HEADER, tokens.refreshToken(), response);
-        log.info(">> 쿠키 → {}",
-                response.getHeaders("Set-Cookie").stream().collect(Collectors.joining(" | "))
-        );
+        LineLoginResponse response = LineLoginResponse.from(tokens);
+
+        return ApiResponse.success(HttpStatus.OK, LOGIN_SUCCESS.getMessage(), response);
     }
-
-    /*
-     * TODO: 명세서 작성 후 플로우 확정 예정
-     */
-
+    
     @Operation(summary = "라인 로그인 URL 생성 (클라에서 호출)")
     @GetMapping("/url")
     public ApiResponse<LoginUrlResponse> getLoginUrl() {

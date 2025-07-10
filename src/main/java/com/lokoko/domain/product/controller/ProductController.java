@@ -16,7 +16,6 @@ import com.lokoko.domain.product.dto.CrawlRequest;
 import com.lokoko.domain.product.dto.NameBrandProductResponse;
 import com.lokoko.domain.product.dto.ProductDetailResponse;
 import com.lokoko.domain.product.dto.ProductDetailYoutubeResponse;
-import com.lokoko.domain.product.dto.ProductSearchRequest;
 import com.lokoko.domain.product.entity.enums.MiddleCategory;
 import com.lokoko.domain.product.entity.enums.SubCategory;
 import com.lokoko.domain.product.service.NewProductCrawlingService;
@@ -24,7 +23,10 @@ import com.lokoko.domain.product.service.ProductCrawlingService;
 import com.lokoko.domain.product.service.ProductReadService;
 import com.lokoko.domain.product.service.ProductService;
 import com.lokoko.domain.review.dto.ImageReviewListResponse;
+import com.lokoko.domain.review.dto.KeywordImageReviewListResponse;
+import com.lokoko.domain.review.dto.KeywordVideoReviewListResponse;
 import com.lokoko.domain.review.dto.VideoReviewListResponse;
+import com.lokoko.domain.review.exception.MissingMediaTypeException;
 import com.lokoko.domain.review.service.ReviewReadService;
 import com.lokoko.global.common.entity.MediaType;
 import com.lokoko.global.common.entity.SearchType;
@@ -33,7 +35,6 @@ import com.lokoko.global.kuromoji.service.ProductMigrationService;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -91,12 +92,50 @@ public class ProductController {
                 return ApiResponse.success(HttpStatus.OK, CATEGORY_REVIEW_SEARCH_SUCCESS.getMessage(),
                         imageReviewListResponse);
             }
-
+            throw new MissingMediaTypeException();
         }
         CategoryProductPageResponse categoryProductResponse = productReadService.searchProductsByCategory(
                 middleCategory, subCategory, page, size);
 
         return ApiResponse.success(HttpStatus.OK, CATEGORY_SEARCH_SUCCESS.getMessage(), categoryProductResponse);
+    }
+
+    @Operation(summary = "상품명 또는 브랜드명 상품 및 리뷰 검색")
+    @GetMapping("/search")
+    public ApiResponse<?> search(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "false") SearchType searchType,
+            @RequestParam(required = false) MediaType mediaType,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        // 리뷰 검색
+        if (searchType == SearchType.REVIEW) {
+
+            // 동영상 리뷰
+            if (mediaType == MediaType.VIDEO) {
+                KeywordVideoReviewListResponse videoReviewResponse = reviewReadService.searchVideoReviewsByKeyword(
+                        keyword, page, size);
+
+                return ApiResponse.success(HttpStatus.OK, ResponseMessage.NAME_BRAND_REVIEW_SEARCH_SUCCESS.getMessage(),
+                        videoReviewResponse);
+                // 이미지 리뷰
+            } else if (mediaType == MediaType.IMAGE) {
+                KeywordImageReviewListResponse imageReviewResponse = reviewReadService.searchImageReviewsByKeyword(
+                        keyword, page, size);
+
+                return ApiResponse.success(HttpStatus.OK, ResponseMessage.NAME_BRAND_REVIEW_SEARCH_SUCCESS.getMessage(),
+                        imageReviewResponse);
+            }
+
+            throw new MissingMediaTypeException();
+        }
+        // 상품 검색
+        NameBrandProductResponse searchResults = productService.search(keyword, page,
+                size);
+
+        return ApiResponse.success(HttpStatus.OK, ResponseMessage.NAME_BRAND_SEARCH_SUCCESS.getMessage(),
+                searchResults);
+
     }
 
     @Operation(summary = "신상품 카테고리별 조회")
@@ -153,17 +192,6 @@ public class ProductController {
         ProductDetailYoutubeResponse detailYoutube = productReadService.getProductDetailYoutube(productId);
 
         return ApiResponse.success(HttpStatus.OK, PRODUCT_YOUTUBE_DETAIL_SUCCESS.getMessage(), detailYoutube);
-    }
-
-    @Operation(summary = "상품명 또는 브랜드명 상품 검색")
-    @GetMapping("/search")
-    public ApiResponse<NameBrandProductResponse> search(@Valid ProductSearchRequest request,
-                                                        @RequestParam(defaultValue = "0") int page,
-                                                        @RequestParam(defaultValue = "20") int size) {
-        NameBrandProductResponse searchResults = productService.search(request.keyword(), page, size);
-        return ApiResponse.success(HttpStatus.OK, ResponseMessage.NAME_BRAND_SEARCH_SUCCESS.getMessage(),
-                searchResults);
-
     }
 
     @Hidden

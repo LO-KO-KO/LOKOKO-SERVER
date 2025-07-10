@@ -36,7 +36,7 @@ public class User extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String lineId;
 
-    @Column(unique = true)
+    @Column
     private String email;
 
     @Column
