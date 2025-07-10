@@ -12,11 +12,11 @@ public record ReviewListResponse<T>(
         PageableResponse pageInfo
 
 ) {
-    public static <T> ReviewListResponse<T> from(String keyword, Slice<T> videoReviews) {
+    public static <T> ReviewListResponse<T> from(String keyword, Slice<T> reviews) {
         return new ReviewListResponse(
                 keyword,
-                videoReviews.getContent(),
-                PageableResponse.of(videoReviews)
+                reviews.getContent(),
+                PageableResponse.of(reviews)
         );
     }
 }
