@@ -6,17 +6,17 @@ import lombok.Builder;
 public record GenerateTokenDto(
         Long id,
         String role,
-        String email
+        String lineId
 ) {
-    public static GenerateTokenDto of(Long id, String role, String email) {
-        return new GenerateTokenDto(id, role, email);
+    public static GenerateTokenDto of(Long id, String role, String lineId) {
+        return new GenerateTokenDto(id, role, lineId);
     }
 
-    public static GenerateTokenDto from(Long id, String role, String email) {
-        return new GenerateTokenDto(id, role, email);
+    public static GenerateTokenDto from(Long id, String role, String lineId) {
+        return new GenerateTokenDto(id, role, lineId);
     }
 
     public static GenerateTokenDto from(GenerateTokenDto dto) {
-        return new GenerateTokenDto(dto.id(), dto.role(), dto.email());
+        return new GenerateTokenDto(dto.id(), dto.role(), dto.lineId());
     }
 }

@@ -80,9 +80,9 @@ public class AuthService {
                 loginStatus = OauthLoginStatus.REGISTER;
             }
 
-            String accessToken = jwtProvider.generateAccessToken(user.getId(), user.getRole().name());
+            String accessToken = jwtProvider.generateAccessToken(user.getId(), user.getRole().name(), lineUserId);
             String tokenId = UUID.randomUUID().toString();
-            String refreshToken = jwtProvider.generateRefreshToken(user.getId(), user.getRole().name(), tokenId);
+            String refreshToken = jwtProvider.generateRefreshToken(user.getId(), user.getRole().name(), tokenId, lineUserId);
             log.info("[AuthService] JWT 생성 → accessToken={}, refreshToken={}, tokenId={}",
                     accessToken, refreshToken, tokenId);
 
