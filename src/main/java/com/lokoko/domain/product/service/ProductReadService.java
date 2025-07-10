@@ -8,9 +8,11 @@ import com.lokoko.domain.product.dto.CategoryPopularProductResponse;
 import com.lokoko.domain.product.dto.CategoryProductPageResponse;
 import com.lokoko.domain.product.dto.ProductDetailResponse;
 import com.lokoko.domain.product.dto.ProductDetailYoutubeResponse;
+import com.lokoko.domain.product.dto.ProductOptionResponse;
 import com.lokoko.domain.product.dto.ProductResponse;
 import com.lokoko.domain.product.dto.ProductSummary;
 import com.lokoko.domain.product.entity.Product;
+import com.lokoko.domain.product.entity.ProductOption;
 import com.lokoko.domain.product.entity.enums.MiddleCategory;
 import com.lokoko.domain.product.entity.enums.SubCategory;
 import com.lokoko.domain.product.entity.enums.Tag;
@@ -128,10 +130,14 @@ public class ProductReadService {
 
         List<ProductResponse> products =
                 productService.makeProductResponse(List.of(product), summaryMap);
+        List<ProductOption> options = productOptionRepository.findByProduct(product);
+        List<ProductOptionResponse> optionResponses = options.stream()
+                .map(ProductOptionResponse::from)
+                .toList();
 
         return new ProductDetailResponse(
                 products,
-                productOptionRepository.findOptionNamesByProduct(product),
+                optionResponses,
                 product.getNormalPrice(),
                 product.getProductDetail(),
                 product.getIngredients(),
