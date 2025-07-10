@@ -1,9 +1,8 @@
 package com.lokoko.domain.user.exception;
 
-import static org.springframework.http.HttpStatus.NOT_FOUND;
-
 import com.lokoko.global.common.exception.BaseException;
 
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 public class UserNotFoundException extends BaseException {
     public UserNotFoundException() {
