@@ -1,7 +1,8 @@
 package com.lokoko.domain.like.controller;
 
+import static com.lokoko.domain.like.controller.enums.ResponseMessage.LIKE_TOGGLE_SUCCESS;
+
 import com.lokoko.domain.like.service.ProductLikeService;
-import com.lokoko.domain.product.controller.ResponseMessage;
 import com.lokoko.global.auth.annotation.CurrentUser;
 import com.lokoko.global.common.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,6 +28,6 @@ public class ProductLikeController {
                                         @Parameter(hidden = true) @CurrentUser Long userId) {
         productLikeService.toggleProductLike(productId, userId);
 
-        return ApiResponse.success(HttpStatus.OK, ResponseMessage.LIKE_TOGGLE_SUCCESS.getMessage());
+        return ApiResponse.success(HttpStatus.OK, LIKE_TOGGLE_SUCCESS.getMessage());
     }
 }
