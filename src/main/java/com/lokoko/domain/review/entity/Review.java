@@ -1,8 +1,7 @@
 package com.lokoko.domain.review.entity;
 
-import static jakarta.persistence.FetchType.LAZY;
-
 import com.lokoko.domain.product.entity.Product;
+import com.lokoko.domain.product.entity.ProductOption;
 import com.lokoko.domain.review.entity.enums.Rating;
 import com.lokoko.domain.user.entity.User;
 import com.lokoko.global.common.entity.BaseEntity;
@@ -19,6 +18,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+
+import static jakarta.persistence.FetchType.LAZY;
 
 @Getter
 @Entity
@@ -54,6 +55,10 @@ public class Review extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Rating rating;
+
+    @ManyToOne(fetch = LAZY)
+    @JoinColumn(name = "product_option_id")
+    private ProductOption productOption;
 
     // 긍정 리뷰 내용 수정
     public void changePositiveContent(String content) {
