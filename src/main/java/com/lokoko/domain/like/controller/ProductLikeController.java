@@ -2,15 +2,16 @@ package com.lokoko.domain.like.controller;
 
 import com.lokoko.domain.like.service.ProductLikeService;
 import com.lokoko.domain.product.controller.ResponseMessage;
+import com.lokoko.global.auth.annotation.CurrentUser;
 import com.lokoko.global.common.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "PRODUCT LIKE")
@@ -23,7 +24,7 @@ public class ProductLikeController {
     @Operation(summary = "게시글 좋아요/취소")
     @PostMapping
     public ApiResponse<Void> toggleLike(@PathVariable final Long productId,
-                                        @RequestParam Long userId) {
+                                        @Parameter(hidden = true) @CurrentUser Long userId) {
         productLikeService.toggleProductLike(productId, userId);
 
         return ApiResponse.success(HttpStatus.OK, ResponseMessage.LIKE_TOGGLE_SUCCESS.getMessage());
