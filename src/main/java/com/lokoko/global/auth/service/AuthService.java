@@ -24,6 +24,8 @@ import com.lokoko.global.auth.line.dto.LineProfileResponse;
 import com.lokoko.global.auth.line.dto.LineTokenResponse;
 import com.lokoko.global.auth.line.dto.LineUserInfoResponse;
 import com.lokoko.global.utils.RedisUtil;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -77,14 +79,11 @@ public class AuthService {
                 user = userRepository.save(user);
                 loginStatus = OauthLoginStatus.REGISTER;
             }
-
             String accessToken = jwtProvider.generateAccessToken(user.getId(), user.getRole().name());
             String tokenId = UUID.randomUUID().toString();
             String refreshToken = jwtProvider.generateRefreshToken(user.getId(), user.getRole().name(), tokenId);
-            String redisKey = "refreshToken:" + user.getId() + ":" + tokenId;
-            redisUtil.setRefreshToken(redisKey, refreshToken, refreshTokenExpiration);
 
-            return LoginDto.of(accessToken, refreshToken, loginStatus);
+            return LoginDto.of(accessToken, refreshToken, loginStatus, user.getId(), tokenId);
         } catch (StateValidationException ex) {
             log.warn("State 검증 실패: {}", ex.getMessage());
             throw ex;
@@ -96,11 +95,11 @@ public class AuthService {
 
     public String generateLineLoginUrl() {
         String state = stateService.generateState();
-
+        String redirectUri = URLEncoder.encode(props.getRedirectUri(), StandardCharsets.UTF_8);
         return AUTHORIZE_PATH +
                 PARAM_RESPONSE_TYPE +
                 PARAM_CLIENT_ID + props.getClientId() +
-                PARAM_REDIRECT_URI + props.getRedirectUri() +
+                PARAM_REDIRECT_URI + redirectUri +
                 PARAM_STATE + state +
                 PARAM_SCOPE;
     }
