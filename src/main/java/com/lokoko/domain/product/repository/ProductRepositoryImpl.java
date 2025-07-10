@@ -31,7 +31,6 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
     private final QProduct p = QProduct.product;
     private final QReview r = QReview.review;
 
-
     /**
      * 주어진 토큰 리스트를 기반으로 상품 검색 단계적으로 검색이 수행되고, 각 단계에서 결과가 존재하면 바로 반환
      *
@@ -49,76 +48,18 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
 
             NumberExpression<Double> ratingAvgExpr = Expressions.numberTemplate(Double.class, "avg({0})", r.rating);
 
-            String fullKeyword = String.join("", tokens);
-            List<Product> exactMatches = queryFactory
+            BooleanBuilder finalCondition = buildSearchCondition(tokens);
+
+            allMatches = queryFactory
                     .select(p)
                     .from(p)
                     .leftJoin(r).on(r.product.eq(p))
-                    .where(p.searchToken.containsIgnoreCase(fullKeyword))
+                    .where(finalCondition)
                     .groupBy(p.id)
                     .orderBy(reviewCount.desc(), ratingAvgExpr.desc())
                     .fetch();
-            if (!exactMatches.isEmpty()) {
-                allMatches = exactMatches;
-            } else {
-                BooleanBuilder allTokensMatch = new BooleanBuilder();
-                tokens.forEach(token ->
-                        allTokensMatch.and(p.searchToken.containsIgnoreCase(token))
-                );
-                List<Product> allTokenMatches = queryFactory
-                        .select(p)
-                        .from(p)
-                        .leftJoin(r).on(r.product.eq(p))
-                        .where(allTokensMatch)
-                        .groupBy(p.id)
-                        .orderBy(reviewCount.desc(), ratingAvgExpr.desc())
-                        .fetch();
-                if (!allTokenMatches.isEmpty()) {
-                    allMatches = allTokenMatches;
-                } else if (tokens.size() >= 3) {
-                    BooleanBuilder majorTokensMatch = new BooleanBuilder()
-                            .and(p.searchToken.containsIgnoreCase(tokens.get(0)))
-                            .and(p.searchToken.containsIgnoreCase(tokens.get(tokens.size() - 1)));
-                    List<Product> majorMatches = queryFactory
-                            .select(p)
-                            .from(p)
-                            .leftJoin(r).on(r.product.eq(p))
-                            .where(majorTokensMatch)
-                            .groupBy(p.id)
-                            .orderBy(reviewCount.desc(), ratingAvgExpr.desc())
-                            .fetch();
-                    if (!majorMatches.isEmpty()) {
-                        allMatches = majorMatches;
-                    } else {
-                        BooleanBuilder anyTokenMatch = new BooleanBuilder();
-                        tokens.forEach(token ->
-                                anyTokenMatch.or(p.searchToken.containsIgnoreCase(token))
-                        );
-                        allMatches = queryFactory
-                                .select(p)
-                                .from(p)
-                                .leftJoin(r).on(r.product.eq(p))
-                                .where(anyTokenMatch)
-                                .groupBy(p.id)
-                                .orderBy(reviewCount.desc(), ratingAvgExpr.desc())
-                                .fetch();
-                    }
-                } else {
-                    BooleanBuilder anyTokenMatch = new BooleanBuilder();
-                    tokens.forEach(token ->
-                            anyTokenMatch.or(p.searchToken.containsIgnoreCase(token))
-                    );
-                    allMatches = queryFactory
-                            .select(p)
-                            .from(p)
-                            .leftJoin(r).on(r.product.eq(p))
-                            .where(anyTokenMatch)
-                            .groupBy(p.id)
-                            .orderBy(reviewCount.desc(), ratingAvgExpr.desc())
-                            .fetch();
-                }
-            }
         }
+
         int offset = (int) pageable.getOffset();
         int limit = pageable.getPageSize();
         List<Product> content;
@@ -135,10 +76,65 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
         return new SliceImpl<>(content, pageable, hasNext);
     }
 
+    /**
+     * 검색 토큰 리스트를 기반으로 단계적 검색 조건을 구성 1단계: 완전 일치 검색 2단계: 모든 토큰 포함 (AND 검색) 3단계: 주요 토큰 포함 (첫 번째 + 마지막 토큰) 4단계: 일부 토큰 포함
+     * (OR 검색)
+     */
+    private BooleanBuilder buildSearchCondition(List<String> tokens) {
+
+        String fullKeyword = String.join("", tokens);
+        BooleanBuilder exactMatch = new BooleanBuilder()
+                .and(p.searchToken.containsIgnoreCase(fullKeyword));
+
+        long exactMatchCount = queryFactory
+                .selectFrom(p)
+                .where(exactMatch)
+                .fetchCount();
+
+        if (exactMatchCount > 0) {
+            return exactMatch;
+        }
+
+        BooleanBuilder allTokensMatch = new BooleanBuilder();
+        tokens.forEach(token ->
+                allTokensMatch.and(p.searchToken.containsIgnoreCase(token))
+        );
+
+        long allTokensCount = queryFactory
+                .selectFrom(p)
+                .where(allTokensMatch)
+                .fetchCount();
+
+        if (allTokensCount > 0) {
+            return allTokensMatch;
+        }
+
+        if (tokens.size() >= 3) {
+            BooleanBuilder majorTokensMatch = new BooleanBuilder()
+                    .and(p.searchToken.containsIgnoreCase(tokens.get(0)))
+                    .and(p.searchToken.containsIgnoreCase(tokens.get(tokens.size() - 1)));
+
+            long majorTokensCount = queryFactory
+                    .selectFrom(p)
+                    .where(majorTokensMatch)
+                    .fetchCount();
+
+            if (majorTokensCount > 0) {
+                return majorTokensMatch;
+            }
+        }
+
+        BooleanBuilder anyTokenMatch = new BooleanBuilder();
+        tokens.forEach(token ->
+                anyTokenMatch.or(p.searchToken.containsIgnoreCase(token))
+        );
+
+        return anyTokenMatch;
+    }
+
     @Override
     public Slice<Product> findProductsByPopularityAndRating(MiddleCategory category, Pageable pageable) {
         NumberExpression<Long> reviewCount = r.id.count();
-
         NumberExpression<Double> ratingAvgExpr = Expressions.numberTemplate(Double.class, "avg({0})", r.rating);
 
         List<Product> content = queryFactory
@@ -165,10 +161,12 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             SubCategory subCategory,
             Pageable pageable
     ) {
+
         NumberExpression<Long> reviewCount = r.id.count();
         NumberExpression<Double> ratingAvgExpr = Expressions.numberTemplate(Double.class, "avg({0})", r.rating);
 
         BooleanExpression where = p.middleCategory.eq(category);
+
         if (subCategory != null) {
             where = where.and(p.subCategory.eq(subCategory));
         }
