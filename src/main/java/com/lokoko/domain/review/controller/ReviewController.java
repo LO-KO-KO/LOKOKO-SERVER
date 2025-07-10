@@ -41,7 +41,6 @@ public class ReviewController {
 
     @PostMapping("/media")
     public ApiResponse<ReviewMediaResponse> createMediaPresignedUrl(
-
             @Parameter(hidden = true) @CurrentUser Long userId,
             @RequestBody @Valid ReviewMediaRequest request) {
         ReviewMediaResponse response = reviewService.createMediaPresignedUrl(userId, request);
@@ -53,7 +52,7 @@ public class ReviewController {
     @PostMapping("/{productId}")
     public ApiResponse<ReviewResponse> createReceipt(
             @PathVariable Long productId,
-            @CurrentUser Long userId,
+            @Parameter(hidden = true) @CurrentUser Long userId,
             @RequestBody @Valid ReviewRequest request
     ) {
         ReviewResponse response = reviewService.createReview(productId, userId, request);
