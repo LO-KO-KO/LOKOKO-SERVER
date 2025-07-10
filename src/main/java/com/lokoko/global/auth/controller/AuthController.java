@@ -16,10 +16,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,30 +36,29 @@ public class AuthController {
     private final JwtService jwtService;
     private final CookieUtil cookieUtil;
 
-    @Value("${frontend.redirect.url}")
-    private String frontendRedirectUrl;
-
-
-    @Operation(summary = "라인 소셜 로그인, 리다이렉션")
+    @Operation(summary = "라인 소셜 로그인, 리다이렉션 (백엔드 주소로)")
     @GetMapping("/line/redirect")
     public void redirectToLineAuth(HttpServletResponse response) throws IOException {
         String authorizeUrl = authService.generateLineLoginUrl();
         response.sendRedirect(authorizeUrl);
     }
 
-    @Operation(summary = "라인 소셜 로그인, JWT 토큰 발급")
+    @Operation(summary = "라인 소셜 로그인, JWT 토큰 발급 후 저장")
     @GetMapping("/line/login")
-    public void lineLogin(@RequestParam("code") String code,
-                                                    @RequestParam("state") String state,
-                                                    HttpServletResponse response) throws IOException {
+    public LoginDto lineLogin(@RequestParam("code") String code, @RequestParam("state") String state) {
         LoginDto tokens = authService.loginWithLine(code, state);
-        cookieUtil.setCookie(ACCESS_TOKEN_HEADER, tokens.accessToken(), response);
-        cookieUtil.setCookie(REFRESH_TOKEN_HEADER, tokens.refreshToken(), response);
-        log.info(">> 쿠키 → {}",
-                response.getHeaders("Set-Cookie").stream().collect(Collectors.joining(" | "))
-        );
+        return tokens;
     }
 
+    @Operation(summary = "JWT 토큰 쿠키에 저장")
+    @GetMapping("/line/token/cookie")
+    public void setJwtCookie(@RequestParam("accessToken") String accessToken,
+                             @RequestParam("refreshToken") String refreshToken,
+                             HttpServletResponse response
+    ) {
+        cookieUtil.setCookie(ACCESS_TOKEN_HEADER, accessToken, response);
+        cookieUtil.setCookie(REFRESH_TOKEN_HEADER, refreshToken, response);
+    }
     /*
      * TODO: 명세서 작성 후 플로우 확정 예정
      */

@@ -1,12 +1,6 @@
 package com.lokoko.global.auth.service;
 
 import static com.lokoko.global.auth.jwt.utils.JwtProvider.EMAIL_CLAIM;
-import static com.lokoko.global.utils.LineConstants.AUTHORIZE_PATH;
-import static com.lokoko.global.utils.LineConstants.PARAM_CLIENT_ID;
-import static com.lokoko.global.utils.LineConstants.PARAM_REDIRECT_URI;
-import static com.lokoko.global.utils.LineConstants.PARAM_RESPONSE_TYPE;
-import static com.lokoko.global.utils.LineConstants.PARAM_SCOPE;
-import static com.lokoko.global.utils.LineConstants.PARAM_STATE;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
@@ -23,12 +17,13 @@ import com.lokoko.global.auth.line.LineProperties;
 import com.lokoko.global.auth.line.dto.LineProfileResponse;
 import com.lokoko.global.auth.line.dto.LineTokenResponse;
 import com.lokoko.global.auth.line.dto.LineUserInfoResponse;
-import com.lokoko.global.utils.RedisUtil;
+import com.lokoko.global.utils.LineConstants;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,10 +36,6 @@ public class AuthService {
     private final UserRepository userRepository;
     private final JwtProvider jwtProvider;
     private final LineProperties props;
-    private final RedisUtil redisUtil;
-
-    @Value("${lokoko.jwt.refresh.expiration}")
-    private long refreshTokenExpiration;
 
     @Transactional
     public LoginDto loginWithLine(String code, String state) {
@@ -79,18 +70,12 @@ public class AuthService {
                 user = userRepository.save(user);
                 loginStatus = OauthLoginStatus.REGISTER;
             }
-
             String accessToken = jwtProvider.generateAccessToken(user.getId(), user.getRole().name(), lineUserId);
             String tokenId = UUID.randomUUID().toString();
-            String refreshToken = jwtProvider.generateRefreshToken(user.getId(), user.getRole().name(), tokenId, lineUserId);
-            log.info("[AuthService] JWT 생성 → accessToken={}, refreshToken={}, tokenId={}",
-                    accessToken, refreshToken, tokenId);
+            String refreshToken = jwtProvider.generateRefreshToken(
+                    user.getId(), user.getRole().name(), tokenId, lineUserId);
 
-            String redisKey = "refreshToken:" + user.getId() + ":" + tokenId;
-            redisUtil.setRefreshToken(redisKey, refreshToken, refreshTokenExpiration);
-            log.info("[AuthService] Redis에 refreshToken 저장 → key={}, expiration={}", redisKey, refreshTokenExpiration);
-
-            return LoginDto.of(accessToken, refreshToken, loginStatus);
+            return LoginDto.of(accessToken, refreshToken, loginStatus, user.getId(), tokenId);
         } catch (StateValidationException ex) {
             log.warn("State 검증 실패: {}", ex.getMessage());
             throw ex;
@@ -102,12 +87,13 @@ public class AuthService {
 
     public String generateLineLoginUrl() {
         String state = stateService.generateState();
+        String redirectUri = URLEncoder.encode(props.getRedirectUri(), StandardCharsets.UTF_8);
 
-        return AUTHORIZE_PATH +
-                PARAM_RESPONSE_TYPE +
-                PARAM_CLIENT_ID + props.getClientId() +
-                PARAM_REDIRECT_URI + props.getRedirectUri() +
-                PARAM_STATE + state +
-                PARAM_SCOPE;
+        return LineConstants.AUTHORIZE_PATH +
+                LineConstants.PARAM_RESPONSE_TYPE +
+                LineConstants.PARAM_CLIENT_ID + props.getClientId() +
+                LineConstants.PARAM_REDIRECT_URI + redirectUri +
+                LineConstants.PARAM_STATE + state +
+                LineConstants.PARAM_SCOPE;
     }
 }
