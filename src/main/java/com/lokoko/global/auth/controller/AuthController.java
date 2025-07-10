@@ -60,7 +60,6 @@ public class AuthController {
         log.info(">> 쿠키 → {}",
                 response.getHeaders("Set-Cookie").stream().collect(Collectors.joining(" | "))
         );
-        response.sendRedirect(frontendRedirectUrl);
     }
 
     /*
