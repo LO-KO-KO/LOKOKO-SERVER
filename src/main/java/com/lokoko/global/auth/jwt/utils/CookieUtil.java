@@ -25,7 +25,7 @@ public class CookieUtil {
                 .sameSite("Lax")
                 .build();
 
-        response.setHeader("Set-Cookie", cookie.toString());
+        response.addHeader("Set-Cookie", cookie.toString());
     }
 
     public void deleteCookie(HttpServletResponse response, String name) {
