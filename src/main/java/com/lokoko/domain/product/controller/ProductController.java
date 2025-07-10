@@ -35,6 +35,9 @@ import com.lokoko.global.kuromoji.service.ProductMigrationService;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Parameter;
+import com.lokoko.global.auth.annotation.CurrentUser;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -64,7 +67,6 @@ public class ProductController {
         productCrawlingService.scrapeByCategory(request.mainCategory(), request.middleCategory());
 
         return ApiResponse.success(HttpStatus.OK, ResponseMessage.PRODUCT_CRAWL_SUCCESS.getMessage(), null);
-
     }
 
     @Operation(summary = "카테고리 별 상품 검색")
@@ -74,13 +76,14 @@ public class ProductController {
             @RequestParam(required = false) SubCategory subCategory,
             @RequestParam(defaultValue = "false") SearchType searchType,
             @RequestParam(required = false) MediaType mediaType,
+            @Parameter(hidden = true) @CurrentUser Long userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
         if (searchType == SearchType.REVIEW) {
             if (mediaType == MediaType.VIDEO) {
                 VideoReviewListResponse videoReviewResponse = reviewReadService.searchVideoReviewsByCategory(
-                        middleCategory, subCategory, page, size);
+                        middleCategory, subCategory, userId, page, size);
 
                 return ApiResponse.success(HttpStatus.OK, CATEGORY_REVIEW_SEARCH_SUCCESS.getMessage(),
                         videoReviewResponse);
@@ -95,7 +98,7 @@ public class ProductController {
             throw new MissingMediaTypeException();
         }
         CategoryProductPageResponse categoryProductResponse = productReadService.searchProductsByCategory(
-                middleCategory, subCategory, page, size);
+                middleCategory, subCategory, userId, page, size);
 
         return ApiResponse.success(HttpStatus.OK, CATEGORY_SEARCH_SUCCESS.getMessage(), categoryProductResponse);
     }
@@ -142,21 +145,23 @@ public class ProductController {
     @GetMapping("/categories/new")
     public ApiResponse<CategoryNewProductResponse> searchNewProductsByCategory(
             @RequestParam MiddleCategory middleCategory,
+            @Parameter(hidden = true) @CurrentUser Long userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         CategoryNewProductResponse categoryNewProductResponse = productReadService.searchNewProductsByCategory(
-                middleCategory, page, size);
+                middleCategory, userId, page, size);
 
         return ApiResponse.success(HttpStatus.OK, CATEGORY_NEW_LIST_SUCCESS.getMessage(), categoryNewProductResponse);
     }
 
-    @Operation(summary = "인기상품 카테고리별 조회")
+    @Operation(summary = "인기상품 카테고리별 조회 (메인 페이지)")
     @GetMapping("/categories/popular")
     public ApiResponse<CategoryPopularProductResponse> searchPopularProductsByCategory(
-            @RequestParam MiddleCategory middleCategory, @RequestParam(defaultValue = "0") int page,
+            @RequestParam MiddleCategory middleCategory, @Parameter(hidden = true) @CurrentUser Long userId,
+            @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         CategoryPopularProductResponse categoryPopularProductResponse = productReadService.searchPopularProductsByCategory(
-                middleCategory, page, size);
+                middleCategory, userId, page, size);
 
         return ApiResponse.success(HttpStatus.OK, CATEGORY_POPULAR_LIST_SUCCESS.getMessage(),
                 categoryPopularProductResponse);
@@ -167,6 +172,7 @@ public class ProductController {
     @PostMapping("/crawl/new")
     public ApiResponse<Void> crawlNew(@RequestBody CrawlRequest request) {
         newProductCrawlingService.scrapeNewByCategory(request.mainCategory(), request.middleCategory());
+
         return ApiResponse.success(HttpStatus.OK, ResponseMessage.PRODUCT_CRAWL_NEW_SUCCESS.getMessage(), null);
     }
 
@@ -175,10 +181,11 @@ public class ProductController {
     @PostMapping("/crawl/options")
     public ApiResponse<Void> crawlOptions() {
         productCrawlingService.crawlAllOptions();
+
         return ApiResponse.success(HttpStatus.OK, ResponseMessage.PRODUCT_OPTION_SUCCESS.getMessage(), null);
     }
 
-    @Operation(summary = "상세조회 제품(별점 포함) 조회")
+    @Operation(summary = "상세조회 제품(별점 포함) 조회 (상세 조회)")
     @GetMapping("/details/{productId}")
     public ApiResponse<ProductDetailResponse> getProductDetail(@PathVariable Long productId) {
         ProductDetailResponse detail = productReadService.getProductDetail(productId);
@@ -186,7 +193,7 @@ public class ProductController {
         return ApiResponse.success(HttpStatus.OK, PRODUCT_DETAIL_SUCCESS.getMessage(), detail);
     }
 
-    @Operation(summary = "상세조회 유튜브 리뷰 조회")
+    @Operation(summary = "상세조회 유튜브 리뷰 조회 (상세 조회)")
     @GetMapping("/details/{productId}/youtube")
     public ApiResponse<ProductDetailYoutubeResponse> getProductDetailYoutube(@PathVariable Long productId) {
         ProductDetailYoutubeResponse detailYoutube = productReadService.getProductDetailYoutube(productId);
@@ -194,11 +201,24 @@ public class ProductController {
         return ApiResponse.success(HttpStatus.OK, PRODUCT_YOUTUBE_DETAIL_SUCCESS.getMessage(), detailYoutube);
     }
 
+    @Operation(summary = "상품명 또는 브랜드명 상품 검색 ")
+    @GetMapping("/search")
+    public ApiResponse<NameBrandProductResponse> search(@Valid ProductSearchRequest request,
+                                                        @Parameter(hidden = true) @CurrentUser Long userId,
+                                                        @RequestParam(defaultValue = "0") int page,
+                                                        @RequestParam(defaultValue = "20") int size) {
+        NameBrandProductResponse searchResults = productService.search(request.keyword(), page, size, userId);
+
+        return ApiResponse.success(HttpStatus.OK, ResponseMessage.NAME_BRAND_SEARCH_SUCCESS.getMessage(),
+                searchResults);
+    }
+
     @Hidden
     @Operation(summary = "상품 엔티티의 search_token 필드 갱신")
     @PostMapping("/search-fields/migrate")
     public ApiResponse<String> updateSearchFields() {
         productMigrationService.migrateSearchFields();
+
         return ApiResponse.success(HttpStatus.OK, ResponseMessage.PRODUCT_MIGRATION_SUCCESS.getMessage(), null);
     }
 }
