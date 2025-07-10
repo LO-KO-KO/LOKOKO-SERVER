@@ -23,10 +23,9 @@ import com.lokoko.domain.product.service.ProductCrawlingService;
 import com.lokoko.domain.product.service.ProductReadService;
 import com.lokoko.domain.product.service.ProductService;
 import com.lokoko.domain.review.dto.ImageReviewListResponse;
-import com.lokoko.domain.review.dto.ImageReviewResponse;
-import com.lokoko.domain.review.dto.ReviewListResponse;
+import com.lokoko.domain.review.dto.KeywordImageReviewListResponse;
+import com.lokoko.domain.review.dto.KeywordVideoReviewListResponse;
 import com.lokoko.domain.review.dto.VideoReviewListResponse;
-import com.lokoko.domain.review.dto.VideoReviewResponse;
 import com.lokoko.domain.review.exception.MissingMediaTypeException;
 import com.lokoko.domain.review.service.ReviewReadService;
 import com.lokoko.global.common.entity.MediaType;
@@ -114,14 +113,14 @@ public class ProductController {
 
             // 동영상 리뷰
             if (mediaType == MediaType.VIDEO) {
-                ReviewListResponse<VideoReviewResponse> videoReviewResponse = reviewReadService.searchVideoReviewsByKeyword(
+                KeywordVideoReviewListResponse videoReviewResponse = reviewReadService.searchVideoReviewsByKeyword(
                         keyword, page, size);
 
                 return ApiResponse.success(HttpStatus.OK, ResponseMessage.NAME_BRAND_REVIEW_SEARCH_SUCCESS.getMessage(),
                         videoReviewResponse);
                 // 이미지 리뷰
             } else if (mediaType == MediaType.IMAGE) {
-                ReviewListResponse<ImageReviewResponse> imageReviewResponse = reviewReadService.searchImageReviewsByKeyword(
+                KeywordImageReviewListResponse imageReviewResponse = reviewReadService.searchImageReviewsByKeyword(
                         keyword, page, size);
 
                 return ApiResponse.success(HttpStatus.OK, ResponseMessage.NAME_BRAND_REVIEW_SEARCH_SUCCESS.getMessage(),

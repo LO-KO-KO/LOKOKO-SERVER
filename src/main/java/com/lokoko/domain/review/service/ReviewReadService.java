@@ -4,7 +4,8 @@ import com.lokoko.domain.product.entity.enums.MiddleCategory;
 import com.lokoko.domain.product.entity.enums.SubCategory;
 import com.lokoko.domain.review.dto.ImageReviewListResponse;
 import com.lokoko.domain.review.dto.ImageReviewResponse;
-import com.lokoko.domain.review.dto.ReviewListResponse;
+import com.lokoko.domain.review.dto.KeywordImageReviewListResponse;
+import com.lokoko.domain.review.dto.KeywordVideoReviewListResponse;
 import com.lokoko.domain.review.dto.VideoReviewListResponse;
 import com.lokoko.domain.review.dto.VideoReviewResponse;
 import com.lokoko.domain.review.repository.ReviewRepository;
@@ -71,11 +72,9 @@ public class ReviewReadService {
                 .reviews(imageReviews.getContent())
                 .pageInfo(PageableResponse.of(imageReviews))
                 .build();
-
     }
 
-
-    public ReviewListResponse<VideoReviewResponse> searchVideoReviewsByKeyword(String keyword, int page, int size) {
+    public KeywordVideoReviewListResponse searchVideoReviewsByKeyword(String keyword, int page, int size) {
 
         List<String> tokens = kuromojiService.tokenize(keyword);
         Pageable pageable = PageRequest.of(page, size);
@@ -83,13 +82,11 @@ public class ReviewReadService {
         Slice<VideoReviewResponse> videoReviews = reviewRepository.findVideoReviewsByKeyword(tokens,
                 pageable);
 
-        return ReviewListResponse.from(keyword, videoReviews);
-
-
+        return KeywordVideoReviewListResponse.from(keyword, videoReviews);
+//        return ReviewListResponse.from(keyword, videoReviews);
     }
 
-
-    public ReviewListResponse<ImageReviewResponse> searchImageReviewsByKeyword(String keyword, int page, int size) {
+    public KeywordImageReviewListResponse searchImageReviewsByKeyword(String keyword, int page, int size) {
 
         List<String> tokens = kuromojiService.tokenize(keyword);
         Pageable pageable = PageRequest.of(page, size);
@@ -97,6 +94,7 @@ public class ReviewReadService {
         Slice<ImageReviewResponse> imageReviews = reviewRepository.findImageReviewsByKeyword(tokens,
                 pageable);
 
-        return ReviewListResponse.from(keyword, imageReviews);
+        return KeywordImageReviewListResponse.from(keyword, imageReviews);
+//        return ReviewListResponse.from(keyword, imageReviews);
     }
 }
