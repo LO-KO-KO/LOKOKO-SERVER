@@ -48,7 +48,7 @@ public class ProductReadService {
 
     // 카테고리 id 로 제품 리스트 조회
     public CategoryProductPageResponse searchProductsByCategory(MiddleCategory middleCategory, SubCategory subCategory,
-                                                                int page,
+                                                                Long userId, int page,
                                                                 int size) {
         Pageable pageable = PageRequest.of(page, size);
         Slice<Product> slice = (subCategory == null)
@@ -56,7 +56,7 @@ public class ProductReadService {
                 : productRepository.findProductsByPopularityAndRating(middleCategory, subCategory, pageable);
 
         Slice<ProductResponse> responseSlice =
-                productService.buildProductResponseWithReviewData(slice);
+                productService.buildProductResponseWithReviewData(slice, userId);
 
         return CategoryProductPageResponse.builder()
                 .searchQuery(subCategory == null
@@ -70,13 +70,14 @@ public class ProductReadService {
                 .build();
     }
 
-    public CategoryNewProductResponse searchNewProductsByCategory(MiddleCategory middleCategory, int page, int size) {
+    public CategoryNewProductResponse searchNewProductsByCategory(MiddleCategory middleCategory, Long userId, int page,
+                                                                  int size) {
         Pageable pageable = PageRequest.of(page, size);
         Slice<Product> slice = productRepository.findByMiddleCategoryAndTag(
                 middleCategory, Tag.NEW, pageable
         );
         Slice<ProductResponse> responseSlice =
-                productService.buildProductResponseWithReviewData(slice);
+                productService.buildProductResponseWithReviewData(slice, userId);
 
         return new CategoryNewProductResponse(
                 middleCategory.name(),
@@ -85,13 +86,14 @@ public class ProductReadService {
         );
     }
 
-    public CategoryPopularProductResponse searchPopularProductsByCategory(MiddleCategory middleCategory, int page,
+    public CategoryPopularProductResponse searchPopularProductsByCategory(MiddleCategory middleCategory, Long userId,
+                                                                          int page,
                                                                           int size) {
         Pageable pageable = PageRequest.of(page, size);
         Slice<Product> slice = productRepository
                 .findProductsByPopularityAndRating(middleCategory, pageable);
         Slice<ProductResponse> responseSlice =
-                productService.buildProductResponseWithReviewData(slice);
+                productService.buildProductResponseWithReviewData(slice, userId);
 
         return new CategoryPopularProductResponse(
                 middleCategory.getDisplayName(),
@@ -100,7 +102,7 @@ public class ProductReadService {
         );
     }
 
-    public ProductDetailResponse getProductDetail(Long productId) {
+    public ProductDetailResponse getProductDetail(Long productId, Long userId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(ProductNotFoundException::new);
 
@@ -127,7 +129,7 @@ public class ProductReadService {
         );
 
         List<ProductResponse> products =
-                productService.makeProductResponse(List.of(product), summaryMap);
+                productService.makeProductResponse(List.of(product), summaryMap, userId);
         List<ProductOption> options = productOptionRepository.findByProduct(product);
         List<ProductOptionResponse> optionResponses = options.stream()
                 .map(ProductOptionResponse::from)
