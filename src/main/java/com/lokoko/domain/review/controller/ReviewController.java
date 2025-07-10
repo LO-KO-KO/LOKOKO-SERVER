@@ -53,7 +53,7 @@ public class ReviewController {
 
     @Operation(summary = "리뷰 작성")
     @PostMapping("/{productId}")
-    public ApiResponse<ReviewResponse> createReceipt(
+    public ApiResponse<ReviewResponse> createReview(
             @PathVariable Long productId,
             @Parameter(hidden = true) @CurrentUser Long userId,
             @RequestBody @Valid ReviewRequest request
