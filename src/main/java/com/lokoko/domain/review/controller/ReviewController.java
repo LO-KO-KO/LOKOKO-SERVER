@@ -10,6 +10,7 @@ import com.lokoko.domain.review.dto.response.ReviewResponse;
 import com.lokoko.domain.review.service.ReviewService;
 import com.lokoko.global.auth.annotation.CurrentUser;
 import com.lokoko.global.common.response.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -29,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ReviewController {
     private final ReviewService reviewService;
 
+    @Operation(summary = "영수증 presignedUrl 발급")
     @PostMapping("/receipt")
     public ApiResponse<ReviewReceiptResponse> createReceiptPresignedUrl(
             @Parameter(hidden = true) @CurrentUser Long userId,
@@ -39,6 +41,7 @@ public class ReviewController {
     }
 
 
+    @Operation(summary = "사진 또는 영상 presignedUrl 발급")
     @PostMapping("/media")
     public ApiResponse<ReviewMediaResponse> createMediaPresignedUrl(
             @Parameter(hidden = true) @CurrentUser Long userId,
@@ -48,7 +51,7 @@ public class ReviewController {
         return ApiResponse.success(HttpStatus.OK, ResponseMessage.REVIEW_MEDIA_PRESIGNED_URL_SUCCESS.getMessage(), response);
     }
 
-
+    @Operation(summary = "리뷰 작성")
     @PostMapping("/{productId}")
     public ApiResponse<ReviewResponse> createReceipt(
             @PathVariable Long productId,
