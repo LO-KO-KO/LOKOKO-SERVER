@@ -28,8 +28,8 @@ public class JwtService {
 
     public JwtTokenDto generateJwtToken(GenerateTokenDto dto) {
         String tokenId = UUID.randomUUID().toString();
-        String accessToken = jwtProvider.generateAccessToken(dto.id(), dto.role());
-        String refreshToken = jwtProvider.generateRefreshToken(dto.id(), dto.role(), tokenId);
+        String accessToken = jwtProvider.generateAccessToken(dto.id(), dto.role(), dto.lineId());
+        String refreshToken = jwtProvider.generateRefreshToken(dto.id(), dto.role(), tokenId, dto.lineId());
 
         String redisKey = "refreshToken:" + dto.id() + ":" + tokenId;
         redisUtil.setRefreshToken(redisKey, refreshToken, refreshTokenExpiration);
@@ -55,7 +55,7 @@ public class JwtService {
         }
 
         String role = jwtExtractor.getRole(refreshToken);
-        String email = jwtExtractor.getEmail(refreshToken);
+        String email = jwtExtractor.getLindId(refreshToken);
         JwtTokenDto newTokens = generateJwtToken(GenerateTokenDto.of(userId, role, email));
 
         redisUtil.deleteRefreshToken(redisKey);

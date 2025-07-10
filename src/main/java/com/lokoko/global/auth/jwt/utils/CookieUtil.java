@@ -25,16 +25,16 @@ public class CookieUtil {
                 .sameSite("Lax")
                 .build();
 
-        response.setHeader("Set-Cookie", cookie.toString());
+        response.addHeader("Set-Cookie", cookie.toString());
     }
 
     public void deleteCookie(HttpServletResponse response, String name) {
         ResponseCookie cookie = ResponseCookie.from(name, "value")
                 .maxAge(0)
                 .path("/")
-                .secure(false)
+                .secure(true)
                 .httpOnly(true)
-                .sameSite("None")
+                .sameSite("Lax")
                 .build();
 
         response.setHeader("Set-Cookie", cookie.toString());

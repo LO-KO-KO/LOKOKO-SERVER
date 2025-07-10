@@ -18,6 +18,7 @@ public class JwtProvider {
     public static final String EMAIL_CLAIM = "email";
     private static final String ROLE_CLAIM = "role";
     private static final String ROLE_PREFIX = "ROLE_";
+    public static final String LINE_ID_CLAIM = "lineId";
 
     private final Key key;
     private final long accessTokenExpiration;
@@ -33,7 +34,7 @@ public class JwtProvider {
         this.refreshTokenExpiration = refreshTokenExpiration;
     }
 
-    public String generateAccessToken(Long userId, String role) {
+    public String generateAccessToken(Long userId, String role, String lineId) {
         return Jwts.builder()
                 .setSubject(userId.toString())
                 .setIssuedAt(new Date())
@@ -41,11 +42,12 @@ public class JwtProvider {
                         + accessTokenExpiration))
                 .claim(ID_CLAIM, userId)
                 .claim(ROLE_CLAIM, ROLE_PREFIX + role)
+                .claim(LINE_ID_CLAIM, lineId)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    public String generateRefreshToken(Long userId, String role, String tokenId) {
+    public String generateRefreshToken(Long userId, String role, String tokenId, String lineId) {
         return Jwts.builder()
                 .setId(tokenId)
                 .setSubject(userId.toString())
@@ -54,6 +56,7 @@ public class JwtProvider {
                         + refreshTokenExpiration))
                 .claim(ID_CLAIM, userId)
                 .claim(ROLE_CLAIM, ROLE_PREFIX + role)
+                .claim(LINE_ID_CLAIM, lineId)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }

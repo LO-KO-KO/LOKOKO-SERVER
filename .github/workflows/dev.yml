@@ -64,7 +64,9 @@ jobs:
             sudo docker stop app || true
             sudo docker rm app   || true
 
-            sudo docker run --name app -d -p 8080:8080 \
+            sudo docker run --name app -d \
+            --network lokoko-net \
+            -p 8080:8080 \
             --env-file /home/ubuntu/lokoko-dev.env \
             -e TZ=Asia/Seoul \
             ${{ secrets.DOCKER_USER_NAME }}/lokoko:latest
