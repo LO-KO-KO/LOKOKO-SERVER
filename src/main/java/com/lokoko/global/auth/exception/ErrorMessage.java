@@ -16,7 +16,10 @@ public enum ErrorMessage {
     // state 관련
     STATE_PARAMETER_REQUIRED("State 매개변수가 필요합니다.", HttpStatus.BAD_REQUEST.value()),
     STATE_PARAMETER_INVALID("유효하지 않거나 만료된 State 매개변수입니다.", HttpStatus.BAD_REQUEST.value()),
-    STATE_PARAMETER_EXPIRED("State 매개변수가 만료되었습니다.", HttpStatus.BAD_REQUEST.value());
+    STATE_PARAMETER_EXPIRED("State 매개변수가 만료되었습니다.", HttpStatus.BAD_REQUEST.value()),
+
+    // 권한 관련
+    ADMIN_PERMISSION_REQUIRED("관리자 권한이 필요합니다.", HttpStatus.FORBIDDEN.value());
 
     private final String message;
     private final int httpStatus;
