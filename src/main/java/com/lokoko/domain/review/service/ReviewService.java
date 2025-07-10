@@ -5,6 +5,7 @@ import com.lokoko.domain.image.entity.ReviewImage;
 import com.lokoko.domain.image.repository.ReceiptImageRepository;
 import com.lokoko.domain.image.repository.ReviewImageRepository;
 import com.lokoko.domain.product.entity.ProductOption;
+import com.lokoko.domain.product.exception.ProductOptionMismatchException;
 import com.lokoko.domain.product.exception.ProductOptionNotFoundException;
 import com.lokoko.domain.product.repository.ProductOptionRepository;
 import com.lokoko.domain.product.repository.ProductRepository;
@@ -127,7 +128,7 @@ public class ReviewService {
                 .orElseThrow(ProductOptionNotFoundException::new);
 
         if (!option.getProduct().getId().equals(productId)) {
-            throw new ProductOptionNotFoundException();
+            throw new ProductOptionMismatchException();
         }
 
         User user = userRepository.findById(userId)
