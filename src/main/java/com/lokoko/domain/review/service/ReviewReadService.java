@@ -4,10 +4,14 @@ import com.lokoko.domain.product.entity.enums.MiddleCategory;
 import com.lokoko.domain.product.entity.enums.SubCategory;
 import com.lokoko.domain.review.dto.ImageReviewListResponse;
 import com.lokoko.domain.review.dto.ImageReviewResponse;
+import com.lokoko.domain.review.dto.KeywordImageReviewListResponse;
+import com.lokoko.domain.review.dto.KeywordVideoReviewListResponse;
 import com.lokoko.domain.review.dto.VideoReviewListResponse;
 import com.lokoko.domain.review.dto.VideoReviewResponse;
 import com.lokoko.domain.review.repository.ReviewRepository;
 import com.lokoko.global.common.response.PageableResponse;
+import com.lokoko.global.kuromoji.service.KuromojiService;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +23,7 @@ import org.springframework.stereotype.Service;
 public class ReviewReadService {
 
     private final ReviewRepository reviewRepository;
+    private final KuromojiService kuromojiService;
 
     // 카테고리별 영상 리뷰 조회
     public VideoReviewListResponse searchVideoReviewsByCategory(MiddleCategory middleCategory,
@@ -67,8 +72,29 @@ public class ReviewReadService {
                 .reviews(imageReviews.getContent())
                 .pageInfo(PageableResponse.of(imageReviews))
                 .build();
-
     }
 
+    public KeywordVideoReviewListResponse searchVideoReviewsByKeyword(String keyword, int page, int size) {
 
+        List<String> tokens = kuromojiService.tokenize(keyword);
+        Pageable pageable = PageRequest.of(page, size);
+
+        Slice<VideoReviewResponse> videoReviews = reviewRepository.findVideoReviewsByKeyword(tokens,
+                pageable);
+
+        return KeywordVideoReviewListResponse.from(keyword, videoReviews);
+//        return ReviewListResponse.from(keyword, videoReviews);
+    }
+
+    public KeywordImageReviewListResponse searchImageReviewsByKeyword(String keyword, int page, int size) {
+
+        List<String> tokens = kuromojiService.tokenize(keyword);
+        Pageable pageable = PageRequest.of(page, size);
+
+        Slice<ImageReviewResponse> imageReviews = reviewRepository.findImageReviewsByKeyword(tokens,
+                pageable);
+
+        return KeywordImageReviewListResponse.from(keyword, imageReviews);
+//        return ReviewListResponse.from(keyword, imageReviews);
+    }
 }
