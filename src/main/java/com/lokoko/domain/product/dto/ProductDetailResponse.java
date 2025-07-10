@@ -7,14 +7,14 @@ import java.util.List;
 
 public record ProductDetailResponse(
 
-        Long productId, // 제품 id(추후 상세조회를 위해서)
-        List<String> imageUrls, // 제품 이미지
-        String productName,// 제품 이름
-        String brandName, // 브랜드 이름
-        String unit, // 제품 단위
-        Long reviewCount, // 리뷰 개수
-        Double rating, // 별점
-        List<String> productOptions,
+        Long productId,
+        List<String> imageUrls,
+        List<ProductOptionResponse> productOptions,
+        String productName,
+        String brandName,
+        String unit,
+        Long reviewCount,
+        Double rating,
         long normalPrice,
         String productDetail,
         String ingredients,
@@ -23,17 +23,17 @@ public record ProductDetailResponse(
         MiddleCategory middleCategory,
         SubCategory subCategory
 ) {
-    public static ProductDetailResponse from(ProductResponse response, List<String> productOptions, Product product) {
+    public static ProductDetailResponse from(ProductResponse response, List<ProductOptionResponse> productOptions, Product product) {
 
         return new ProductDetailResponse(
                 response.productId(),
                 response.imageUrls(),
+                productOptions,
                 response.productName(),
                 response.brandName(),
                 response.unit(),
                 response.reviewCount(),
                 response.rating(),
-                productOptions,
                 product.getNormalPrice(),
                 product.getProductDetail(),
                 product.getIngredients(),
