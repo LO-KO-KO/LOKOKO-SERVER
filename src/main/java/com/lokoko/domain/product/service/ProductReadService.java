@@ -16,9 +16,7 @@ import com.lokoko.domain.product.entity.ProductOption;
 import com.lokoko.domain.product.entity.enums.MiddleCategory;
 import com.lokoko.domain.product.entity.enums.SubCategory;
 import com.lokoko.domain.product.entity.enums.Tag;
-import com.lokoko.domain.product.exception.MiddleCategoryNotFoundException;
 import com.lokoko.domain.product.exception.ProductNotFoundException;
-import com.lokoko.domain.product.exception.SubCategoryNotFoundException;
 import com.lokoko.domain.product.repository.ProductOptionRepository;
 import com.lokoko.domain.product.repository.ProductRepository;
 import com.lokoko.domain.review.entity.enums.Rating;
@@ -162,31 +160,5 @@ public class ProductReadService {
                 .toList();
 
         return new ProductDetailYoutubeResponse(urls);
-    }
-
-    public List<String> getProductOptionNames(Product product) {
-        List<String> names = productOptionRepository.findOptionNamesByProduct(product);
-        return names.isEmpty() ? null : names;
-    }
-
-    public List<Long> getProductIds(List<Product> products) {
-        return products.stream()
-                .map(Product::getId)
-                .toList();
-    }
-
-    private MiddleCategory getMiddleCategory(String middleCategoryId) {
-        return Arrays.stream(MiddleCategory.values())
-                .filter(mid -> mid.getCtgrNo().equals(middleCategoryId))
-                .findFirst()
-                .orElseThrow(MiddleCategoryNotFoundException::new);
-    }
-
-    // 클라이언트에서 카테고리 number 를 전달하므로, 이 number 에 해당하는 카테고리 이름을 검색해야함.
-    private SubCategory getSubCategory(String subCategoryId) {
-        return Arrays.stream(SubCategory.values())
-                .filter(sub -> sub.getCtgrNo().equals(subCategoryId))
-                .findFirst()
-                .orElseThrow(SubCategoryNotFoundException::new);
     }
 }
