@@ -1,18 +1,17 @@
 package com.lokoko.domain.review.service;
 
+import static com.lokoko.global.utils.AllowedMediaType.ALLOWED_MEDIA_TYPES;
+
 import com.lokoko.domain.review.dto.request.ReviewReceiptRequest;
 import com.lokoko.domain.review.dto.response.ReviewReceiptResponse;
 import com.lokoko.domain.review.dto.response.ReviewReceiptUrl;
 import com.lokoko.domain.review.exception.ErrorMessage;
 import com.lokoko.domain.review.exception.InvalidMediaTypeException;
 import com.lokoko.global.common.service.S3Service;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-
-import static com.lokoko.domain.review.utils.AllowedMediaType.ALLOWED_MEDIA_TYPES;
 
 @Service
 @RequiredArgsConstructor
