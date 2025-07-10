@@ -99,7 +99,7 @@ public class ProductController {
         return ApiResponse.success(HttpStatus.OK, CATEGORY_SEARCH_SUCCESS.getMessage(), categoryProductResponse);
     }
 
-    @Operation(summary = "신상품 카테고리별 조회")
+    @Operation(summary = "신상품 카테고리별 조회 (메인 페이지)")
     @GetMapping("/categories/new")
     public ApiResponse<CategoryNewProductResponse> searchNewProductsByCategory(
             @RequestParam MiddleCategory middleCategory,
@@ -111,7 +111,7 @@ public class ProductController {
         return ApiResponse.success(HttpStatus.OK, CATEGORY_NEW_LIST_SUCCESS.getMessage(), categoryNewProductResponse);
     }
 
-    @Operation(summary = "인기상품 카테고리별 조회")
+    @Operation(summary = "인기상품 카테고리별 조회 (메인 페이지)")
     @GetMapping("/categories/popular")
     public ApiResponse<CategoryPopularProductResponse> searchPopularProductsByCategory(
             @RequestParam MiddleCategory middleCategory, @RequestParam(defaultValue = "0") int page,
@@ -139,7 +139,7 @@ public class ProductController {
         return ApiResponse.success(HttpStatus.OK, ResponseMessage.PRODUCT_OPTION_SUCCESS.getMessage(), null);
     }
 
-    @Operation(summary = "상세조회 제품(별점 포함) 조회")
+    @Operation(summary = "상세조회 제품(별점 포함) 조회 (상세 조회)")
     @GetMapping("/details/{productId}")
     public ApiResponse<ProductDetailResponse> getProductDetail(@PathVariable Long productId) {
         ProductDetailResponse detail = productReadService.getProductDetail(productId);
@@ -147,7 +147,7 @@ public class ProductController {
         return ApiResponse.success(HttpStatus.OK, PRODUCT_DETAIL_SUCCESS.getMessage(), detail);
     }
 
-    @Operation(summary = "상세조회 유튜브 리뷰 조회")
+    @Operation(summary = "상세조회 유튜브 리뷰 조회 (상세 조회)")
     @GetMapping("/details/{productId}/youtube")
     public ApiResponse<ProductDetailYoutubeResponse> getProductDetailYoutube(@PathVariable Long productId) {
         ProductDetailYoutubeResponse detailYoutube = productReadService.getProductDetailYoutube(productId);
@@ -155,7 +155,7 @@ public class ProductController {
         return ApiResponse.success(HttpStatus.OK, PRODUCT_YOUTUBE_DETAIL_SUCCESS.getMessage(), detailYoutube);
     }
 
-    @Operation(summary = "상품명 또는 브랜드명 상품 검색")
+    @Operation(summary = "상품명 또는 브랜드명 상품 검색 ")
     @GetMapping("/search")
     public ApiResponse<NameBrandProductResponse> search(@Valid ProductSearchRequest request,
                                                         @RequestParam(defaultValue = "0") int page,
