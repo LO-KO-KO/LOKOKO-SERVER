@@ -8,9 +8,9 @@ import static java.util.stream.Collectors.toList;
 
 import com.lokoko.domain.image.entity.ProductImage;
 import com.lokoko.domain.image.repository.ProductImageRepository;
-import com.lokoko.domain.product.dto.NameBrandProductResponse;
-import com.lokoko.domain.product.dto.ProductResponse;
-import com.lokoko.domain.product.dto.ProductSummary;
+import com.lokoko.domain.product.dto.response.NameBrandProductResponse;
+import com.lokoko.domain.product.dto.response.ProductResponse;
+import com.lokoko.domain.product.dto.response.ProductSummary;
 import com.lokoko.domain.product.entity.Product;
 import com.lokoko.domain.product.exception.ProductNotFoundException;
 import com.lokoko.domain.product.repository.ProductRepository;

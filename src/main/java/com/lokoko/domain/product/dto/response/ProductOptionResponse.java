@@ -1,4 +1,4 @@
-package com.lokoko.domain.product.dto;
+package com.lokoko.domain.product.dto.response;
 
 import com.lokoko.domain.product.entity.ProductOption;
 
