@@ -60,8 +60,8 @@ public class ReviewService {
 
         String mediaType = request.mediaType();
 
-        // "video/" 또는 "image/"로 시작하는지, 슬래시가 포함되어 있는지 검사
-        if (!(mediaType.startsWith("video/") || mediaType.startsWith("image/")) || !mediaType.contains("/")) {
+        // "image/"로 시작하는지, 슬래시가 포함되어 있는지 검사
+        if (!(mediaType.startsWith("image/")) || !mediaType.contains("/")) {
             throw new InvalidMediaTypeException(ErrorMessage.INVALID_MEDIA_TYPE_FORMAT);
         }
 
@@ -192,7 +192,7 @@ public class ReviewService {
                 if (url.contains("/video/")) {
                     ReviewVideo rv = ReviewVideo.createReviewVideo(mediaFile, order++, review);
                     reviewVideoRepository.save(rv);
-                }else {
+                } else {
                     ReviewImage ri = ReviewImage.createReviewImage(mediaFile, order++, review);
                     reviewImageRepository.save(ri);
                 }
