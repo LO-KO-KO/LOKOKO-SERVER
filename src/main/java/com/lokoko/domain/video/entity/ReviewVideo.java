@@ -38,10 +38,9 @@ public class ReviewVideo extends BaseEntity {
     @JoinColumn(name = "review_id")
     private Review review; // 동영상이 어떤 리뷰에 대한 것인지 (외래키)
 
-    public static ReviewVideo createReviewVideo(String fileName,
-                                                String fileUrl, int displayOrder, Review review) {
+    public static ReviewVideo createReviewVideo(MediaFile mediaFile, int displayOrder, Review review) {
         return ReviewVideo.builder()
-                .mediaFile(MediaFile.of(fileName, fileUrl))
+                .mediaFile(mediaFile)
                 .displayOrder(displayOrder)
                 .review(review)
                 .build();
