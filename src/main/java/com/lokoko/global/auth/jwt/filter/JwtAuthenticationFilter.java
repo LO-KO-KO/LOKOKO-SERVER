@@ -57,10 +57,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private void saveAuthentication(String token) {
         Long id = jwtExtractor.getId(token);
-        String email = jwtExtractor.getEmail(token);
+        String lineId = jwtExtractor.getLineId(token);
         String role = jwtExtractor.getRole(token);
 
-        UserDetails userDetails = JwtUserDetails.of(id, email, role);
+        UserDetails userDetails = JwtUserDetails.of(id, lineId, role);
         Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null,
                 userDetails.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication);
