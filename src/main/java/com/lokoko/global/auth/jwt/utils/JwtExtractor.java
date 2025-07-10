@@ -22,7 +22,7 @@ public class JwtExtractor {
     private static final String BEARER = "Bearer ";
     private static final String ID_CLAIM = "id";
     private static final String ROLE_CLAIM = "role";
-    private static final String EMAIL_CLAIM = "email";
+    private static final String LIND_ID = "lineId";
     private final Key key;
 
     public JwtExtractor(@Value("${lokoko.jwt.key}") String secretKey) {
@@ -39,8 +39,8 @@ public class JwtExtractor {
         return parseIdClaim(token);
     }
 
-    public String getEmail(String token) {
-        return getClaimFromToken(token, EMAIL_CLAIM);
+    public String getLindId(String token) {
+        return getClaimFromToken(token, LIND_ID);
     }
 
     public String getRole(String token) {

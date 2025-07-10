@@ -16,7 +16,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
     private final AuthService authService;
     private final JwtService jwtService;
@@ -54,6 +57,9 @@ public class AuthController {
         LoginDto tokens = authService.loginWithLine(code, state);
         cookieUtil.setCookie(ACCESS_TOKEN_HEADER, tokens.accessToken(), response);
         cookieUtil.setCookie(REFRESH_TOKEN_HEADER, tokens.refreshToken(), response);
+        log.info(">> 쿠키 → {}",
+                response.getHeaders("Set-Cookie").stream().collect(Collectors.joining(" | "))
+        );
         response.sendRedirect(frontendRedirectUrl);
     }
 

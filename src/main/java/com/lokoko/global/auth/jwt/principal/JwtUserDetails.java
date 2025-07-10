@@ -12,12 +12,12 @@ public class JwtUserDetails extends User {
 
     private final Long id;
 
-    public JwtUserDetails(Long id, String email, List<GrantedAuthority> authorities) {
-        super(email != null ? email : "", "", authorities);
+    public JwtUserDetails(Long id, String lineId, List<GrantedAuthority> authorities) {
+        super(lineId, "", authorities);
         this.id = id;
     }
 
-    public static JwtUserDetails of(Long id, String email, String role) {
-        return new JwtUserDetails(id, email, Collections.singletonList(new SimpleGrantedAuthority(role)));
+    public static JwtUserDetails of(Long id, String LindId, String role) {
+        return new JwtUserDetails(id, LindId, Collections.singletonList(new SimpleGrantedAuthority(role)));
     }
 }
