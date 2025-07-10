@@ -16,6 +16,7 @@ import com.lokoko.domain.product.entity.ProductOption;
 import com.lokoko.domain.product.entity.enums.MiddleCategory;
 import com.lokoko.domain.product.entity.enums.SubCategory;
 import com.lokoko.domain.product.entity.enums.Tag;
+import com.lokoko.domain.product.exception.MiddleCategoryNotFoundException;
 import com.lokoko.domain.product.exception.ProductNotFoundException;
 import com.lokoko.domain.product.exception.SubCategoryNotFoundException;
 import com.lokoko.domain.product.repository.ProductOptionRepository;
