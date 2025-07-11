@@ -1,14 +1,14 @@
-package com.lokoko.domain.product.dto;
+package com.lokoko.domain.review.dto.response;
 
 import com.lokoko.global.common.response.PageableResponse;
 import java.util.List;
 import lombok.Builder;
 
 @Builder
-public record CategoryProductPageResponse(
+public record VideoReviewListResponse(
         String searchQuery,
         String parentCategoryName,
-        List<ProductResponse> products,
+        List<VideoReviewResponse> reviews,
         PageableResponse pageInfo
 ) {
 }

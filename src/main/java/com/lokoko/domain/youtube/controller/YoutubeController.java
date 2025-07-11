@@ -1,6 +1,6 @@
 package com.lokoko.domain.youtube.controller;
 
-import com.lokoko.domain.product.dto.CrawlResponse;
+import com.lokoko.domain.product.dto.response.CrawlResponse;
 import com.lokoko.domain.youtube.controller.enums.ResponseMessage;
 import com.lokoko.domain.youtube.dto.VideoResponse;
 import com.lokoko.domain.youtube.service.YoutubeReviewCrawler;

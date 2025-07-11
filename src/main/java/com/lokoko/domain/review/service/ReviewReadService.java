@@ -2,12 +2,12 @@ package com.lokoko.domain.review.service;
 
 import com.lokoko.domain.product.entity.enums.MiddleCategory;
 import com.lokoko.domain.product.entity.enums.SubCategory;
-import com.lokoko.domain.review.dto.ImageReviewListResponse;
-import com.lokoko.domain.review.dto.ImageReviewResponse;
-import com.lokoko.domain.review.dto.KeywordImageReviewListResponse;
-import com.lokoko.domain.review.dto.KeywordVideoReviewListResponse;
-import com.lokoko.domain.review.dto.VideoReviewListResponse;
-import com.lokoko.domain.review.dto.VideoReviewResponse;
+import com.lokoko.domain.review.dto.response.ImageReviewListResponse;
+import com.lokoko.domain.review.dto.response.ImageReviewResponse;
+import com.lokoko.domain.review.dto.response.KeywordImageReviewListResponse;
+import com.lokoko.domain.review.dto.response.KeywordVideoReviewListResponse;
+import com.lokoko.domain.review.dto.response.VideoReviewListResponse;
+import com.lokoko.domain.review.dto.response.VideoReviewResponse;
 import com.lokoko.domain.review.repository.ReviewRepository;
 import com.lokoko.global.common.response.PageableResponse;
 import com.lokoko.global.kuromoji.service.KuromojiService;

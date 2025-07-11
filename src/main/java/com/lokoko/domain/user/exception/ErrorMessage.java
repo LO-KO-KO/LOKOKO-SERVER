@@ -1,10 +1,10 @@
 package com.lokoko.domain.user.exception;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 @Getter
-@RequiredArgsConstructor
+@AllArgsConstructor
 public enum ErrorMessage {
 
     USER_NOT_FOUND("존재하지 않는 유저입니다");

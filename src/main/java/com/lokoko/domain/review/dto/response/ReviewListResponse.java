@@ -1,16 +1,19 @@
-package com.lokoko.domain.review.dto;
+package com.lokoko.domain.review.dto.response;
 
 import com.lokoko.global.common.response.PageableResponse;
 import java.util.List;
+import lombok.Builder;
 import org.springframework.data.domain.Slice;
 
-public record KeywordImageReviewListResponse(
+@Builder
+public record ReviewListResponse<T>(
         String searchQuery,
-        List<ImageReviewResponse> reviews,
+        List<T> reviews,
         PageableResponse pageInfo
+
 ) {
-    public static KeywordImageReviewListResponse from(String keyword, Slice<ImageReviewResponse> reviews) {
-        return new KeywordImageReviewListResponse(
+    public static <T> ReviewListResponse<T> from(String keyword, Slice<T> reviews) {
+        return new ReviewListResponse(
                 keyword,
                 reviews.getContent(),
                 PageableResponse.of(reviews)
