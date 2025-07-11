@@ -13,9 +13,7 @@ import com.lokoko.domain.review.dto.request.ReviewMediaRequest;
 import com.lokoko.domain.review.dto.request.ReviewReceiptRequest;
 import com.lokoko.domain.review.dto.request.ReviewRequest;
 import com.lokoko.domain.review.dto.response.ReviewMediaResponse;
-import com.lokoko.domain.review.dto.response.ReviewMediaUrl;
 import com.lokoko.domain.review.dto.response.ReviewReceiptResponse;
-import com.lokoko.domain.review.dto.response.ReviewReceiptUrl;
 import com.lokoko.domain.review.dto.response.ReviewResponse;
 import com.lokoko.domain.review.entity.Review;
 import com.lokoko.domain.review.entity.enums.Rating;
@@ -53,7 +51,6 @@ public class ReviewService {
     private final ProductOptionRepository productOptionRepository;
     private final ReviewVideoRepository reviewVideoRepository;
 
-    @Transactional
     public ReviewReceiptResponse createReceiptPresignedUrl(Long userId,
                                                            ReviewReceiptRequest request) {
         userRepository.findById(userId)
@@ -73,10 +70,9 @@ public class ReviewService {
 
         PresignedUrlResponse response = s3Service.generatePresignedUrl(mediaType);
         String presignedUrl = response.presignedUrl();
-        return new ReviewReceiptResponse(List.of(new ReviewReceiptUrl(presignedUrl)));
+        return new ReviewReceiptResponse(List.of(presignedUrl));
     }
 
-    @Transactional
     public ReviewMediaResponse createMediaPresignedUrl(
             Long userId,
             ReviewMediaRequest request) {
@@ -109,9 +105,9 @@ public class ReviewService {
         }
 
         // presigned URL 발급
-        List<ReviewMediaUrl> urls = mediaTypes.stream()
+        List<String> urls = mediaTypes.stream()
                 .map(s3Service::generatePresignedUrl)
-                .map(res -> new ReviewMediaUrl(res.presignedUrl()))
+                .map(PresignedUrlResponse::presignedUrl)
                 .toList();
 
         return new ReviewMediaResponse(urls);

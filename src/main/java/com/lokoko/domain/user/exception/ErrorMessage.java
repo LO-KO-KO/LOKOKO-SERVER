@@ -6,7 +6,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum ErrorMessage {
-    NOT_FOUND_USER("존재하지 않는 평점입니다.")
+    NOT_FOUND_USER("존재하지 않는 유저입니다.")
     ;
 
     private final String message;
