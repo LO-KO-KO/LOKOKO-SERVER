@@ -1,4 +1,4 @@
-package com.lokoko.domain.product.controller;
+package com.lokoko.domain.user.admin.controller.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -6,7 +6,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum ResponseMessage {
-    LIKE_TOGGLE_SUCCESS("좋아요 토글에 성공했습니다.");
+    ADMIN_REVIEW_DELETE_SUCCESS("어드민 리뷰 삭제에 성공했습니다");
 
     private final String message;
 }

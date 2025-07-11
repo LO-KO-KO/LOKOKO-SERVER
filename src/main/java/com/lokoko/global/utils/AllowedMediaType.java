@@ -1,4 +1,4 @@
-package com.lokoko.domain.review.utils;
+package com.lokoko.global.utils;
 
 import java.util.Set;
 

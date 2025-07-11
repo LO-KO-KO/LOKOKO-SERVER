@@ -1,6 +1,7 @@
 package com.lokoko.domain.image.repository;
 
 import com.lokoko.domain.image.entity.ReviewImage;
+import com.lokoko.domain.review.entity.Review;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -21,4 +22,5 @@ public interface ReviewImageRepository extends JpaRepository<ReviewImage, Long> 
             """)
     List<ReviewImage> findAllMainReviewImageWithReview();
 
+    void deleteAllByReview(Review review);
 }

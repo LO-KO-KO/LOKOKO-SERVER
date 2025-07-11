@@ -8,8 +8,8 @@ import java.util.List;
 public record ReviewRequest(
         @NotNull Long productOptionId,
         @NotNull Integer rating,
-        @NotNull @Size(max = 500) String positiveComment,
-        @NotNull @Size(max = 500) String negativeComment,
+        @NotNull @Size(min = 15, max = 1500) String positiveComment,
+        @NotNull @Size(min = 15, max = 1500) String negativeComment,
         List<String> mediaUrl,
         List<String> receiptUrl
 ) {

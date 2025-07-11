@@ -8,6 +8,7 @@ import static java.util.stream.Collectors.toList;
 
 import com.lokoko.domain.image.entity.ProductImage;
 import com.lokoko.domain.image.repository.ProductImageRepository;
+import com.lokoko.domain.like.repository.ProductLikeRepository;
 import com.lokoko.domain.product.dto.response.NameBrandProductResponse;
 import com.lokoko.domain.product.dto.response.ProductResponse;
 import com.lokoko.domain.product.dto.response.ProductSummary;
@@ -25,7 +26,8 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -43,15 +45,16 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final ProductImageRepository productImageRepository;
+    private final ProductLikeRepository productLikeRepository;
     private final ReviewRepository reviewRepository;
     private final KuromojiService kuromojiService;
 
-    public NameBrandProductResponse search(String keyword, int page, int size) {
+    public NameBrandProductResponse search(String keyword, int page, int size, Long userId) {
         List<String> tokens = kuromojiService.tokenize(keyword);
         Pageable pageable = PageRequest.of(page, size);
         Slice<Product> slice = productRepository.searchByTokens(tokens, pageable);
-        Slice<ProductResponse> responseSlice = buildProductResponseWithReviewData(slice);
-        
+        Slice<ProductResponse> responseSlice = buildProductResponseWithReviewData(slice, userId);
+
         return new NameBrandProductResponse(
                 keyword,
                 responseSlice.getContent(),
@@ -59,7 +62,7 @@ public class ProductService {
         );
     }
 
-    public List<ProductResponse> buildProductResponseWithReviewData(List<Product> products) {
+    public List<ProductResponse> buildProductResponseWithReviewData(List<Product> products, Long userId) {
         // 1) ID 추출
         List<Long> productIds = products.stream()
                 .map(Product::getId)
@@ -95,11 +98,11 @@ public class ProductService {
                 );
 
         // 6) summary 맵 생성
-        return makeProductResponse(products, summaryMap);
+        return makeProductResponse(products, summaryMap, userId);
     }
 
-    public Slice<ProductResponse> buildProductResponseWithReviewData(Slice<Product> slice) {
-        List<ProductResponse> content = buildProductResponseWithReviewData(slice.getContent());
+    public Slice<ProductResponse> buildProductResponseWithReviewData(Slice<Product> slice, Long userId) {
+        List<ProductResponse> content = buildProductResponseWithReviewData(slice.getContent(), userId);
 
         return new SliceImpl<>(content, slice.getPageable(), slice.hasNext());
     }
@@ -163,38 +166,20 @@ public class ProductService {
     }
 
     public List<ProductResponse> makeProductResponse(List<Product> products,
-                                                     Map<Long, ProductSummary> summaryMap) {
+                                                     Map<Long, ProductSummary> summaryMap, Long userId) {
+        Set<Long> likedIds = productLikeRepository.findAllByUserId(userId).stream()
+                .map(pl -> pl.getProduct().getId())
+                .collect(Collectors.toSet());
+
+        // 2) ProductResponse.of(...) 으로 매핑
         return products.stream()
                 .map(product -> {
-                    ProductSummary s = summaryMap.getOrDefault(
+                    ProductSummary summary = summaryMap.getOrDefault(
                             product.getId(),
                             new ProductSummary("", 0L, 0.0)
                     );
-                    List<String> imageUrls = Optional.ofNullable(s.imageUrl())
-                            .filter(url -> !url.isBlank())
-                            .map(url -> {
-                                if (url.contains(",")) {
-
-                                    return Arrays.stream(url.split(","))
-                                            .map(String::trim)
-                                            .filter(u -> !u.isEmpty())
-                                            .toList();
-                                } else {
-
-                                    return List.of(url);
-                                }
-                            })
-                            .orElseGet(List::of);
-
-                    return new ProductResponse(
-                            product.getId(),
-                            imageUrls,
-                            product.getProductName(),
-                            product.getBrandName(),
-                            product.getUnit(),
-                            s.reviewCount(),
-                            s.avgRating()
-                    );
+                    boolean isLiked = likedIds.contains(product.getId());
+                    return ProductResponse.of(product, summary, isLiked);
                 })
                 .toList();
     }

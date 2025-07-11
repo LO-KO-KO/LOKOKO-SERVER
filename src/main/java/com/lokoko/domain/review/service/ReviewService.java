@@ -1,5 +1,7 @@
 package com.lokoko.domain.review.service;
 
+import static com.lokoko.global.utils.AllowedMediaType.ALLOWED_MEDIA_TYPES;
+
 import com.lokoko.domain.image.entity.ReceiptImage;
 import com.lokoko.domain.image.entity.ReviewImage;
 import com.lokoko.domain.image.repository.ReceiptImageRepository;
@@ -8,16 +10,13 @@ import com.lokoko.domain.product.entity.ProductOption;
 import com.lokoko.domain.product.exception.ProductOptionMismatchException;
 import com.lokoko.domain.product.exception.ProductOptionNotFoundException;
 import com.lokoko.domain.product.repository.ProductOptionRepository;
-import com.lokoko.domain.product.repository.ProductRepository;
 import com.lokoko.domain.review.dto.request.ReviewMediaRequest;
 import com.lokoko.domain.review.dto.request.ReviewReceiptRequest;
 import com.lokoko.domain.review.dto.request.ReviewRequest;
 import com.lokoko.domain.review.dto.response.MainImageReview;
 import com.lokoko.domain.review.dto.response.MainImageReviewResponse;
 import com.lokoko.domain.review.dto.response.ReviewMediaResponse;
-import com.lokoko.domain.review.dto.response.ReviewMediaUrl;
 import com.lokoko.domain.review.dto.response.ReviewReceiptResponse;
-import com.lokoko.domain.review.dto.response.ReviewReceiptUrl;
 import com.lokoko.domain.review.dto.response.ReviewResponse;
 import com.lokoko.domain.review.entity.Review;
 import com.lokoko.domain.review.entity.enums.Rating;
@@ -34,9 +33,10 @@ import com.lokoko.domain.video.repository.ReviewVideoRepository;
 import com.lokoko.global.common.dto.PresignedUrlResponse;
 import com.lokoko.global.common.entity.MediaFile;
 import com.lokoko.global.common.service.S3Service;
-import jakarta.transaction.Transactional;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
@@ -46,18 +46,17 @@ import static com.lokoko.domain.review.utils.AllowedMediaType.ALLOWED_MEDIA_TYPE
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ReviewService {
     private final S3Service s3Service;
 
     private final ReviewRepository reviewRepository;
     private final ReceiptImageRepository receiptImageRepository;
     private final UserRepository userRepository;
-    private final ProductRepository productRepository;
     private final ReviewImageRepository reviewImageRepository;
     private final ProductOptionRepository productOptionRepository;
     private final ReviewVideoRepository reviewVideoRepository;
 
-    @Transactional
     public ReviewReceiptResponse createReceiptPresignedUrl(Long userId,
                                                            ReviewReceiptRequest request) {
         userRepository.findById(userId)
@@ -77,10 +76,9 @@ public class ReviewService {
 
         PresignedUrlResponse response = s3Service.generatePresignedUrl(mediaType);
         String presignedUrl = response.presignedUrl();
-        return new ReviewReceiptResponse(List.of(new ReviewReceiptUrl(presignedUrl)));
+        return new ReviewReceiptResponse(List.of(presignedUrl));
     }
 
-    @Transactional
     public ReviewMediaResponse createMediaPresignedUrl(
             Long userId,
             ReviewMediaRequest request) {
@@ -113,9 +111,9 @@ public class ReviewService {
         }
 
         // presigned URL 발급
-        List<ReviewMediaUrl> urls = mediaTypes.stream()
+        List<String> urls = mediaTypes.stream()
                 .map(s3Service::generatePresignedUrl)
-                .map(res -> new ReviewMediaUrl(res.presignedUrl()))
+                .map(PresignedUrlResponse::presignedUrl)
                 .toList();
 
         return new ReviewMediaResponse(urls);
