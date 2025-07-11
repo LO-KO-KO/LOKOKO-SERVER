@@ -9,10 +9,10 @@ import static com.lokoko.domain.product.controller.enums.ResponseMessage.PRODUCT
 import static com.lokoko.domain.product.controller.enums.ResponseMessage.PRODUCT_YOUTUBE_DETAIL_SUCCESS;
 
 import com.lokoko.domain.product.controller.enums.ResponseMessage;
+import com.lokoko.domain.product.dto.request.CrawlRequest;
 import com.lokoko.domain.product.dto.response.CategoryNewProductResponse;
 import com.lokoko.domain.product.dto.response.CategoryPopularProductResponse;
 import com.lokoko.domain.product.dto.response.CategoryProductPageResponse;
-import com.lokoko.domain.product.dto.request.CrawlRequest;
 import com.lokoko.domain.product.dto.response.NameBrandProductResponse;
 import com.lokoko.domain.product.dto.response.ProductDetailResponse;
 import com.lokoko.domain.product.dto.response.ProductDetailYoutubeResponse;
@@ -37,9 +37,6 @@ import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.Parameter;
-import com.lokoko.global.auth.annotation.CurrentUser;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -112,6 +109,7 @@ public class ProductController {
             @RequestParam String keyword,
             @RequestParam(defaultValue = "false") SearchType searchType,
             @RequestParam(required = false) MediaType mediaType,
+            @Parameter(hidden = true) @CurrentUser Long userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         // 리뷰 검색
@@ -137,7 +135,7 @@ public class ProductController {
         }
         // 상품 검색
         NameBrandProductResponse searchResults = productService.search(keyword, page,
-                size);
+                size, userId);
 
         return ApiResponse.success(HttpStatus.OK, ResponseMessage.NAME_BRAND_SEARCH_SUCCESS.getMessage(),
                 searchResults);
@@ -203,19 +201,6 @@ public class ProductController {
         ProductDetailYoutubeResponse detailYoutube = productReadService.getProductDetailYoutube(productId);
 
         return ApiResponse.success(HttpStatus.OK, PRODUCT_YOUTUBE_DETAIL_SUCCESS.getMessage(), detailYoutube);
-    }
-
-    @Operation(summary = "상품명 또는 브랜드명 상품 검색 ")
-    @GetMapping("/search")
-    public ApiResponse<NameBrandProductResponse> search(@Valid ProductSearchRequest request,
-                                                        @Parameter(hidden = true) @CurrentUser Long userId,
-                                                        @RequestParam(defaultValue = "0") int page,
-                                                        @RequestParam(defaultValue = "20") int size) {
-        NameBrandProductResponse searchResults = productService.search(request.keyword(), page, size, userId);
-
-        return ApiResponse.success(HttpStatus.OK, ResponseMessage.NAME_BRAND_SEARCH_SUCCESS.getMessage(),
-                searchResults);
-
     }
 
     @Hidden

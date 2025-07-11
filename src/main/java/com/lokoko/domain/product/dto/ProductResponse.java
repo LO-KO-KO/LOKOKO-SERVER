@@ -1,6 +1,7 @@
 package com.lokoko.domain.product.dto;
 
 
+import com.lokoko.domain.product.dto.response.ProductSummary;
 import com.lokoko.domain.product.entity.Product;
 import java.util.Arrays;
 import java.util.List;
