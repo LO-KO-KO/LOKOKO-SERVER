@@ -15,7 +15,7 @@ public class JwtProvider {
     public static final String ACCESS_TOKEN_HEADER = "AccessToken";
     public static final String REFRESH_TOKEN_HEADER = "RefreshToken";
     public static final String ID_CLAIM = "id";
-    public static final String EMAIL_CLAIM = "sub";
+    public static final String EMAIL_CLAIM = "email";
     private static final String ROLE_CLAIM = "role";
     private static final String ROLE_PREFIX = "ROLE_";
     public static final String LINE_ID_CLAIM = "lineId";
