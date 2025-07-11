@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProductLikeController {
     private final ProductLikeService productLikeService;
 
-    @Operation(summary = "게시글 좋아요/취소")
+    @Operation(summary = "상품 좋아요 토글 (추가/취소)")
     @PostMapping
     public ApiResponse<Void> toggleLike(@PathVariable final Long productId,
                                         @Parameter(hidden = true) @CurrentUser Long userId) {
