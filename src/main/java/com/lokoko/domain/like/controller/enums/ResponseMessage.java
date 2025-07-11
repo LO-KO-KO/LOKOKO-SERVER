@@ -1,4 +1,4 @@
-package com.lokoko.domain.product.controller;
+package com.lokoko.domain.like.controller.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
