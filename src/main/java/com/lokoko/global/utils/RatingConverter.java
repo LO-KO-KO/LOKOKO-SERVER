@@ -1,4 +1,4 @@
-package com.lokoko.domain.review.utils;
+package com.lokoko.global.utils;
 
 import com.lokoko.domain.review.entity.enums.Rating;
 import jakarta.persistence.AttributeConverter;
