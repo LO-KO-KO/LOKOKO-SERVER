@@ -28,12 +28,14 @@ import com.lokoko.domain.review.dto.response.KeywordVideoReviewListResponse;
 import com.lokoko.domain.review.dto.response.VideoReviewListResponse;
 import com.lokoko.domain.review.exception.MissingMediaTypeException;
 import com.lokoko.domain.review.service.ReviewReadService;
+import com.lokoko.global.auth.annotation.CurrentUser;
 import com.lokoko.global.common.entity.MediaType;
 import com.lokoko.global.common.entity.SearchType;
 import com.lokoko.global.common.response.ApiResponse;
 import com.lokoko.global.kuromoji.service.ProductMigrationService;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Parameter;
 import com.lokoko.global.auth.annotation.CurrentUser;
@@ -67,6 +69,7 @@ public class ProductController {
         productCrawlingService.scrapeByCategory(request.mainCategory(), request.middleCategory());
 
         return ApiResponse.success(HttpStatus.OK, ResponseMessage.PRODUCT_CRAWL_SUCCESS.getMessage(), null);
+
     }
 
     @Operation(summary = "카테고리 별 상품 검색")
@@ -141,7 +144,7 @@ public class ProductController {
 
     }
 
-    @Operation(summary = "신상품 카테고리별 조회")
+    @Operation(summary = "신상품 카테고리별 조회 (메인 페이지)")
     @GetMapping("/categories/new")
     public ApiResponse<CategoryNewProductResponse> searchNewProductsByCategory(
             @RequestParam MiddleCategory middleCategory,
@@ -187,8 +190,9 @@ public class ProductController {
 
     @Operation(summary = "상세조회 제품(별점 포함) 조회 (상세 조회)")
     @GetMapping("/details/{productId}")
-    public ApiResponse<ProductDetailResponse> getProductDetail(@PathVariable Long productId) {
-        ProductDetailResponse detail = productReadService.getProductDetail(productId);
+    public ApiResponse<ProductDetailResponse> getProductDetail(@PathVariable Long productId,
+                                                               @Parameter(hidden = true) @CurrentUser Long userId) {
+        ProductDetailResponse detail = productReadService.getProductDetail(productId, userId);
 
         return ApiResponse.success(HttpStatus.OK, PRODUCT_DETAIL_SUCCESS.getMessage(), detail);
     }
@@ -211,6 +215,7 @@ public class ProductController {
 
         return ApiResponse.success(HttpStatus.OK, ResponseMessage.NAME_BRAND_SEARCH_SUCCESS.getMessage(),
                 searchResults);
+
     }
 
     @Hidden
