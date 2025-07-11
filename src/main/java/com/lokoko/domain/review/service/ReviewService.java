@@ -13,6 +13,8 @@ import com.lokoko.domain.review.dto.request.ReviewReceiptRequest;
 import com.lokoko.domain.review.dto.request.ReviewRequest;
 import com.lokoko.domain.review.dto.response.MainImageReview;
 import com.lokoko.domain.review.dto.response.MainImageReviewResponse;
+import com.lokoko.domain.review.dto.response.MainVideoReview;
+import com.lokoko.domain.review.dto.response.MainVideoReviewResponse;
 import com.lokoko.domain.review.dto.response.ReviewMediaResponse;
 import com.lokoko.domain.review.dto.response.ReviewReceiptResponse;
 import com.lokoko.domain.review.dto.response.ReviewResponse;
@@ -210,7 +212,7 @@ public class ReviewService {
                 .sorted(Comparator
                         .comparing((ReviewImage ri) -> ri.getReview().getLikeCount()).reversed()
                         .thenComparing(ri -> ri.getReview().getRating().getValue(), Comparator.reverseOrder()))
-                .limit(10)
+                .limit(4)
                 .toList();
 
         List<MainImageReview> dtoList = IntStream.range(0, sorted.size())
@@ -219,5 +221,24 @@ public class ReviewService {
 
         return new MainImageReviewResponse(dtoList);
     }
+
+    public MainVideoReviewResponse getMainVideoReview() {
+        List<ReviewVideo> videos = reviewVideoRepository.findAllMainReviewVideoWithReview();
+
+        // 정렬: likeCount DESC, 좋아요 개수 같을 시 rating.value DESC
+        List<ReviewVideo> sorted = videos.stream()
+                .sorted(Comparator
+                        .comparing((ReviewVideo ri) -> ri.getReview().getLikeCount()).reversed()
+                        .thenComparing(ri -> ri.getReview().getRating().getValue(), Comparator.reverseOrder()))
+                .limit(4)
+                .toList();
+
+        List<MainVideoReview> dtoList = IntStream.range(0, sorted.size())
+                .mapToObj(i -> MainVideoReview.from(sorted.get(i), i + 1))
+                .toList();
+
+        return new MainVideoReviewResponse(dtoList);
+    }
+
 
 }
