@@ -36,7 +36,7 @@ public class Review extends BaseEntity {
     @JoinColumn(name = "user_id")
     private User author; // 리뷰 작성자 foreign key 매핑
 
-    @Column(nullable = false, length = 10)
+    @Column(nullable = false, length = 100)
     private String productInfo;
 
     @ManyToOne(fetch = LAZY)

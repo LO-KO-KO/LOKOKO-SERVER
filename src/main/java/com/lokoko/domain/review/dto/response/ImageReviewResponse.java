@@ -1,6 +1,6 @@
-package com.lokoko.domain.review.dto;
+package com.lokoko.domain.review.dto.response;
 
-public record VideoReviewResponse(
+public record ImageReviewResponse(
         Long reviewId,
         int ranking,
         String brandName,

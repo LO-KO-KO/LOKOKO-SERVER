@@ -6,7 +6,8 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum ErrorMessage {
-    NOT_FOUND_USER("해당 ID의 유저가 존재하지 않습니다.");
+    NOT_FOUND_USER("존재하지 않는 유저입니다.")
+    ;
 
     private final String message;
 }

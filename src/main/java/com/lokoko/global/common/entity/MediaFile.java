@@ -1,5 +1,6 @@
 package com.lokoko.global.common.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
@@ -13,6 +14,8 @@ import lombok.NoArgsConstructor;
 public class MediaFile {
 
     private String fileName;
+
+    @Column(length = 1000)
     private String fileUrl;
 
     public MediaFile(String fileName, String fileUrl) {
