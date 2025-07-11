@@ -1,5 +1,7 @@
 package com.lokoko.domain.review.service;
 
+import static com.lokoko.global.utils.AllowedMediaType.ALLOWED_MEDIA_TYPES;
+
 import com.lokoko.domain.image.entity.ReceiptImage;
 import com.lokoko.domain.image.entity.ReviewImage;
 import com.lokoko.domain.image.repository.ReceiptImageRepository;
@@ -8,10 +10,7 @@ import com.lokoko.domain.product.entity.ProductOption;
 import com.lokoko.domain.product.exception.ProductOptionMismatchException;
 import com.lokoko.domain.product.exception.ProductOptionNotFoundException;
 import com.lokoko.domain.product.repository.ProductOptionRepository;
-import com.lokoko.domain.product.repository.ProductRepository;
 import com.lokoko.domain.review.dto.request.ReviewMediaRequest;
-import static com.lokoko.global.utils.AllowedMediaType.ALLOWED_MEDIA_TYPES;
-
 import com.lokoko.domain.review.dto.request.ReviewReceiptRequest;
 import com.lokoko.domain.review.dto.request.ReviewRequest;
 import com.lokoko.domain.review.dto.response.ReviewMediaResponse;
@@ -32,11 +31,11 @@ import com.lokoko.domain.video.repository.ReviewVideoRepository;
 import com.lokoko.global.common.dto.PresignedUrlResponse;
 import com.lokoko.global.common.entity.MediaFile;
 import com.lokoko.global.common.service.S3Service;
-import jakarta.transaction.Transactional;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 
 @Service
 @RequiredArgsConstructor
@@ -47,7 +46,6 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final ReceiptImageRepository receiptImageRepository;
     private final UserRepository userRepository;
-    private final ProductRepository productRepository;
     private final ReviewImageRepository reviewImageRepository;
     private final ProductOptionRepository productOptionRepository;
     private final ReviewVideoRepository reviewVideoRepository;
