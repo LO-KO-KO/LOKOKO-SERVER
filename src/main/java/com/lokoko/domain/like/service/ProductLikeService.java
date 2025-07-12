@@ -50,4 +50,11 @@ public class ProductLikeService {
             productLikeRepository.save(newLike);
         }
     }
+
+    public boolean isLiked(Long productId, Long userId) {
+        if (!productRepository.existsById(productId)) {
+            throw new ProductNotFoundException();
+        }
+        return productLikeRepository.existsByProductIdAndUserId(productId, userId);
+    }
 }

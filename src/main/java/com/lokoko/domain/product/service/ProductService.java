@@ -15,13 +15,13 @@ import com.lokoko.domain.product.dto.response.ProductSummary;
 import com.lokoko.domain.product.entity.Product;
 import com.lokoko.domain.product.exception.ProductNotFoundException;
 import com.lokoko.domain.product.repository.ProductRepository;
+import com.lokoko.domain.review.dto.request.RatingCount;
 import com.lokoko.domain.review.entity.enums.Rating;
 import com.lokoko.domain.review.repository.ReviewRepository;
 import com.lokoko.global.common.response.PageableResponse;
 import com.lokoko.global.kuromoji.service.KuromojiService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -62,42 +62,40 @@ public class ProductService {
         );
     }
 
-    public List<ProductResponse> buildProductResponseWithReviewData(List<Product> products, Long userId) {
-        // 1) ID 추출
+    public List<ProductResponse> buildProductResponseWithReviewData(
+            List<Product> products, Long userId
+    ) {
         List<Long> productIds = products.stream()
                 .map(Product::getId)
                 .toList();
-
-        // 2) 이미지 조회 → 맵 생성
         Map<Long, String> imageMap = createProductImageMap(
                 productImageRepository.findByProductIdIn(productIds)
         );
 
-        // 3) 리뷰 통계 조회
-        List<Object[]> stats = reviewRepository.countAndAvgRatingByProductIds(productIds);
+        List<RatingCount> stats = reviewRepository.countByProductIdsAndRating(productIds);
         Map<Long, Long> reviewCountMap = new HashMap<>();
-        Map<Long, BigDecimal> weightedSumsMap = new HashMap<>();
-        Map<Long, Map<Rating, Long>> ratingCountsMap = new HashMap<>();
-        aggregateReviewStats(stats,
-                reviewCountMap,
-                weightedSumsMap,
-                ratingCountsMap);
+        Map<Long, Long> weightedSumMap = new HashMap<>();
+        for (RatingCount rc : stats) {
+            Long pid = rc.productId();
+            int score = rc.rating().getValue();
+            Long cnt = rc.count();
 
-        // 4) 평균 별점 계산
-        Map<Long, Double> avgMap =
-                calculateAverageRatings(reviewCountMap, weightedSumsMap);
+            reviewCountMap.merge(pid, cnt, Long::sum);
+            weightedSumMap.merge(pid, score * cnt, Long::sum);
+        }
+        Map<Long, Double> avgMap = productIds.stream()
+                .collect(Collectors.toMap(
+                        pid -> pid,
+                        pid -> {
+                            long total = reviewCountMap.getOrDefault(pid, 0L);
+                            long sum = weightedSumMap.getOrDefault(pid, 0L);
+                            return total == 0 ? 0.0 : (double) sum / total;
+                        }
+                ));
+        Map<Long, ProductSummary> summaryMap = createProductSummaryMap(
+                products, imageMap, reviewCountMap, avgMap
+        );
 
-        // 5) 정렬
-        // 4) 이제 ratingCountsMap 과 avgMap 을 각각 사용 가능
-        Map<Long, ProductSummary> summaryMap =
-                createProductSummaryMap(
-                        products,
-                        imageMap,
-                        reviewCountMap,
-                        avgMap
-                );
-
-        // 6) summary 맵 생성
         return makeProductResponse(products, summaryMap, userId);
     }
 
