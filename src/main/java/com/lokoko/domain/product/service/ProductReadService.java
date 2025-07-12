@@ -123,9 +123,10 @@ public class ProductReadService {
             totalCount += cnt;
             weightedSum += rating.getValue() * cnt;
         }
-        double avgRating = totalCount == 0
+        double rawAvg = totalCount == 0
                 ? 0.0
                 : (double) weightedSum / totalCount;
+        double avgRating = Math.round(rawAvg * 10) / 10.0;
         Map<Long, Long> reviewCountMap = Map.of(productId, totalCount);
         Map<Long, Double> avgRatingMap = Map.of(productId, avgRating);
         Map<Long, ProductSummary> summaryMap = productService.createProductSummaryMap(
@@ -145,12 +146,17 @@ public class ProductReadService {
         long cnt3 = countMap.getOrDefault(Rating.THREE, 0L);
         long cnt2 = countMap.getOrDefault(Rating.TWO, 0L);
         long cnt1 = countMap.getOrDefault(Rating.ONE, 0L);
+        long pct5 = totalCount == 0 ? 0L : (cnt5 * 100) / totalCount;
+        long pct4 = totalCount == 0 ? 0L : (cnt4 * 100) / totalCount;
+        long pct3 = totalCount == 0 ? 0L : (cnt3 * 100) / totalCount;
+        long pct2 = totalCount == 0 ? 0L : (cnt2 * 100) / totalCount;
+        long pct1 = totalCount == 0 ? 0L : (cnt1 * 100) / totalCount;
         List<ScorePercent> starPercent = List.of(
-                new ScorePercent(5, totalCount == 0 ? 0.0 : cnt5 * 100.0 / totalCount),
-                new ScorePercent(4, totalCount == 0 ? 0.0 : cnt4 * 100.0 / totalCount),
-                new ScorePercent(3, totalCount == 0 ? 0.0 : cnt3 * 100.0 / totalCount),
-                new ScorePercent(2, totalCount == 0 ? 0.0 : cnt2 * 100.0 / totalCount),
-                new ScorePercent(1, totalCount == 0 ? 0.0 : cnt1 * 100.0 / totalCount)
+                new ScorePercent(5, pct5),
+                new ScorePercent(4, pct4),
+                new ScorePercent(3, pct3),
+                new ScorePercent(2, pct2),
+                new ScorePercent(1, pct1)
         );
         boolean isLiked = productLikeService.isLiked(productId, userId);
 
