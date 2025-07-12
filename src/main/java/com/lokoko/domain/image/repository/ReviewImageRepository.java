@@ -9,11 +9,20 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface ReviewImageRepository extends JpaRepository<ReviewImage, Long> {
+public interface ReviewImageRepository extends JpaRepository<ReviewImage, Long>, ReviewImageRepositoryCustom {
 
     // 리뷰 이미지가 참조하는 리뷰
     // 리뷰가 참조하는 상품
     // 대표 이미지(displayOrder = 0)만 조회
+//    @Query("""
+//                SELECT ri FROM ReviewImage ri
+//                JOIN FETCH ri.review r
+//                JOIN FETCH r.product p
+//                WHERE ri.displayOrder = 0
+//            """)
+//    List<ReviewImage> findAllMainReviewImageWithReview();
+
+
     @Query("""
                 SELECT ri FROM ReviewImage ri
                 JOIN FETCH ri.review r         
