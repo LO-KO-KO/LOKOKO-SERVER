@@ -2,7 +2,6 @@ package com.lokoko.global.auth.controller;
 
 import static com.lokoko.global.auth.controller.enums.ResponseMessage.LOGIN_SUCCESS;
 import static com.lokoko.global.auth.controller.enums.ResponseMessage.REFRESH_TOKEN_REISSUE;
-import static com.lokoko.global.auth.controller.enums.ResponseMessage.URL_GET_SUCCESS;
 import static com.lokoko.global.auth.jwt.utils.JwtProvider.ACCESS_TOKEN_HEADER;
 import static com.lokoko.global.auth.jwt.utils.JwtProvider.REFRESH_TOKEN_HEADER;
 
@@ -11,17 +10,18 @@ import com.lokoko.global.auth.jwt.dto.LoginDto;
 import com.lokoko.global.auth.jwt.service.JwtService;
 import com.lokoko.global.auth.jwt.utils.CookieUtil;
 import com.lokoko.global.auth.line.dto.LineLoginResponse;
-import com.lokoko.global.auth.line.dto.LoginUrlResponse;
 import com.lokoko.global.auth.service.AuthService;
 import com.lokoko.global.common.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -52,13 +52,17 @@ public class AuthController {
 
         return ApiResponse.success(HttpStatus.OK, LOGIN_SUCCESS.getMessage(), response);
     }
-    
-    @Operation(summary = "라인 로그인 URL 생성 (클라에서 호출)")
-    @GetMapping("/url")
-    public ApiResponse<LoginUrlResponse> getLoginUrl() {
-        String url = authService.generateLineLoginUrl();
 
-        return ApiResponse.success(HttpStatus.OK, URL_GET_SUCCESS.getMessage(), new LoginUrlResponse(url));
+    /**
+     * Todo: 테스트용으로 JWT 토큰을 발급하고, 쿠키와 헤더에 저장하는 엔드포인트, 추후 제거 예정
+     */
+    @Operation(summary = "테스트용 JWT 토큰 발급")
+    @PostMapping("/login")
+    public ApiResponse<JwtLoginResponse> login(@RequestBody @Valid TestLoginRequest request) {
+        JwtTokenDto tokenDto = jwtService.issueTokensForTest(request.userId());
+        JwtLoginResponse loginResponse = JwtLoginResponse.of(tokenDto);
+
+        return ApiResponse.success(HttpStatus.OK, LOGIN_SUCCESS.getMessage(), loginResponse);
     }
 
     @PostMapping("/refresh")
