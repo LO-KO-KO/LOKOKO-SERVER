@@ -2,6 +2,7 @@ package com.lokoko.domain.review.repository;
 
 import com.lokoko.domain.product.entity.enums.MiddleCategory;
 import com.lokoko.domain.product.entity.enums.SubCategory;
+import com.lokoko.domain.review.dto.request.RatingCount;
 import com.lokoko.domain.review.dto.response.ImageReviewResponse;
 import com.lokoko.domain.review.dto.response.VideoReviewResponse;
 import java.util.List;
@@ -31,4 +32,5 @@ public interface ReviewRepositoryCustom {
 
     Slice<ImageReviewResponse> findImageReviewsByKeyword(List<String> tokens, Pageable pageable);
 
+    List<RatingCount> countByProductIdsAndRating(List<Long> productIds);
 }
