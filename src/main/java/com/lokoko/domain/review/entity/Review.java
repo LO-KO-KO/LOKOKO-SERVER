@@ -49,9 +49,6 @@ public class Review extends BaseEntity {
     @Column(nullable = false, length = 500)
     private String negativeContent; // 부정 리뷰 내용
 
-    @Column(nullable = false)
-    private int likeCount; // 좋아요 수
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Rating rating;
