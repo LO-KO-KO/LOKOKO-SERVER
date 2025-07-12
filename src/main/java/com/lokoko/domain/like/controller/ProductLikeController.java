@@ -1,7 +1,8 @@
 package com.lokoko.domain.like.controller;
 
-import static com.lokoko.domain.like.controller.enums.ResponseMessage.LIKE_TOGGLE_SUCCESS;
+import static com.lokoko.domain.like.controller.enums.ResponseMessage.PRODUCT_LIKE_TOGGLE_SUCCESS;
 
+import com.lokoko.domain.like.dto.response.ToggleLikeResponse;
 import com.lokoko.domain.like.service.ProductLikeService;
 import com.lokoko.global.auth.annotation.CurrentUser;
 import com.lokoko.global.common.response.ApiResponse;
@@ -24,10 +25,11 @@ public class ProductLikeController {
 
     @Operation(summary = "상품 좋아요 토글 (추가/취소)")
     @PostMapping
-    public ApiResponse<Void> toggleLike(@PathVariable final Long productId,
-                                        @Parameter(hidden = true) @CurrentUser Long userId) {
+    public ApiResponse<ToggleLikeResponse> toggleLike(@PathVariable final Long productId,
+                                                      @Parameter(hidden = true) @CurrentUser Long userId) {
         productLikeService.toggleProductLike(productId, userId);
-
-        return ApiResponse.success(HttpStatus.OK, LIKE_TOGGLE_SUCCESS.getMessage());
+        boolean isLiked = productLikeService.isLiked(productId, userId);
+        return ApiResponse.success(HttpStatus.OK, PRODUCT_LIKE_TOGGLE_SUCCESS.getMessage(),
+                new ToggleLikeResponse(isLiked));
     }
 }
