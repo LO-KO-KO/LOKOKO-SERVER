@@ -89,7 +89,8 @@ public class ProductService {
                         pid -> {
                             long total = reviewCountMap.getOrDefault(pid, 0L);
                             long sum = weightedSumMap.getOrDefault(pid, 0L);
-                            return total == 0 ? 0.0 : (double) sum / total;
+                            double raw = total == 0 ? 0.0 : (double) sum / total;
+                            return Math.round(raw * 10) / 10.0;
                         }
                 ));
         Map<Long, ProductSummary> summaryMap = createProductSummaryMap(
