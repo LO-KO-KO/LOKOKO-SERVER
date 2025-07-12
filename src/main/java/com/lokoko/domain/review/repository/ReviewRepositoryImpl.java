@@ -4,16 +4,19 @@ import com.lokoko.domain.image.entity.QReviewImage;
 import com.lokoko.domain.product.entity.QProduct;
 import com.lokoko.domain.product.entity.enums.MiddleCategory;
 import com.lokoko.domain.product.entity.enums.SubCategory;
+import com.lokoko.domain.review.dto.request.RatingCount;
 import com.lokoko.domain.review.dto.response.ImageReviewResponse;
 import com.lokoko.domain.review.dto.response.VideoReviewResponse;
 import com.lokoko.domain.review.entity.QReview;
 import com.lokoko.domain.video.entity.QReviewVideo;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -154,6 +157,29 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
         List<ImageReviewResponse> content = getImageReviewsByKeyword(tokens, pageable);
         updateImageSequence(content, pageable);
         return createSlice(content, pageable);
+    }
+
+    @Override
+    public List<RatingCount> countByProductIdsAndRating(List<Long> productIds) {
+        List<Tuple> tuples = queryFactory
+                .select(
+                        product.id,
+                        review.rating,
+                        review.id.count()
+                )
+                .from(review)
+                .join(review.product, product)
+                .where(product.id.in(productIds))
+                .groupBy(product.id, review.rating)
+                .fetch();
+
+        return tuples.stream()
+                .map(t -> new RatingCount(
+                        t.get(product.id),
+                        t.get(review.rating),
+                        t.get(review.id.count())
+                ))
+                .collect(Collectors.toList());
     }
 
     private List<VideoReviewResponse> getVideoReviewsByKeyword(List<String> tokens, Pageable pageable) {
