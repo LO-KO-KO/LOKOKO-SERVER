@@ -1,7 +1,5 @@
 package com.lokoko.domain.review.service;
 
-import static com.lokoko.global.utils.AllowedMediaType.ALLOWED_MEDIA_TYPES;
-
 import com.lokoko.domain.image.entity.ReceiptImage;
 import com.lokoko.domain.image.entity.ReviewImage;
 import com.lokoko.domain.image.repository.ReceiptImageRepository;
@@ -13,6 +11,8 @@ import com.lokoko.domain.product.repository.ProductOptionRepository;
 import com.lokoko.domain.review.dto.request.ReviewMediaRequest;
 import com.lokoko.domain.review.dto.request.ReviewReceiptRequest;
 import com.lokoko.domain.review.dto.request.ReviewRequest;
+import com.lokoko.domain.review.dto.response.MainImageReview;
+import com.lokoko.domain.review.dto.response.MainImageReviewResponse;
 import com.lokoko.domain.review.dto.response.ReviewMediaResponse;
 import com.lokoko.domain.review.dto.response.ReviewReceiptResponse;
 import com.lokoko.domain.review.dto.response.ReviewResponse;
@@ -31,11 +31,14 @@ import com.lokoko.domain.video.repository.ReviewVideoRepository;
 import com.lokoko.global.common.dto.PresignedUrlResponse;
 import com.lokoko.global.common.entity.MediaFile;
 import com.lokoko.global.common.service.S3Service;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.stream.IntStream;
+
+import static com.lokoko.global.utils.AllowedMediaType.ALLOWED_MEDIA_TYPES;
 
 @Service
 @RequiredArgsConstructor
@@ -198,4 +201,13 @@ public class ReviewService {
         return new ReviewResponse(review.getId());
     }
 
+    public MainImageReviewResponse getMainImageReview() {
+        List<ReviewImage> sorted = reviewImageRepository.findMainImageReviewSorted();
+
+        List<MainImageReview> dtoList = IntStream.range(0, sorted.size())
+                .mapToObj(i -> MainImageReview.from(sorted.get(i), i + 1))
+                .toList();
+
+        return new MainImageReviewResponse(dtoList);
+    }
 }

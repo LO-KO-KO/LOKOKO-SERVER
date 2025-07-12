@@ -43,10 +43,10 @@ public class Review extends BaseEntity {
     @JoinColumn(name = "product_id")
     private Product product;
 
-    @Column(nullable = false, length = 500)
+    @Column(nullable = false, length = 1500)
     private String positiveContent; // 긍정 리뷰 내용
 
-    @Column(nullable = false, length = 500)
+    @Column(nullable = false, length = 1500)
     private String negativeContent; // 부정 리뷰 내용
 
     @Column(nullable = false)
