@@ -1,5 +1,7 @@
 package com.lokoko.domain.image.entity;
 
+import static jakarta.persistence.FetchType.LAZY;
+
 import com.lokoko.domain.review.entity.Review;
 import com.lokoko.global.common.entity.BaseEntity;
 import com.lokoko.global.common.entity.MediaFile;
@@ -15,8 +17,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import static jakarta.persistence.FetchType.LAZY;
 
 @Getter
 @Entity
@@ -45,4 +45,8 @@ public class ReviewImage extends BaseEntity {
                 .review(review)
                 .build();
     }
+
+    private boolean isMain;
+
+
 }
