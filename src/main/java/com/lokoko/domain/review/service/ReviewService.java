@@ -1,7 +1,5 @@
 package com.lokoko.domain.review.service;
 
-import static com.lokoko.global.utils.AllowedMediaType.ALLOWED_MEDIA_TYPES;
-
 import com.lokoko.domain.image.entity.ReceiptImage;
 import com.lokoko.domain.image.entity.ReviewImage;
 import com.lokoko.domain.image.repository.ReceiptImageRepository;
@@ -13,6 +11,10 @@ import com.lokoko.domain.product.repository.ProductOptionRepository;
 import com.lokoko.domain.review.dto.request.ReviewMediaRequest;
 import com.lokoko.domain.review.dto.request.ReviewReceiptRequest;
 import com.lokoko.domain.review.dto.request.ReviewRequest;
+import com.lokoko.domain.review.dto.response.MainImageReview;
+import com.lokoko.domain.review.dto.response.MainImageReviewResponse;
+import com.lokoko.domain.review.dto.response.MainVideoReview;
+import com.lokoko.domain.review.dto.response.MainVideoReviewResponse;
 import com.lokoko.domain.review.dto.response.ReviewMediaResponse;
 import com.lokoko.domain.review.dto.response.ReviewReceiptResponse;
 import com.lokoko.domain.review.dto.response.ReviewResponse;
@@ -31,11 +33,14 @@ import com.lokoko.domain.video.repository.ReviewVideoRepository;
 import com.lokoko.global.common.dto.PresignedUrlResponse;
 import com.lokoko.global.common.entity.MediaFile;
 import com.lokoko.global.common.service.S3Service;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.stream.IntStream;
+
+import static com.lokoko.global.utils.AllowedMediaType.ALLOWED_MEDIA_TYPES;
 
 @Service
 @RequiredArgsConstructor
@@ -197,5 +202,45 @@ public class ReviewService {
 
         return new ReviewResponse(review.getId());
     }
+
+    public MainImageReviewResponse getMainImageReview() {
+        List<ReviewImage> sortedImage = reviewImageRepository.findMainImageReviewSorted();
+
+        List<MainImageReview> dtoList = IntStream.range(0, sortedImage.size())
+                .mapToObj(i -> MainImageReview.from(sortedImage.get(i), i + 1))
+                .toList();
+
+        return new MainImageReviewResponse(dtoList);
+    }
+
+    public MainVideoReviewResponse getMainVideoReview()  {
+        List<ReviewVideo> sortedVideo = reviewVideoRepository.findMainVideoReviewSorted();
+
+        List<MainVideoReview> dtoList = IntStream.range(0, sortedVideo.size())
+                .mapToObj(i -> MainVideoReview.from(sortedVideo.get(i), i + 1))
+                .toList();
+
+        return new MainVideoReviewResponse(dtoList);
+    }
+
+
+//    public MainVideoReviewResponse getMainVideoReview() {
+//        List<ReviewVideo> videos = reviewVideoRepository.findAllMainReviewVideoWithReview();
+//
+//        // 정렬: likeCount DESC, 좋아요 개수 같을 시 rating.value DESC
+//        List<ReviewVideo> sorted = videos.stream()
+//                .sorted(Comparator
+//                        .comparing((ReviewVideo ri) -> ri.getReview().getLikeCount()).reversed()
+//                        .thenComparing(ri -> ri.getReview().getRating().getValue(), Comparator.reverseOrder()))
+//                .limit(4)
+//                .toList();
+//
+//        List<MainVideoReview> dtoList = IntStream.range(0, sorted.size())
+//                .mapToObj(i -> MainVideoReview.from(sorted.get(i), i + 1))
+//                .toList();
+//
+//        return new MainVideoReviewResponse(dtoList);
+//    }
+
 
 }

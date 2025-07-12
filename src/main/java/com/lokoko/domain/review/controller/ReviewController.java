@@ -4,6 +4,8 @@ import com.lokoko.domain.review.controller.enums.ResponseMessage;
 import com.lokoko.domain.review.dto.request.ReviewMediaRequest;
 import com.lokoko.domain.review.dto.request.ReviewReceiptRequest;
 import com.lokoko.domain.review.dto.request.ReviewRequest;
+import com.lokoko.domain.review.dto.response.MainImageReviewResponse;
+import com.lokoko.domain.review.dto.response.MainVideoReviewResponse;
 import com.lokoko.domain.review.dto.response.ReviewMediaResponse;
 import com.lokoko.domain.review.dto.response.ReviewReceiptResponse;
 import com.lokoko.domain.review.dto.response.ReviewResponse;
@@ -16,6 +18,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -64,5 +67,17 @@ public class ReviewController {
                 ResponseMessage.REVIEW_UPLOAD_SUCCESS.getMessage(),
                 response
         );
+    }
+
+    @GetMapping("/image")
+    public ApiResponse<MainImageReviewResponse> getMainImageReviews() {
+        MainImageReviewResponse response = reviewService.getMainImageReview();
+        return ApiResponse.success(HttpStatus.OK, ResponseMessage.MAIN_REVIEW_IMAGE_SUCCESS.getMessage(), response);
+    }
+
+    @GetMapping("/video")
+    public ApiResponse<MainVideoReviewResponse> getMainVideoReviews() {
+        MainVideoReviewResponse response = reviewService.getMainVideoReview();
+        return ApiResponse.success(HttpStatus.OK, ResponseMessage.MAIN_REVIEW_VIDEO_SUCCESS.getMessage(), response);
     }
 }
