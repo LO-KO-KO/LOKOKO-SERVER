@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface ReviewVideoRepository extends JpaRepository<ReviewVideo, Long> {
+public interface ReviewVideoRepository extends JpaRepository<ReviewVideo, Long> ,ReviewVideoRepositoryCustom{
 
     // 리뷰 비디오ㅓ 참조하는 리뷰
     // 리뷰가 참조하는 상품
