@@ -11,4 +11,8 @@ public record JwtTokenDto(
     public static JwtTokenDto of(String accessToken, String refreshToken, String tokenId) {
         return new JwtTokenDto(accessToken, refreshToken, tokenId);
     }
+
+    public static JwtTokenDto of(String accessToken, String refreshToken) {
+        return new JwtTokenDto(accessToken, refreshToken, null);
+    }
 }

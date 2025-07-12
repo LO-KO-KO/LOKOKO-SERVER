@@ -6,24 +6,31 @@ import static com.lokoko.global.auth.jwt.exception.JwtErrorMessage.JWT_TOKEN_NOT
 
 import com.lokoko.global.auth.jwt.principal.JwtUserDetails;
 import com.lokoko.global.auth.jwt.utils.JwtExtractor;
+import com.lokoko.global.auth.jwt.utils.JwtProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String NO_CHECK_URL = "";
     private final static String JWT_ERROR = "jwtError";
+    private final static String ROLE = "role";
     private final JwtExtractor jwtExtractor;
+    private final JwtProvider jwtProvider;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -51,7 +58,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             return;
         }
-        saveAuthentication(accessToken);
+        Jwt springJwt = jwtProvider.toSpringJwt(accessToken);
+        Authentication auth = new JwtAuthenticationToken(
+                springJwt,
+                List.of(new SimpleGrantedAuthority(springJwt.getClaimAsString(ROLE)))
+        );
+        SecurityContextHolder.getContext().setAuthentication(auth);
         filterChain.doFilter(request, response);
     }
 

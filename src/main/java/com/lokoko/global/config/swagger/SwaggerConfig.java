@@ -25,6 +25,8 @@ public class SwaggerConfig {
                 .addTagsItem(new Tag().name("PRODUCT"))
                 .addTagsItem(new Tag().name("PRODUCT LIKE"))
                 .addTagsItem(new Tag().name("REVIEW"))
+                .addTagsItem(new Tag().name("REVIEW LIKE"))
+                .addTagsItem(new Tag().name("ADMIN"))
                 /*
                  * TODO: 나머지 컨트롤러 완성시 추가 예정
                  */

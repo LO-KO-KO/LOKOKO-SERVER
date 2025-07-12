@@ -1,12 +1,19 @@
 package com.lokoko.global.auth.jwt.utils;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.JwsHeader;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.time.Instant;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -59,6 +66,39 @@ public class JwtProvider {
                 .claim(LINE_ID_CLAIM, lineId)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    public Jwt toSpringJwt(String tokenValue) {
+        Jws<Claims> jws = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(tokenValue);
+
+        JwsHeader<?> jwsHeader = jws.getHeader();
+        Claims jwsBody = jws.getBody();
+
+        Instant issuedAt = dateToInstant(jwsBody.getIssuedAt());
+        Instant expiresAt = dateToInstant(jwsBody.getExpiration());
+
+        Map<String, Object> headers = new HashMap<>();
+        jwsHeader.forEach(headers::put);
+
+        Map<String, Object> claims = new HashMap<>();
+        jwsBody.forEach(claims::put);
+
+        return new Jwt(
+                tokenValue,
+                issuedAt,
+                expiresAt,
+                headers,
+                claims
+        );
+    }
+
+    private Instant dateToInstant(Date date) {
+        return date != null
+                ? date.toInstant()
+                : Instant.EPOCH;
     }
 }
 
