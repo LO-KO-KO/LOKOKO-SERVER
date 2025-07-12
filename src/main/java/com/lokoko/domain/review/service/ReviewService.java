@@ -35,7 +35,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -203,15 +202,7 @@ public class ReviewService {
     }
 
     public MainImageReviewResponse getMainImageReview() {
-        List<ReviewImage> images = reviewImageRepository.findAllMainReviewImageWithReview();
-
-        // 정렬: likeCount DESC, 좋아요 개수 같을 시 rating.value DESC
-        List<ReviewImage> sorted = images.stream()
-                .sorted(Comparator
-                        .comparing((ReviewImage ri) -> ri.getReview().getLikeCount()).reversed()
-                        .thenComparing(ri -> ri.getReview().getRating().getValue(), Comparator.reverseOrder()))
-                .limit(10)
-                .toList();
+        List<ReviewImage> sorted = reviewImageRepository.findMainImageReviewSorted();
 
         List<MainImageReview> dtoList = IntStream.range(0, sorted.size())
                 .mapToObj(i -> MainImageReview.from(sorted.get(i), i + 1))
@@ -219,5 +210,4 @@ public class ReviewService {
 
         return new MainImageReviewResponse(dtoList);
     }
-
 }

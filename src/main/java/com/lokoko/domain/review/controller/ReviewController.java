@@ -73,6 +73,4 @@ public class ReviewController {
         MainImageReviewResponse response = reviewService.getMainImageReview();
         return ApiResponse.success(HttpStatus.OK, ResponseMessage.MAIN_REVIEW_IMAGE_SUCCESS.getMessage(), response);
     }
-
-
 }
