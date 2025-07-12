@@ -50,6 +50,7 @@ public class AuthController {
         LoginDto tokens = authService.loginWithLine(code, state);
         LineLoginResponse loginResponse = LineLoginResponse.from(tokens);
         cookieUtil.setCookie(ACCESS_TOKEN_HEADER, tokens.accessToken(), response);
+        cookieUtil.setCookie(REFRESH_TOKEN_HEADER, tokens.refreshToken(), response);
 
         return ApiResponse.success(HttpStatus.OK, LOGIN_SUCCESS.getMessage(), loginResponse);
     }
