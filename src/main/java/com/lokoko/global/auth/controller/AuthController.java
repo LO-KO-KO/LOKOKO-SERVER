@@ -46,11 +46,13 @@ public class AuthController {
     @Operation(summary = "라인 소셜 로그인, JWT 토큰 발급 후 저장")
     @GetMapping("/line/login")
     public ApiResponse<LineLoginResponse> lineLogin(@RequestParam("code") String code,
-                                                    @RequestParam("state") String state) {
+                                                    @RequestParam("state") String state, HttpServletResponse response) {
         LoginDto tokens = authService.loginWithLine(code, state);
-        LineLoginResponse response = LineLoginResponse.from(tokens);
+        LineLoginResponse loginResponse = LineLoginResponse.from(tokens);
+        cookieUtil.setCookie(ACCESS_TOKEN_HEADER, tokens.accessToken(), response);
+        cookieUtil.setCookie(REFRESH_TOKEN_HEADER, tokens.refreshToken(), response);
 
-        return ApiResponse.success(HttpStatus.OK, LOGIN_SUCCESS.getMessage(), response);
+        return ApiResponse.success(HttpStatus.OK, LOGIN_SUCCESS.getMessage(), loginResponse);
     }
 
     /**

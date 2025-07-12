@@ -51,8 +51,6 @@ public class AuthService {
     @Transactional
     public LoginDto loginWithLine(String code, String state) {
         try {
-            stateService.verify(state);
-
             LineTokenResponse tokenResp = oAuthClient.issueToken(code);
             DecodedJWT idToken = JWT.decode(tokenResp.id_token());
             String email = idToken.getClaim(EMAIL_CLAIM).asString();
