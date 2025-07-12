@@ -9,7 +9,6 @@ import com.lokoko.domain.review.entity.enums.Rating;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
-import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
@@ -47,8 +46,14 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             allMatches = List.of();
         } else {
             NumberExpression<Long> reviewCount = r.id.count();
-
-            NumberExpression<Double> ratingAvgExpr = Expressions.numberTemplate(Double.class, "avg({0})", r.rating);
+            NumberExpression<Integer> ratingValue = new CaseBuilder()
+                    .when(r.rating.eq(Rating.ONE)).then(1)
+                    .when(r.rating.eq(Rating.TWO)).then(2)
+                    .when(r.rating.eq(Rating.THREE)).then(3)
+                    .when(r.rating.eq(Rating.FOUR)).then(4)
+                    .when(r.rating.eq(Rating.FIVE)).then(5)
+                    .otherwise(0);
+            NumberExpression<Double> ratingAvgExpr = ratingValue.avg();
 
             BooleanBuilder finalCondition = buildSearchCondition(tokens);
 
