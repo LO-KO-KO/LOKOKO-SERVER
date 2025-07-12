@@ -37,7 +37,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -205,32 +204,43 @@ public class ReviewService {
     }
 
     public MainImageReviewResponse getMainImageReview() {
-        List<ReviewImage> sorted = reviewImageRepository.findMainImageReviewSorted();
+        List<ReviewImage> sortedImage = reviewImageRepository.findMainImageReviewSorted();
 
-        List<MainImageReview> dtoList = IntStream.range(0, sorted.size())
-                .mapToObj(i -> MainImageReview.from(sorted.get(i), i + 1))
+        List<MainImageReview> dtoList = IntStream.range(0, sortedImage.size())
+                .mapToObj(i -> MainImageReview.from(sortedImage.get(i), i + 1))
                 .toList();
 
         return new MainImageReviewResponse(dtoList);
     }
 
-    public MainVideoReviewResponse getMainVideoReview() {
-        List<ReviewVideo> videos = reviewVideoRepository.findAllMainReviewVideoWithReview();
+    public MainVideoReviewResponse getMainVideoReview()  {
+        List<ReviewVideo> sortedVideo = reviewVideoRepository.findMainVideoReviewSorted();
 
-        // 정렬: likeCount DESC, 좋아요 개수 같을 시 rating.value DESC
-        List<ReviewVideo> sorted = videos.stream()
-                .sorted(Comparator
-                        .comparing((ReviewVideo ri) -> ri.getReview().getLikeCount()).reversed()
-                        .thenComparing(ri -> ri.getReview().getRating().getValue(), Comparator.reverseOrder()))
-                .limit(4)
-                .toList();
-
-        List<MainVideoReview> dtoList = IntStream.range(0, sorted.size())
-                .mapToObj(i -> MainVideoReview.from(sorted.get(i), i + 1))
+        List<MainVideoReview> dtoList = IntStream.range(0, sortedVideo.size())
+                .mapToObj(i -> MainVideoReview.from(sortedVideo.get(i), i + 1))
                 .toList();
 
         return new MainVideoReviewResponse(dtoList);
     }
+
+
+//    public MainVideoReviewResponse getMainVideoReview() {
+//        List<ReviewVideo> videos = reviewVideoRepository.findAllMainReviewVideoWithReview();
+//
+//        // 정렬: likeCount DESC, 좋아요 개수 같을 시 rating.value DESC
+//        List<ReviewVideo> sorted = videos.stream()
+//                .sorted(Comparator
+//                        .comparing((ReviewVideo ri) -> ri.getReview().getLikeCount()).reversed()
+//                        .thenComparing(ri -> ri.getReview().getRating().getValue(), Comparator.reverseOrder()))
+//                .limit(4)
+//                .toList();
+//
+//        List<MainVideoReview> dtoList = IntStream.range(0, sorted.size())
+//                .mapToObj(i -> MainVideoReview.from(sorted.get(i), i + 1))
+//                .toList();
+//
+//        return new MainVideoReviewResponse(dtoList);
+//    }
 
 
 }
