@@ -44,12 +44,12 @@ public class ReviewLike extends BaseEntity {
     @JoinColumn(name = "user_id") //  foreign key
     private User user;  // 어떤 회원이 좋아요를 눌렀는지
 
-    // 정적 팩토리 메소드
-    public static ReviewLike createReviewLike(Review review, User user) {
-        return ReviewLike.builder()
-                .review(review)
-                .user(user)
-                .build();
+    protected ReviewLike(Review review, User user) {
+        this.review = review;
+        this.user = user;
     }
 
+    public static ReviewLike of(Review review, User user) {
+        return new ReviewLike(review, user);
+    }
 }
