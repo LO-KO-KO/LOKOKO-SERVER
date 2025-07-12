@@ -28,7 +28,7 @@ public class ReviewReadService {
     // 카테고리별 영상 리뷰 조회
     public VideoReviewListResponse searchVideoReviewsByCategory(MiddleCategory middleCategory,
                                                                 SubCategory subCategory,
-                                                                Long userId, int page, int size) {
+                                                                int page, int size) {
 
         Pageable pageable = PageRequest.of(page, size);
 

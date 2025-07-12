@@ -83,7 +83,7 @@ public class ProductController {
         if (searchType == SearchType.REVIEW) {
             if (mediaType == MediaType.VIDEO) {
                 VideoReviewListResponse videoReviewResponse = reviewReadService.searchVideoReviewsByCategory(
-                        middleCategory, subCategory, userId, page, size);
+                        middleCategory, subCategory, page, size);
 
                 return ApiResponse.success(HttpStatus.OK, CATEGORY_REVIEW_SEARCH_SUCCESS.getMessage(),
                         videoReviewResponse);
