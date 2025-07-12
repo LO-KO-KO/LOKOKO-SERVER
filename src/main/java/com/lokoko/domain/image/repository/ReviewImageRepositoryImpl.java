@@ -15,9 +15,9 @@ import java.util.List;
 public class ReviewImageRepositoryImpl implements ReviewImageRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
-    private final QReviewImage reviewImage = QReviewImage.reviewImage;
-    private final QReview review = QReview.review;
-    private final QProduct product = QProduct.product;
+    private static final QReviewImage reviewImage = QReviewImage.reviewImage;
+    private static final QReview review = QReview.review;
+    private static final QProduct product = QProduct.product;
 
     @Override
     public List<ReviewImage> findMainImageReviewSorted() {
