@@ -5,8 +5,10 @@ import com.lokoko.domain.product.entity.QProduct;
 import com.lokoko.domain.product.entity.enums.MiddleCategory;
 import com.lokoko.domain.product.entity.enums.SubCategory;
 import com.lokoko.domain.review.entity.QReview;
+import com.lokoko.domain.review.entity.enums.Rating;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -133,10 +135,19 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
     }
 
     @Override
-    public Slice<Product> findProductsByPopularityAndRating(MiddleCategory category, Pageable pageable) {
+    public Slice<Product> findProductsByPopularityAndRating(
+            MiddleCategory category,
+            Pageable pageable
+    ) {
         NumberExpression<Long> reviewCount = r.id.count();
-        NumberExpression<Double> ratingAvgExpr = Expressions.numberTemplate(Double.class, "avg({0})", r.rating);
-
+        NumberExpression<Integer> ratingValue = new CaseBuilder()
+                .when(r.rating.eq(Rating.ONE)).then(1)
+                .when(r.rating.eq(Rating.TWO)).then(2)
+                .when(r.rating.eq(Rating.THREE)).then(3)
+                .when(r.rating.eq(Rating.FOUR)).then(4)
+                .when(r.rating.eq(Rating.FIVE)).then(5)
+                .otherwise(0);
+        NumberExpression<Double> ratingAvg = ratingValue.avg();
         List<Product> content = queryFactory
                 .select(p)
                 .from(p)
@@ -145,13 +156,13 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 .groupBy(p.id)
                 .orderBy(
                         reviewCount.desc(),
-                        ratingAvgExpr.desc()
+                        ratingAvg.desc()
                 )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
-        boolean hasNext = content.size() == pageable.getPageSize();
 
+        boolean hasNext = content.size() == pageable.getPageSize();
         return new SliceImpl<>(content, pageable, hasNext);
     }
 
@@ -161,23 +172,26 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             SubCategory subCategory,
             Pageable pageable
     ) {
-
         NumberExpression<Long> reviewCount = r.id.count();
-        NumberExpression<Double> ratingAvgExpr = Expressions.numberTemplate(Double.class, "avg({0})", r.rating);
-
+        NumberExpression<Integer> ratingValue = new CaseBuilder()
+                .when(r.rating.eq(Rating.ONE)).then(1)
+                .when(r.rating.eq(Rating.TWO)).then(2)
+                .when(r.rating.eq(Rating.THREE)).then(3)
+                .when(r.rating.eq(Rating.FOUR)).then(4)
+                .when(r.rating.eq(Rating.FIVE)).then(5)
+                .otherwise(0);
+        NumberExpression<Double> ratingAvg = ratingValue.avg();
         BooleanExpression where = p.middleCategory.eq(category);
-
         if (subCategory != null) {
             where = where.and(p.subCategory.eq(subCategory));
         }
-
         List<Product> content = queryFactory
                 .select(p)
                 .from(p)
                 .leftJoin(r).on(r.product.eq(p))
                 .where(where)
                 .groupBy(p.id)
-                .orderBy(reviewCount.desc(), ratingAvgExpr.desc())
+                .orderBy(reviewCount.desc(), ratingAvg.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();

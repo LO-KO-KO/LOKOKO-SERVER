@@ -1,5 +1,8 @@
 package com.lokoko.global.auth.jwt.service;
 
+import com.lokoko.domain.user.entity.User;
+import com.lokoko.domain.user.exception.UserNotFoundException;
+import com.lokoko.domain.user.repository.UserRepository;
 import com.lokoko.global.auth.jwt.dto.GenerateTokenDto;
 import com.lokoko.global.auth.jwt.dto.JwtTokenDto;
 import com.lokoko.global.auth.jwt.exception.TokenExpiredException;
@@ -22,6 +25,7 @@ public class JwtService {
     private final JwtProvider jwtProvider;
     private final JwtExtractor jwtExtractor;
     private final RedisUtil redisUtil;
+    private final UserRepository userRepository;
 
     @Value("${lokoko.jwt.refresh.expiration}")
     private long refreshTokenExpiration;
@@ -60,5 +64,27 @@ public class JwtService {
 
         redisUtil.deleteRefreshToken(redisKey);
         return newTokens;
+    }
+
+    public JwtTokenDto issueTokensForTest(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        String tokenId = UUID.randomUUID().toString();
+        String fakeLineId = user.getId().toString();
+
+        String accessToken = jwtProvider.generateAccessToken(
+                user.getId(),
+                user.getRole().name(),
+                fakeLineId
+        );
+        String refreshToken = jwtProvider.generateRefreshToken(
+                user.getId(),
+                user.getRole().name(),
+                tokenId,
+                fakeLineId
+        );
+
+        return JwtTokenDto.of(accessToken, refreshToken, tokenId);
     }
 }

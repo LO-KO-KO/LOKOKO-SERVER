@@ -15,6 +15,8 @@ public record ProductDetailResponse(
         String unit,
         Long reviewCount,
         Double rating,
+        List<ScorePercent> starPercent,
+        Boolean isLiked,
         long normalPrice,
         String productDetail,
         String ingredients,
@@ -23,7 +25,8 @@ public record ProductDetailResponse(
         MiddleCategory middleCategory,
         SubCategory subCategory
 ) {
-    public static ProductDetailResponse from(ProductResponse response, List<ProductOptionResponse> productOptions, Product product) {
+    public static ProductDetailResponse from(ProductResponse response, List<ProductOptionResponse> productOptions,
+                                             Product product, List<ScorePercent> starPercent, Boolean isLiked) {
 
         return new ProductDetailResponse(
                 response.productId(),
@@ -34,6 +37,8 @@ public record ProductDetailResponse(
                 response.unit(),
                 response.reviewCount(),
                 response.rating(),
+                starPercent,
+                isLiked,
                 product.getNormalPrice(),
                 product.getProductDetail(),
                 product.getIngredients(),
