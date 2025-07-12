@@ -1,4 +1,4 @@
-package com.lokoko.domain.like.dto;
+package com.lokoko.domain.like.dto.response;
 
 public record ToggleLikeResponse(
         boolean isLiked
